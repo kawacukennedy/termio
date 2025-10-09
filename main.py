@@ -34,7 +34,7 @@ from tts import TextToSpeechModule
 from screen_reader import ScreenReaderModule
 from screen_control import ScreenControlModule
 from wake_word import WakeWordDetectionModule
-from stt import SpeechToTextModule
+from stt import HuggingFaceSTTModule as SpeechToTextModule
 from plugins import PluginModule
 from offline_online_switch import OfflineOnlineSwitchModule
 from performance_optimizer import PerformanceOptimizerModule
@@ -55,7 +55,7 @@ optimizer = PerformanceOptimizerModule()
 security = SecurityAndPrivacyModule()
 
 # Voice components
-hotkey = settings.get('voice_interface.push_to_talk.hotkey', 'f12')
+hotkey = ' '  # SPACE for push-to-talk
 if HAS_SOUNDDEVICE:
     stt = SpeechToTextModule(switch_module=switch)
 else:
@@ -70,8 +70,9 @@ def process_input(user_input):
         # Command parsing
         if "read screen" in user_input.lower():
             if security.check_permission("screen_reading"):
+                response = "Scanning screen...\n"
                 text = screen_reader.read_screen_area()
-                response = f"Screen text: {text[:500]}..."
+                response += f"Screen text: {text[:500]}..."
             else:
                 response = "Screen reading permission denied"
         elif user_input.lower().startswith("type "):
@@ -86,8 +87,9 @@ def process_input(user_input):
                 parts = user_input.split()
                 try:
                     x, y = int(parts[-2]), int(parts[-1])
+                    response = f"Execute click at {x}, {y}? (Assuming yes)\n"
                     screen_control.click_at(x, y)
-                    response = f"Clicked at {x}, {y}"
+                    response += "Action done."
                 except ValueError:
                     response = "Invalid coordinates. Use: click at <x> <y>"
             else:
@@ -211,7 +213,9 @@ def process_input(user_input):
             # Interrupt current TTS if possible
             response = "Interruption requested"
         elif "help" in user_input.lower():
-            response = "Available commands: read screen, type <text>, click at <x> <y>, time, plugin <name>, list plugins, summarize screen, search screen for <keyword>, convert screen to speech, highlight keywords <kw>, recognize tables, clear logs, set voice <type>, set speed <0.9-1.2>, set pitch <offset>, set profile <formal/casual/energetic>, close window, scroll up/down, open <app>, toggle offline, pause, interrupt, quit"
+            response = "Categories: Voice Commands (Auralis, what time?), Screen Reading (read screen), Screen Control (click at x y), Text Queries (time), Settings (set voice), Plugins (plugin name). Type 'help <category>' for details."
+        elif "settings" in user_input.lower():
+            response = "Settings Panel:\n- Voice: set voice male/female/neutral\n- Speed: set speed 0.9-1.2\n- Pitch: set pitch -3 to 3\n- Volume: set volume 0-100\n- Profile: set profile formal/casual/energetic\n- Theme: toggle theme\n- Mode: toggle offline\n- Permissions: enable/disable microphone/screen control\nUse commands like 'set voice male'"
         elif "quit" in user_input.lower():
             response = "Goodbye"
         else:
@@ -233,6 +237,7 @@ def process_input(user_input):
 def process_voice(text):
     if text:
         response = process_input(text)
+        print("Speaking...")
         tts.speak(response)
         # In curses, would update, but for now print
         print(f"Voice input: {text}")
@@ -276,19 +281,18 @@ def listen_thread():
         if text:
             process_voice(text)
         else:
-            apology = "I'm sorry, I didn't catch that. Could you please repeat?"
+            apology = "I'm sorry, I didn't catch that. Did you mean 'time' or 'help'?"
             print(f"Response: {apology}")
             tts.speak(apology)
     except Exception as e:
         print(f"Error in recording: {e}")
 
-def push_to_talk(hotkey='f12'):
+def push_to_talk(hotkey=' '):
     if not HAS_SOUNDDEVICE:
         return
     from pynput import keyboard
-    key_obj = getattr(keyboard.Key, hotkey.lower(), keyboard.Key.f12)
     def on_press(key):
-        if key == key_obj:
+        if key == keyboard.Key.space:
             listen_thread()
     listener = keyboard.Listener(on_press=on_press)
     listener.start()
@@ -303,8 +307,20 @@ def main_curses(stdscr):
     curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK) # Hints
     curses.init_pair(6, curses.COLOR_RED, curses.COLOR_BLACK)    # Errors
     curses.init_pair(7, curses.COLOR_BLUE, curses.COLOR_BLACK)   # Status
-    theme = 1  # 1 light, 2 dark
+    theme = 2  # 2 dark default
     stdscr.bkgd(curses.color_pair(theme))
+    stdscr.clear()
+
+    # Boot sequence
+    boot_frames = config['terminal_ui_ux']['boot_sequence']['ASCII_animation_frames']
+    for frame in boot_frames:
+        stdscr.clear()
+        stdscr.addstr(0, 0, frame, curses.color_pair(7))
+        stdscr.refresh()
+        curses.napms(500)  # 0.5s per frame
+    stdscr.addstr(1, 0, config['terminal_ui_ux']['boot_sequence']['final_prompt'], curses.color_pair(4))
+    stdscr.refresh()
+    curses.napms(2000)  # Show for 2s
     stdscr.clear()
 
     # Header with ASCII art
@@ -318,7 +334,10 @@ def main_curses(stdscr):
     ]
     for i, line in enumerate(header):
         stdscr.addstr(i, 0, line, curses.color_pair(4 if theme == 1 else 3))
-    stdscr.addstr(6, 0, f"Commands: {hotkey.upper()} for voice | 'help' for commands | 'quit' to exit", curses.color_pair(7))
+    # Status bar
+    status_bar = "Mic: OFF | Mode: Offline | CPU: 5% | Net: OK"
+    stdscr.addstr(6, 0, status_bar, curses.color_pair(7))
+    stdscr.addstr(7, 0, "Hold [SPACE] to talk or type 'help'", curses.color_pair(5))
 
     history = []
     show_history = True
@@ -349,7 +368,8 @@ def main_curses(stdscr):
             # Redraw header
             for i, line in enumerate(header):
                 stdscr.addstr(i, 0, line, curses.color_pair(4 if theme == 1 else 3))
-            stdscr.addstr(6, 0, f"Commands: {hotkey.upper()} for voice | 'help' for commands | 'quit' to exit", curses.color_pair(7))
+            stdscr.addstr(6, 0, status_bar, curses.color_pair(7))
+            stdscr.addstr(7, 0, "Hold [SPACE] to talk or type 'help'", curses.color_pair(5))
             response = f"Theme switched to {'dark' if theme == 2 else 'light'}"
             y = 8
         else:
@@ -357,6 +377,10 @@ def main_curses(stdscr):
             stdscr.refresh()
             response = process_input(user_input)
             stdscr.addstr(y+1, 0, " " * 20, curses.color_pair(theme))  # Clear processing
+            # Output minimization
+            lines = response.split('\n')
+            if len(lines) > 10:
+                response = "Summary: " + lines[0] + "... (truncated, full has " + str(len(lines)) + " lines)"
         y += 1
         stdscr.addstr(y, 0, f"AI: {response}", curses.color_pair(4))
         # Contextual hints

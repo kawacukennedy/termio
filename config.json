@@ -2,29 +2,46 @@
   "app_name": "Auralis",
   "version": "1.0.0",
   "launch_command": "auralis",
-  "description": "Auralis is a terminal-based AI assistant providing full offline-first natural voice and text conversation, real-time screen reading and control, push-to-talk voice interaction, optional online enhancements, minimal CPU/GPU usage, and storage under 100MB.",
-  "storage_budget": "<100MB",
+  "description": "Auralis is a terminal-based AI assistant leveraging HuggingFace APIs for STT, NLP, and TTS. Provides natural conversation, push-to-talk, wake word detection, screen reading/control, offline lightweight operation, minimal CPU/GPU usage, storage under 100MB.",
+  "constraints": {
+    "budget": "$0",
+    "storage_limit": "<100MB",
+    "CPU_GPU_low_usage": true,
+    "offline_first": true,
+    "terminal_launch": true,
+    "natural_voice_conversation": true,
+    "push_to_talk_supported": true,
+    "screen_reading_control": true,
+    "logs_minimized": true,
+    "voice_response_real_time": true,
+    "cross_platform": true,
+    "RAM_max": "2GB",
+    "CPU_max": "dual-core 1.5GHz"
+  },
   "platforms": {
     "supported_os": ["Windows 10+", "macOS 11+", "Linux Ubuntu 20.04+"],
     "core_language": "Python 3.11+",
     "terminal_interface": {
-      "display_mode": "ASCII terminal with optional waveform visualization for voice input",
-      "interactive_prompt": "typed commands and push-to-talk voice input",
-      "logging_display": "toggleable, compressed, configurable retention",
-      "cpu_gpu_optimized": true
+      "display_mode": "ASCII terminal with real-time waveform, status indicators, scrolling output",
+      "themes": ["dark","light"],
+      "fonts": ["monospace"],
+      "visual_elements": ["status_bar","waveform_visualization","prompt_text","scrollable output","error messages","mini-progress bars","interactive hints"]
     }
   },
   "architecture": {
     "layers": [
-      "Input Layer: microphone with push-to-talk, wake word detection, keyboard input",
-      "Processing Layer: lightweight NLP engine, command parser, screen OCR, screen control executor, conversation memory manager, natural dialogue engine",
-      "Output Layer: text-to-speech, terminal text output, screen action executor"
+      "Input Layer: microphone (push-to-talk), wake word detection, keyboard input, text input fallback",
+      "Processing Layer: HuggingFace NLP API, lightweight offline NLP engine, command parser, screen OCR, screen control executor, conversation memory manager, natural dialogue engine, error handling",
+      "Output Layer: HuggingFace TTS API, offline TTS fallback, terminal text output, screen action executor, visual feedback"
     ],
     "modules": [
       "WakeWordDetectionModule",
-      "SpeechToTextModule",
-      "UltraLightNLPModule",
-      "TextToSpeechModule",
+      "HuggingFaceSTTModule",
+      "OfflineSTTModule",
+      "HuggingFaceNLPModule",
+      "OfflineNLPModule",
+      "HuggingFaceTTSModule",
+      "OfflineTTSModule",
       "ScreenReaderModule",
       "ScreenControlModule",
       "ConversationMemoryModule",
@@ -34,268 +51,59 @@
       "SecurityAndPrivacyModule",
       "PerformanceOptimizerModule",
       "OfflineOnlineSwitchModule",
-      "NaturalDialogueEngine"
+      "NaturalDialogueEngine",
+      "ErrorHandlingModule",
+      "HelpMenuModule",
+      "ThemeManagerModule",
+      "CommandParserModule",
+      "FeedbackVisualizerModule"
     ]
   },
   "offline_mode": {
-    "purpose": "Fully functional AI conversation, screen reading, screen control, and natural spoken dialogue without internet",
-    "storage_budget": "<100MB including models",
-    "cpu_gpu_optimization": {
-      "STT": "Vosk ultra-light (~20MB), CPU-only, streaming recognition",
-      "NLP": "MicroGPT/TinyGPT (~50MB), lightweight transformer, CPU-optimized, natural dialogue support",
-      "TTS": "espeak-ng (~5MB), CPU-only, real-time speech",
-      "OCR": "Tesseract minimal (~20MB), CPU-only",
-      "lazy_loading": true,
-      "low_thread_usage": true,
-      "idle_sleep": true
-    },
-    "speech_to_text": {
-      "engine": "Vosk ultra-light",
-      "features": [
-        "streaming recognition",
-        "push-to-talk support",
-        "partial transcription for long utterances",
-        "multi-turn offline conversation support",
-        "low CPU usage"
-      ]
-    },
-    "nlp_brain": {
-      "engine": "MicroGPT/TinyGPT",
-      "features": [
-        "context-aware responses",
-        "last 3 interactions stored in RAM",
-        "definitions, arithmetic, summarization, casual conversation",
-        "lightweight reasoning",
-        "supports natural spoken responses"
-      ]
-    },
-    "text_to_speech": {
-      "engine": "espeak-ng",
-      "features": [
-        "offline real-time speech synthesis",
-        "male/female/neutral voices",
-        "adjustable pitch and speed",
-        "CPU-efficient",
-        "ASCII waveform visualization optional",
-        "natural conversational replies"
-      ]
-    },
-    "conversation_flow": {
-      "wake_word": "Auralis",
-      "push_to_talk": true,
-      "continuous_listening": false,
-      "context_memory": "last 3 interactions",
-      "interruption_support": true,
-      "natural_conversation": true,
-      "voice_response_enabled": true
-    }
+    "description": "Casual conversation, screen reading, and control without internet",
+    "STT_engine": {"type":"Vosk tiny","size":"~20MB","cpu_only":true,"push_to_talk":true,"wake_word_support":true,"latency_ms":"<100"},
+    "NLP_engine": {"type":"TinyGPT","size":"~50MB","CPU_only":true,"context_window":3,"conversational_replies":true,"fallback_strategy":"simplified responses if context exceeds memory"},
+    "TTS_engine": {"type":"espeak-ng","size":"~5MB","CPU_only":true,"voices":["male","female","neutral"],"speed_range":"0.9x-1.2x","pitch_range":"-3 to +3","volume_range":"0-100%","preset_profiles":["formal","casual","energetic"]},
+    "OCR_engine": {"type":"Tesseract minimal","size":"~20MB","capabilities":["read text","summarize","highlight keywords","convert to speech","recognize tables","search text","capture region"]},
+    "conversation_flow": {"wake_word":"Auralis","push_to_talk":true,"continuous_listening":false,"interruption_support":true,"voice_response_enabled":true},
+    "performance":{"lazy_loading":true,"low_thread_usage":true,"idle_sleep":true,"RAM_max":"2GB","CPU_max":"15%","GPU_usage":"optional <5%"}
   },
   "online_mode": {
-    "purpose": "Optional advanced reasoning, translation, creative output, long-term memory, enhanced natural conversation",
-    "constraints": "activated only when internet is available",
-    "cpu_gpu_optimization": {
-      "low_bandwidth_mode": true,
-      "fallback_to_offline": true,
-      "async_processing": true
-    },
-    "speech_to_text": {
-      "engine": "Hugging Face Whisper API",
-      "features": ["high accuracy", "multi-language support", "streaming transcription"]
-    },
-    "nlp_brain": {
-      "engine": "Hugging Face DialoGPT",
-      "features": [
-        "long-term context",
-        "complex reasoning",
-        "translation",
-        "creative output",
-        "multi-turn dialogue",
-        "context-aware task execution",
-        "natural spoken responses"
-      ]
-    },
-    "text_to_speech": {
-      "engine": "Hugging Face TTS",
-      "features": ["human-like voice", "emotional intonation", "low-latency streaming"]
-    },
-    "fallback_logic": "auto-switch to offline mode if internet is unavailable"
+    "description": "Enhanced reasoning, multi-turn dialogue, creative output using HuggingFace APIs",
+    "STT":"Whisper",
+    "NLP":"GPT-based conversational model",
+    "TTS":"HiFi-GAN/WaveNet vocoder",
+    "fallback":"auto-switch to offline if API fails",
+    "conversation_features":["multi-turn dialogue","translation","creative content generation","long-term memory","context-aware responses"],
+    "performance":{"async_API_requests":true,"low_bandwidth_mode":true,"idle_sleep_between_requests":true}
   },
   "voice_interface": {
-    "push_to_talk": {
-      "hotkey": "t"
-    },
-    "conversation_flow": {
-      "interruption_support": true,
-      "context_window": "last 3 interactions",
-      "voice_feedback": true,
-      "terminal_visual_feedback": "ASCII waveform real-time activity",
-      "natural_conversational_replies": true
-    },
-    "voice_customization": {
-      "available_voices": ["male_default","female_default","neutral"],
-      "speed_range": "0.9x-1.2x",
-      "pitch_range": "-3 to +3 semitones",
-      "volume_control": "0-100%",
-      "preset_profiles": ["formal", "casual", "energetic"]
-    }
+    "wake_word":{"engine":"Porcupine ultra-light","phrase":"Auralis","sensitivity":"medium","always_on":false,"hotkey":"configurable","latency_ms":"<100","feedback_icon":"mic ON/OFF ASCII icon"},
+    "conversation_flow":{"interruption_support":true,"context_window":3,"voice_feedback":true,"terminal_visual_feedback":"ASCII waveform","natural_conversational_replies":true,"fallback_to_text":"if TTS fails"},
+    "voice_customization":{"voices":["male_default","female_default","neutral"],"speed_range":"0.9x-1.2x","pitch_range":"-3 to +3","volume_range":"0-100%","preset_profiles":["formal","casual","energetic"]}
   },
   "screen_interaction": {
-    "screen_reading": {
-      "engine": "Tesseract OCR minimal (~20MB)",
-      "capabilities": [
-        "read text from terminal and GUI apps",
-        "summarize content",
-        "highlight keywords",
-        "convert screen text to speech",
-        "recognize tables, prompts, logs",
-        "search for specific text"
-      ],
-      "performance": {
-        "capture_area": "user-selected",
-        "refresh_rate": "manual",
-        "accuracy": "80-95%",
-        "cpu_optimized": true
-      },
-      "commands": [
-        "Read screen section",
-        "Summarize content",
-        "Extract highlighted text",
-        "Convert screen text to audio",
-        "Search screen for keywords"
-      ]
-    },
-    "screen_control": {
-      "engine": "PyAutoGUI lightweight (~5MB)",
-      "capabilities": [
-        "mouse movement, clicks, drag-and-drop",
-        "keyboard typing and hotkeys",
-        "basic window management",
-        "automation scripts",
-        "interactive confirmation before destructive actions",
-        "coordinate/UI element commands"
-      ],
-      "example_commands": [
-        "Type 'Hello' in terminal",
-        "Close window",
-        "Scroll down",
-        "Open application",
-        "Click button at coordinates",
-        "Run terminal script"
-      ]
-    }
+    "screen_reading":{"engine":"Tesseract OCR","capabilities":["read text","summarize","highlight keywords","convert to speech","recognize tables","search text","capture region"],"commands":["Read screen section","Summarize content","Extract highlighted text","Convert screen text to audio","Search screen for keywords"]},
+    "screen_control":{"engine":"PyAutoGUI","capabilities":["mouse movement","clicks","drag-drop","keyboard typing","window management","automation scripts","confirmation prompts","coordinate/UI element interaction"]}
   },
   "terminal_ui_ux": {
-    "style": "Minimal ASCII terminal interface",
-    "features": [
-      "interactive command prompt",
-      "waveform visualization for voice input",
-      "toggleable chat history",
-      "dark/light ASCII themes",
-      "inline command suggestions",
-      "error handling and fallback suggestions",
-      "contextual hints",
-      "real-time activity indicator",
-      "CPU-efficient rendering",
-      "supports natural voice conversation"
-    ]
+    "boot_sequence":{"ASCII_animation_frames":["[*        ] Initializing core...","[**       ] Loading offline models...","[***      ] Activating voice interface...","[****     ] Preparing screen modules...","[*****    ] Optimizing CPU/GPU footprint...","[******   ] Calibrating microphone...","[*******  ] Warming up NLP interpreter...","[******** ] Ready..."],"status_bar_elements":["mic_status","mode_indicator","cpu_usage","network_status"],"final_prompt":"Auralis ready. Press [SPACE] to talk or type a command."},
+    "idle_screen":{"visual_style":"minimal terminal","hint_text":"Hold [SPACE] to talk or type 'help'","background_mode":"dark default, toggleable","micro_animation":"pulse around hint every 2s"},
+    "push_to_talk_flow":{"key":"SPACE","ui_feedback":["mic ON icon","ASCII waveform","status 'LISTENING...'"],"transcribing_state":{"indicator":"Processing...","thinking_animation":"dots cycling"},"interrupt_logic":"SPACE or 'Stop' halts TTS/STT"},
+    "text_input_flow":{"auto_suggest":true,"submit_key":"ENTER","post_submit_animation":"thinking dots"},
+    "voice_response_ui":{"pre_speech":"display 'Speaking...' with audio icon","text_display_modes":["live transcription","post-speech display"]},
+    "screen_reading_ui":{"activation":"voice or text","scanning_animation":"ASCII scan-line","post_read_options":["Repeat","Summarize","Save text","Speak again"]},
+    "screen_control_ui":{"confirmation_prompt":"Execute action? (Y/N)","timeout_s":4,"execution_feedback":"Action done."},
+    "error_handling":{"misheard_voice":"Did you mean: [X]?","unknown_command":"Unknown command. Say 'help'.","OCR_failure":"Screen unreadable. Try again.","action_denied":"Mouse control disabled."},
+    "help_panel":{"categories":["Voice Commands","Screen Reading","Screen Control","Text Queries","Settings","Plugins"],"navigation":"arrow keys, numbers, voice selection","examples":"inline one-line"},
+    "settings_panel":{"categories":["Voice Input","Wake Word","Theme","Online/Offline Mode","Memory Settings","Permissions"],"interaction":"ENTER to toggle, left/right to adjust sliders, 'q' to exit"},
+    "theme":{"dark_mode":{"background":"#000","text_color":"#CCC","highlight":"#FFF"},"light_mode":{"background":"#FFF","text_color":"#333","highlight":"#000"},"toggle_command":"theme toggle or voice 'toggle theme'"},
+    "output_minimization":{"pagination":"SPACE to scroll","summary_prompt":"Show summary if >10 lines","clear_screen":"clear or cls"}
   },
-  "conversation_memory": {
-    "short_term": {"location": "RAM", "max_turns": 3},
-    "long_term": {
-      "optional": "encrypted SQLite database if enabled",
-      "purpose": "persistent notes, command history, user preferences"
-    }
-  },
-  "logging_and_storage": {
-    "conversation_logs": {
-      "format": "JSON",
-      "compression": "gzip",
-      "rotation_policy": "max 1MB or 7 days",
-      "storage_location": "user home directory",
-      "privacy": "user can clear anytime",
-      "cpu_optimized": true
-    },
-    "model_storage": {
-      "offline_model": "~50MB MicroGPT",
-      "STT_model": "~20MB Vosk tiny",
-      "TTS_model": "~5MB espeak-ng",
-      "OCR_model": "~20MB Tesseract minimal"
-    },
-    "optimization": {
-      "minimal_disk_usage": true,
-      "delete_temp_files": true,
-      "cache_last_outputs_only": true,
-      "lazy_load_modules": true,
-      "CPU/GPU_low_intensity": true
-    }
-  },
-  "security_privacy": {
-    "permissions": ["microphone", "keyboard/mouse control optional"],
-    "offline_privacy": "100% local processing",
-    "online_security": ["HTTPS API calls only", "optional API key encryption"],
-    "user_control": [
-      "pause assistant",
-      "clear logs",
-      "toggle offline/online",
-      "custom wake word",
-      "disable microphone or screen control at any time"
-    ]
-  },
-  "extensibility": {
-    "plugin_system": {
-      "concept": "user-defined scripts for new commands",
-      "examples": ["calculator", "weather", "music control", "automation scripts"],
-      "API": "Python scripts <1MB each, dynamically loadable, access to screen/text/terminal"
-    }
-  },
-  "performance_requirements": {
-    "minimum": {"RAM":"2GB","CPU":"dual-core 1.5GHz","GPU":"optional"},
-    "optimization_strategies": [
-      "lazy-load modules",
-      "sleep when idle",
-      "sub-100ms wake word response",
-      "compress logs",
-      "memory-efficient conversation caching",
-      "CPU/GPU-efficient inference",
-      "offline-prioritized execution",
-      "low-latency natural voice responses"
-    ]
-  },
-  "example_commands": {
-    "voice": [
-      "Auralis, what time is it?",
-      "Auralis, type 'Hello' in terminal",
-      "Auralis, read this section",
-      "Auralis, summarize output",
-      "Auralis, close this window",
-      "Auralis, search screen for 'error'",
-      "Auralis, open browser and go to 'example.com'",
-      "Auralis, tell me a joke",
-      "Auralis, explain this output to me"
-    ],
-    "chat": [
-      "Explain basic math",
-      "Tell a joke",
-      "Translate 'Hola' to English",
-      "Summarize last terminal output",
-      "Open browser",
-      "Define 'quantum computing'",
-      "Provide a summary of this document"
-    ]
-  },
-  "constraints": {
-    "budget": "$0",
-    "storage_limit": "<100MB including models",
-    "offline_priority": "fully functional offline",
-    "terminal_launch": true,
-    "executable_name": "auralis",
-    "user_control": "full permissions",
-    "cross_platform": true,
-    "CPU_GPU_low_usage": true,
-    "natural_voice_conversation": true,
-    "push_to_talk_supported": true,
-    "screen_reading_control": true,
-    "logs_minimized": true,
-    "voice_response_real_time": true
-  }
+  "conversation_memory":{"short_term":{"location":"RAM","max_turns":3},"long_term":{"optional":"encrypted SQLite","purpose":"persistent notes, history, preferences"}},
+  "logging_storage":{"conversation_logs":{"format":"JSON","compression":"gzip","rotation_policy":"1MB or 7 days","privacy":"user can clear anytime"},"model_storage":{"STT":"~20MB","NLP":"~50MB","TTS":"~5MB","OCR":"~20MB"},"optimization":{"lazy_load_modules":true,"CPU/GPU_low_intensity":true,"delete_temp_files":true}},
+  "security_privacy":{"permissions":["microphone","keyboard/mouse optional"],"offline_privacy":"100% local processing","online_security":["HTTPS API calls","optional API key encryption"],"user_control":["pause","clear logs","toggle offline/online","custom wake word","disable microphone/screen control"]},
+  "extensibility":{"plugin_system":{"user_scripts":"Python <1MB dynamically loadable","examples":["calculator","weather","automation"]}},
+  "performance_requirements":{"minimum":{"RAM":"2GB","CPU":"dual-core 1.5GHz","GPU":"optional"},"optimization_strategies":["lazy-load","idle sleep","sub-100ms wake word response","compress logs","memory-efficient caching","CPU/GPU-efficient inference","offline-prioritized execution"]},
+  "example_commands":{"voice":["Auralis, what time is it?","Auralis, read screen","Auralis, summarize output","Auralis, close window","Auralis, search screen for 'error'","Auralis, open browser and go to 'example.com'","Auralis, tell me a joke","Auralis, explain this output"],"chat":["Explain basic math","Tell a joke","Translate 'Hola' to English","Summarize last terminal output","Open browser","Define 'quantum computing'","Provide a summary of this document"]}
 }

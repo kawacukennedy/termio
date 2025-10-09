@@ -4,33 +4,15 @@ import requests
 import io
 import wave
 
-class SpeechToTextModule:
-    def __init__(self, model_path='model', switch_module=None):
+class HuggingFaceSTTModule:
+    def __init__(self, switch_module=None):
         self.switch = switch_module
-        self.offline_rec = None
-        self.online_api_key = os.getenv('OPENAI_API_KEY')
-        if not self.switch or self.switch.get_mode() == 'offline':
-            from vosk import Model, KaldiRecognizer
-            self.model = Model(model_path)
-            self.offline_rec = KaldiRecognizer(self.model, 16000)
-        else:
-            self.model = None
 
     def transcribe(self, data):
-        if self.switch and self.switch.get_mode() == 'online' and self.online_api_key:
+        if self.switch and self.switch.get_mode() == 'online':
             return self._transcribe_online(data)
         else:
             return self._transcribe_offline(data)
-
-    def _transcribe_offline(self, data):
-        if not self.offline_rec:
-            from vosk import Model, KaldiRecognizer
-            self.model = Model('model')
-            self.offline_rec = KaldiRecognizer(self.model, 16000)
-        if self.offline_rec.AcceptWaveform(data):
-            result = json.loads(self.offline_rec.Result())
-            return result.get('text', '')
-        return None
 
     def _transcribe_online(self, data):
         # Use Hugging Face Whisper via Inference API
@@ -59,3 +41,28 @@ class SpeechToTextModule:
             return "Hugging Face API key not set for STT"
         # Fallback to offline
         return self._transcribe_offline(data)
+
+    def _transcribe_offline(self, data):
+        # Use Vosk for offline
+        from vosk import Model, KaldiRecognizer
+        model = Model('vosk-model-small-en-us-0.15')
+        rec = KaldiRecognizer(model, 16000)
+        if rec.AcceptWaveform(data):
+            result = json.loads(rec.Result())
+            return result.get('text', '')
+        return None
+
+
+class OfflineSTTModule:
+    def __init__(self):
+        pass
+
+    def transcribe(self, data):
+        # Use Vosk for offline
+        from vosk import Model, KaldiRecognizer
+        model = Model('vosk-model-small-en-us-0.15')  # Adjust path
+        rec = KaldiRecognizer(model, 16000)
+        if rec.AcceptWaveform(data):
+            result = json.loads(rec.Result())
+            return result.get('text', '')
+        return None

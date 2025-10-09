@@ -3,13 +3,17 @@ from PIL import Image
 import mss
 import re
 import shutil
+import os
 
 class ScreenReaderModule:
     def __init__(self, tts_module=None):
         # Check if tesseract is available
-        if shutil.which('tesseract'):
-            pytesseract.pytesseract.tesseract_cmd = shutil.which('tesseract')
-            self.available = True
+        possible_paths = ['/usr/local/bin/tesseract', '/opt/homebrew/bin/tesseract', shutil.which('tesseract')]
+        for path in possible_paths:
+            if path and os.path.exists(path):
+                pytesseract.pytesseract.tesseract_cmd = path
+                self.available = True
+                break
         else:
             self.available = False
         self.tts = tts_module
