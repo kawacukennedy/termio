@@ -14,7 +14,8 @@ Auralis is a terminal-based AI assistant providing full offline-first natural vo
 
 ## Usage
 
-python main.py
+python main.py text  # for text conversation
+python main.py voice  # for voice conversation
 
 - Type commands in the terminal interface.
 - Use configurable hotkey (default F12) for voice input.

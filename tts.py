@@ -8,15 +8,15 @@ import platform
 class TextToSpeechModule:
     def __init__(self, online_mode=False):
         self.online_mode = online_mode
+        # Set defaults for offline TTS
+        self.voice = 'en'  # Default voice
+        self.speed = 180  # Words per minute
+        self.pitch = 50   # 0-99
+        self.volume = 100  # 0-100
         if self.online_mode:
             self.elevenlabs_key = os.getenv('ELEVENLABS_API_KEY')
             self.voice_id = '21m00Tcm4TlvDq8ikWAM'  # Default voice ID
             self.google_tts_available = True  # gTTS doesn't need key
-        else:
-            self.voice = 'en'  # Default voice
-            self.speed = 180  # Words per minute
-            self.pitch = 50   # 0-99
-            self.volume = 100  # 0-100
         self.waveform_enabled = True
 
     def _play_audio(self, file_path):

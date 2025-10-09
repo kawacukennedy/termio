@@ -46,7 +46,7 @@ logger = LoggingAndStorage()
 settings = Settings()
 plugins = PluginModule()
 plugins.load_plugins()
-tts = TextToSpeechModule()
+tts = TextToSpeechModule(online_mode=True)
 screen_reader = ScreenReaderModule(tts_module=tts)
 screen_control = ScreenControlModule()
 switch = OfflineOnlineSwitchModule()
@@ -238,7 +238,20 @@ def process_voice(text):
         print(f"Voice input: {text}")
         print(f"Response: {response}")
 
-# Wake word removed, only push-to-talk
+def wake_thread():
+    if not HAS_SOUNDDEVICE or not stt:
+        return
+    import queue
+    q = queue.Queue()
+    def audio_callback(indata, frames, time, status):
+        q.put(indata.copy())
+    with sd.InputStream(callback=audio_callback, channels=1, samplerate=16000, blocksize=8000):
+        while True:
+            data = q.get()
+            pcm = data.flatten().astype('int16').tobytes()
+            text = stt.transcribe(pcm)
+            if text and 'auralis' in text.lower():
+                listen_thread()
 
 def listen_thread():
     if not HAS_SOUNDDEVICE or not stt:
@@ -352,8 +365,39 @@ def main_curses(stdscr):
         tts.speak(response)
         optimizer.optimize()  # Sleep if idle
 
+def simple_cli_text():
+    print("Auralis - Text Conversation Mode")
+    while True:
+        user_input = input("> ")
+        if user_input.lower() == 'quit':
+            break
+        response = process_input(user_input)
+        print(f"AI: {response}")
+
+def simple_cli_voice():
+    print("Auralis - Voice Conversation Mode")
+    print("Hello Sir!")
+    tts.speak("Hello Sir!")
+    if not HAS_SOUNDDEVICE:
+        print("Voice not available.")
+        return
+    threading.Thread(target=wake_thread, daemon=True).start()
+    print("Say 'Auralis' to start a conversation.")
+    while True:
+        # Keep running
+        pass
+
 def simple_cli():
     print("Auralis - Simple CLI Mode (Curses not available)")
+    print("Choose mode: 1 for Text-only, 2 for Voice-enabled")
+    choice = input("Enter 1 or 2: ").strip()
+    voice_enabled = choice == '2'
+    if voice_enabled and not HAS_SOUNDDEVICE:
+        print("Voice not available, falling back to text-only.")
+        voice_enabled = False
+    if voice_enabled:
+        threading.Thread(target=wake_thread, daemon=True).start()
+        print("Voice mode enabled. Say 'Auralis' to wake, then speak.")
     while True:
         user_input = input("> ")
         if user_input.lower() == 'quit':
@@ -362,12 +406,21 @@ def simple_cli():
         print(f"AI: {response}")
 
 def main():
-    if HAS_SOUNDDEVICE:
-        push_to_talk(hotkey)
     try:
         curses.wrapper(main_curses)
     except:
         simple_cli()
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) > 1:
+        mode = sys.argv[1].lower()
+        if mode == 'text':
+            simple_cli_text()
+        elif mode == 'voice':
+            simple_cli_voice()
+        else:
+            print("Usage: python main.py [text|voice]")
+            main()
+    else:
+        main()

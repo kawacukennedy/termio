@@ -3,6 +3,7 @@ pyttsx3
 pytesseract
 pyautogui
 transformers
+torch
 sounddevice
 numpy
 pillow

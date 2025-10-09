@@ -122,7 +122,7 @@
   },
   "voice_interface": {
     "push_to_talk": {
-      "hotkey": "f12"
+      "hotkey": "t"
     },
     "conversation_flow": {
       "interruption_support": true,

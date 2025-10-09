@@ -22,7 +22,12 @@ class UltraLightNLPModule:
 
     def generate_response(self, prompt, max_length=100):
         if not HAS_TRANSFORMERS:
-            return "NLP not available. Echo: " + prompt.split('\n')[-1]
+            # Extract user input from prompt
+            lines = prompt.strip().split('\n')
+            for line in reversed(lines):
+                if line.startswith("User: "):
+                    return "NLP not available. Echo: " + line[6:]
+            return "NLP not available. Echo: " + prompt
         inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
         with torch.no_grad():
             outputs = self.model.generate(

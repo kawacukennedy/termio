@@ -34,21 +34,8 @@ class NaturalDialogueEngine:
                 except Exception as e:
                     return "HF error: " + str(e)
             else:
-                return "Hugging Face API key not set"
-            # Try GPT-4 if available
-            try:
-                import openai
-                openai.api_key = os.getenv('OPENAI_API_KEY')
-                client = openai.OpenAI()
-                completion = client.chat.completions.create(
-                    model="gpt-4",
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=100,
-                    temperature=0.7
-                )
-                return completion.choices[0].message.content.strip()
-            except Exception as e:
-                return "GPT-4 error: " + str(e)
+                # Fallback to offline if no key
+                return self.nlp.generate_response(prompt)
 
     def supports_natural_speech(self):
         return True

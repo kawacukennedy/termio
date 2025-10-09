@@ -29,7 +29,7 @@ class OfflineOnlineSwitchModule:
 
     def _has_internet(self):
         try:
-            requests.get('https://www.google.com', timeout=1)
+            requests.get('https://huggingface.co', timeout=5)
             return True
         except:
             return False
