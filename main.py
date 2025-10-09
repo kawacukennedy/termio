@@ -42,14 +42,16 @@ try:
 except ImportError:
     nlp = None
 tts = TextToSpeechModule()
-screen_reader = ScreenReaderModule()
+screen_reader = ScreenReaderModule(tts_module=tts)
 screen_control = ScreenControlModule()
 switch = OfflineOnlineSwitchModule()
 
 # Voice components
 access_key = os.getenv('PICOVOICE_ACCESS_KEY')
+hotkey = settings.get('voice_interface.wake_word.push_to_talk_hotkey', 'f12')
+sensitivity = settings.get('voice_interface.wake_word.sensitivity', 0.5)
 if access_key:
-    wake_word = WakeWordDetectionModule(access_key)
+    wake_word = WakeWordDetectionModule(access_key, keyword='auralis', sensitivity=sensitivity)
     stt = SpeechToTextModule()
     audio = pyaudio.PyAudio()
     stream = audio.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=512)
@@ -99,6 +101,18 @@ def process_input(user_input):
         text = screen_reader.read_screen_area()
         found = screen_reader.search_for_keyword(text, keyword)
         response = f"Keyword '{keyword}' found" if found else f"Keyword '{keyword}' not found"
+    elif "convert screen to speech" in user_input.lower():
+        text = screen_reader.read_screen_area()
+        response = screen_reader.convert_to_speech(text)
+    elif user_input.lower().startswith("highlight keywords "):
+        keywords_str = user_input[18:]
+        keywords = keywords_str.split()
+        text = screen_reader.read_screen_area()
+        highlighted = screen_reader.highlight_keywords(text, keywords)
+        response = highlighted[:500] + "..." if len(highlighted) > 500 else highlighted
+    elif "recognize tables" in user_input.lower():
+        text = screen_reader.read_screen_area()
+        response = screen_reader.recognize_tables(text)
     elif "clear logs" in user_input.lower():
         logger.clear_logs()
         response = "Logs cleared"
@@ -125,8 +139,13 @@ def process_input(user_input):
         tts.set_profile(profile)
         response = f"Profile set to {profile}"
     elif "close window" in user_input.lower():
-        screen_control.close_window()
-        response = "Window closed"
+        # Interactive confirmation
+        confirm = input("Are you sure you want to close the current window? (y/n): ").lower().strip()
+        if confirm == 'y':
+            screen_control.close_window()
+            response = "Window closed"
+        else:
+            response = "Action cancelled"
     elif "scroll up" in user_input.lower():
         screen_control.scroll('up')
         response = "Scrolled up"
@@ -242,10 +261,11 @@ def listen_thread():
             process_voice(text)
             break
 
-def push_to_talk():
+def push_to_talk(hotkey='f12'):
     from pynput import keyboard
+    key_obj = getattr(keyboard.Key, hotkey.lower(), keyboard.Key.f12)
     def on_press(key):
-        if key == keyboard.Key.f12:
+        if key == key_obj:
             listen_thread()
     listener = keyboard.Listener(on_press=on_press)
     listener.start()
@@ -254,7 +274,9 @@ def main_curses(stdscr):
     curses.curs_set(1)
     stdscr.clear()
     stdscr.addstr(0, 0, "Auralis - Terminal AI Assistant")
-    stdscr.addstr(1, 0, "Type commands or use F12 for push-to-talk. Type 'quit' to exit.")
+    stdscr.addstr(1, 0, f"Type commands or use {hotkey.upper()} for push-to-talk. Type 'quit' to exit.")
+    history = []
+    show_history = True
     y = 3
     while True:
         stdscr.addstr(y, 0, "> ")
@@ -263,20 +285,32 @@ def main_curses(stdscr):
         curses.noecho()
         if user_input.lower() == 'quit':
             break
-        response = process_input(user_input)
+        elif user_input.lower() == 'toggle history':
+            show_history = not show_history
+            response = f"History display {'enabled' if show_history else 'disabled'}"
+        else:
+            response = process_input(user_input)
         y += 1
         stdscr.addstr(y, 0, f"AI: {response}")
+        history.append(f"User: {user_input}")
+        history.append(f"AI: {response}")
+        if len(history) > 10:  # Keep last 5 exchanges
+            history = history[-10:]
         y += 1
+        if show_history and y < curses.LINES - 5:
+            for i, line in enumerate(history[-4:]):  # Show last 4 lines
+                stdscr.addstr(y + i, 0, line)
+            y += 4
         if y > curses.LINES - 2:
             y = 3
             stdscr.clear()
             stdscr.addstr(0, 0, "Auralis - Terminal AI Assistant")
-            stdscr.addstr(1, 0, "Type commands or use F12 for push-to-talk. Type 'quit' to exit.")
+            stdscr.addstr(1, 0, f"Type commands or use {hotkey.upper()} for push-to-talk. Type 'quit' to exit.")
         stdscr.refresh()
         tts.speak(response)
 
 if __name__ == "__main__":
     if wake_word:
         threading.Thread(target=wake_thread, daemon=True).start()
-    push_to_talk()
+    push_to_talk(hotkey)
     curses.wrapper(main_curses)

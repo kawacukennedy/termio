@@ -1,49 +1,34 @@
-import pyttsx3
+import subprocess
 import time
 import sys
 
 class TextToSpeechModule:
     def __init__(self):
-        self.engine = pyttsx3.init()
-        self.engine.setProperty('rate', 180)  # Default speed
-        self.engine.setProperty('volume', 0.9)  # Default volume
-        self.voices = self.engine.getProperty('voices')
-        self.current_voice = 0  # Index for voice
-        self.set_voice('male')  # Default
+        self.voice = 'en'  # Default voice
+        self.speed = 180  # Words per minute
+        self.pitch = 50   # 0-99
+        self.volume = 100  # 0-100
         self.waveform_enabled = True
 
     def set_voice(self, voice_type):
         if voice_type == 'male':
-            for i, voice in enumerate(self.voices):
-                if 'male' in voice.name.lower():
-                    self.engine.setProperty('voice', voice.id)
-                    self.current_voice = i
-                    break
+            self.voice = 'en+m3'  # Male voice
         elif voice_type == 'female':
-            for i, voice in enumerate(self.voices):
-                if 'female' in voice.name.lower():
-                    self.engine.setProperty('voice', voice.id)
-                    self.current_voice = i
-                    break
-        else:  # neutral or default
-            self.engine.setProperty('voice', self.voices[0].id)
-            self.current_voice = 0
+            self.voice = 'en+f2'  # Female voice
+        else:  # neutral
+            self.voice = 'en'
 
     def set_speed(self, speed):
-        # speed 0.9x to 1.2x
-        rate = int(180 * speed)
-        self.engine.setProperty('rate', rate)
+        # speed 0.9x to 1.2x, base 180
+        self.speed = int(180 * speed)
 
     def set_pitch(self, pitch_offset):
-        # pitch -3 to +3 semitones, but pyttsx3 doesn't directly support pitch, approximate with rate
-        # For simplicity, adjust rate slightly
-        current_rate = self.engine.getProperty('rate')
-        new_rate = current_rate + (pitch_offset * 10)
-        self.engine.setProperty('rate', max(100, min(300, new_rate)))
+        # pitch_offset -3 to +3, base 50
+        self.pitch = max(0, min(99, 50 + pitch_offset * 10))
 
     def set_volume(self, volume):
         # 0-100%
-        self.engine.setProperty('volume', volume / 100.0)
+        self.volume = volume
 
     def set_profile(self, profile):
         if profile == 'formal':
@@ -59,8 +44,8 @@ class TextToSpeechModule:
     def speak(self, text):
         if self.waveform_enabled:
             self._display_waveform(text)
-        self.engine.say(text)
-        self.engine.runAndWait()
+        cmd = ['espeak-ng', '-v', self.voice, '-s', str(self.speed), '-p', str(self.pitch), '-a', str(self.volume), text]
+        subprocess.run(cmd, capture_output=True)
 
     def _display_waveform(self, text):
         # Simple ASCII waveform simulation
