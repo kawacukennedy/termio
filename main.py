@@ -270,6 +270,10 @@ def listen_thread():
     text = stt.transcribe(data)
     if text:
         process_voice(text)
+    else:
+        apology = "I'm sorry, I didn't catch that. Could you please repeat?"
+        print(f"No speech detected: {apology}")
+        tts.speak(apology)
 
 def push_to_talk(hotkey='f12'):
     if not HAS_SOUNDDEVICE:
