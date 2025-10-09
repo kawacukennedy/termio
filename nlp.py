@@ -1,18 +1,28 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
+try:
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+    import torch
+    HAS_TRANSFORMERS = True
+except ImportError:
+    HAS_TRANSFORMERS = False
 
 class UltraLightNLPModule:
-    def __init__(self, model_name="distilgpt2"):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.model = AutoModelForCausalLM.from_pretrained(model_name)
-        self.model.eval()
-        # Disable gradients for inference
-        for param in self.model.parameters():
-            param.requires_grad = False
+    def __init__(self, model_name="microsoft/DialoGPT-small"):
+        if HAS_TRANSFORMERS:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+            self.model = AutoModelForCausalLM.from_pretrained(model_name)
+            self.model.eval()
+            # Disable gradients for inference
+            for param in self.model.parameters():
+                param.requires_grad = False
+        else:
+            self.tokenizer = None
+            self.model = None
 
     def generate_response(self, prompt, max_length=100):
+        if not HAS_TRANSFORMERS:
+            return "NLP not available. Echo: " + prompt.split('\n')[-1]
         inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
         with torch.no_grad():
             outputs = self.model.generate(

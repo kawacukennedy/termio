@@ -1,8 +1,10 @@
 import pyautogui
+import platform
 
 class ScreenControlModule:
     def __init__(self):
         pyautogui.FAILSAFE = True
+        self.system = platform.system()
 
     def type_text(self, text):
         pyautogui.typewrite(text)
@@ -23,11 +25,19 @@ class ScreenControlModule:
         pyautogui.press(key)
 
     def close_window(self):
-        pyautogui.hotkey('alt', 'f4')  # Windows/Linux
+        if self.system == 'Darwin':  # macOS
+            pyautogui.hotkey('command', 'w')
+        else:  # Windows/Linux
+            pyautogui.hotkey('alt', 'f4')
 
     def open_application(self, app):
         import subprocess
-        subprocess.run([app])
+        if self.system == 'Windows':
+            subprocess.run(['start', app], shell=True)
+        elif self.system == 'Darwin':  # macOS
+            subprocess.run(['open', app])
+        else:  # Linux
+            subprocess.run([app])
 
     def run_script(self, command):
         import subprocess

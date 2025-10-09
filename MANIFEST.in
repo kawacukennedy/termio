@@ -1,0 +1,6 @@
+include config.json
+include requirements.txt
+include README.md
+recursive-include plugins *.py
+recursive-include model *
+recursive-include logs *

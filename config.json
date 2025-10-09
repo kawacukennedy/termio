@@ -99,11 +99,11 @@
       "async_processing": true
     },
     "speech_to_text": {
-      "engine": "OpenAI Whisper API / Google STT",
+      "engine": "Hugging Face Whisper API",
       "features": ["high accuracy", "multi-language support", "streaming transcription"]
     },
     "nlp_brain": {
-      "engine": "OpenAI GPT-3.5 / GPT-4",
+      "engine": "Hugging Face DialoGPT",
       "features": [
         "long-term context",
         "complex reasoning",
@@ -115,19 +115,14 @@
       ]
     },
     "text_to_speech": {
-      "engine": "Google TTS / ElevenLabs",
+      "engine": "Hugging Face TTS",
       "features": ["human-like voice", "emotional intonation", "low-latency streaming"]
     },
     "fallback_logic": "auto-switch to offline mode if internet is unavailable"
   },
   "voice_interface": {
-    "wake_word": {
-      "engine": "Porcupine ultra-light (~1MB)",
-      "phrase": "Auralis",
-      "sensitivity": "medium",
-      "always_on": false,
-      "push_to_talk_hotkey": "configurable",
-      "response_latency": "<100ms"
+    "push_to_talk": {
+      "hotkey": "f12"
     },
     "conversation_flow": {
       "interruption_support": true,

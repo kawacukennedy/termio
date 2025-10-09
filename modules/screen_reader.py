@@ -2,13 +2,21 @@ import pytesseract
 from PIL import Image
 import mss
 import re
+import shutil
 
 class ScreenReaderModule:
     def __init__(self, tts_module=None):
-        pytesseract.pytesseract.tesseract_cmd = '/usr/local/bin/tesseract'
+        # Check if tesseract is available
+        if shutil.which('tesseract'):
+            pytesseract.pytesseract.tesseract_cmd = shutil.which('tesseract')
+            self.available = True
+        else:
+            self.available = False
         self.tts = tts_module
 
     def read_screen_area(self, x=0, y=0, width=800, height=600):
+        if not self.available:
+            return "Tesseract not installed"
         with mss.mss() as sct:
             monitor = {"top": y, "left": x, "width": width, "height": height}
             img = sct.grab(monitor)
@@ -42,7 +50,12 @@ class ScreenReaderModule:
         return text
 
     def recognize_tables(self, text):
-        # Basic table recognition: lines with | or tabs
+        # Improved table recognition using regex for tabular data
+        import re
         lines = text.split('\n')
-        tables = [line for line in lines if '|' in line or '\t' in line]
-        return '\n'.join(tables) if tables else "No tables detected"
+        table_lines = []
+        for line in lines:
+            # Check for multiple separators or structured data
+            if re.search(r'(\|.*\|)|(\t.*\t)|( {2,}.* {2,})', line):
+                table_lines.append(line)
+        return '\n'.join(table_lines) if table_lines else "No tables detected"

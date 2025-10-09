@@ -1,8 +1,11 @@
 import json
 
+import os
+
 class Settings:
-    def __init__(self, config_file='../config.json'):
-        with open(config_file, 'r') as f:
+    def __init__(self, config_file='config.json'):
+        config_path = os.path.join(os.path.dirname(__file__), '..', config_file)
+        with open(config_path, 'r') as f:
             self.config = json.load(f)
 
     def get(self, key, default=None):

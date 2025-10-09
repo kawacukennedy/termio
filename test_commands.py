@@ -44,8 +44,9 @@ except:
 try:
     from screen_reader import ScreenReaderModule
     screen_reader = ScreenReaderModule()
-except:
+except Exception as e:
     screen_reader = None
+    print(f"Screen reader not available: {e}")
 
 try:
     from screen_control import ScreenControlModule
@@ -247,9 +248,6 @@ if __name__ == "__main__":
     test_commands = [
         "what time is it?",
         "type Hello World",
-        "read screen",
-        "summarize screen",
-        "search screen for error",
         "close window",
         "scroll down",
         "open calculator",
@@ -264,6 +262,11 @@ if __name__ == "__main__":
         "Tell a joke",
         "quit"
     ]
+    # Add screen commands only if available
+    if screen_reader:
+        test_commands.insert(2, "read screen")
+        test_commands.insert(3, "summarize screen")
+        test_commands.insert(4, "search screen for error")
 
     for cmd in test_commands:
         print(f"Input: {cmd}")

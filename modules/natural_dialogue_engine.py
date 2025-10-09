@@ -12,13 +12,13 @@ class NaturalDialogueEngine:
         if self.switch.get_mode() == 'offline':
             return self.nlp.generate_response(prompt)
         else:
-            # Try Hugging Face
+            # Use Hugging Face Inference API
             hf_key = os.getenv('HUGGINGFACE_API_KEY')
             if hf_key:
                 try:
                     headers = {"Authorization": f"Bearer {hf_key}"}
                     payload = {"inputs": prompt, "parameters": {"max_new_tokens": 100, "temperature": 0.7}}
-                    response_api = requests.post("https://api-inference.huggingface.co/models/distilgpt2", headers=headers, json=payload)
+                    response_api = requests.post("https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium", headers=headers, json=payload)
                     if response_api.status_code == 200:
                         result = response_api.json()
                         if isinstance(result, list) and result:
@@ -33,20 +33,22 @@ class NaturalDialogueEngine:
                         return f"HF API error: {response_api.status_code}"
                 except Exception as e:
                     return "HF error: " + str(e)
-            # Fallback to OpenAI
+            else:
+                return "Hugging Face API key not set"
+            # Try GPT-4 if available
             try:
                 import openai
                 openai.api_key = os.getenv('OPENAI_API_KEY')
                 client = openai.OpenAI()
                 completion = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4",
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=100,
                     temperature=0.7
                 )
                 return completion.choices[0].message.content.strip()
             except Exception as e:
-                return "Online error: " + str(e)
+                return "GPT-4 error: " + str(e)
 
     def supports_natural_speech(self):
         return True

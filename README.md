@@ -10,16 +10,14 @@ Auralis is a terminal-based AI assistant providing full offline-first natural vo
     - espeak-ng for TTS: `brew install espeak-ng` (macOS), `sudo apt install espeak-ng` (Linux)
 3. pip install -r requirements.txt
 4. Download Vosk STT model: `wget https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip && unzip vosk-model-small-en-us-0.15.zip && mv vosk-model-small-en-us-0.15 model`
-5. Get Picovoice access key from https://console.picovoice.ai/ and set env var: `export PICOVOICE_ACCESS_KEY=your_key`
-6. Optional: For online mode, `export OPENAI_API_KEY=your_openai_key`, `export HUGGINGFACE_API_KEY=your_hf_key` for free alternatives, or `export GOOGLE_API_KEY` for Google STT/TTS
+ 5. Optional: For online mode, get Hugging Face API token from https://huggingface.co/settings/tokens and set `export HUGGINGFACE_API_KEY=your_token`
 
 ## Usage
 
 python main.py
 
 - Type commands in the terminal interface.
-- Use configurable hotkey (default F12) for push-to-talk voice input.
-- Wake word "Auralis" activates voice listening (if access key set).
+- Use configurable hotkey (default F12) for voice input.
 - Type 'quit' to exit.
 
 ## Features
@@ -32,8 +30,7 @@ python main.py
 - Screen reading with Tesseract minimal (~20MB)
 - Screen control with PyAutoGUI lightweight (~5MB)
 - Conversation memory: last 3 interactions in RAM
-- Wake word detection with Porcupine ultra-light (~1MB)
-- Push-to-talk and continuous listening modes
+- Push-to-talk voice input
 - Natural spoken dialogue support
 
 ### Online Mode (Optional)
@@ -72,15 +69,15 @@ python main.py
 ## Example Commands
 
 ### Voice
-- "Auralis, what time is it?"
-- "Auralis, type 'Hello' in terminal"
-- "Auralis, read this section"
-- "Auralis, summarize output"
-- "Auralis, close this window"
-- "Auralis, search screen for 'error'"
-- "Auralis, open browser and go to 'example.com'"
-- "Auralis, tell me a joke"
-- "Auralis, explain this output to me"
+- Press F12, then say "what time is it?"
+- Press F12, then say "type 'Hello' in terminal"
+- Press F12, then say "read this section"
+- Press F12, then say "summarize output"
+- Press F12, then say "close this window"
+- Press F12, then say "search screen for 'error'"
+- Press F12, then say "open browser and go to 'example.com'"
+- Press F12, then say "tell me a joke"
+- Press F12, then say "explain this output to me"
 
 ### Text
 - "Explain basic math"
@@ -103,12 +100,8 @@ python main.py
 
 Edit `config.json` to customize settings like hotkeys, voices, sensitivities, etc.
 
-## Alternative APIs
+## Online APIs
 
-For online mode, free alternatives available:
+For online mode, use Hugging Face Inference API (free tier: ~30 requests/minute for NLP, STT, TTS).
 
-- **NLP**: Hugging Face Inference API (free tier: ~30 requests/minute)
-- **STT**: Google STT API or Hugging Face Whisper
-- **TTS**: ElevenLabs or Google TTS
-
-Set appropriate API keys. Note rate limits.
+Set `HUGGINGFACE_API_KEY`. Note rate limits.

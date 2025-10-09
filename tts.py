@@ -3,19 +3,32 @@ import time
 import sys
 import os
 import requests
+import platform
 
 class TextToSpeechModule:
     def __init__(self, online_mode=False):
         self.online_mode = online_mode
         if self.online_mode:
-            self.api_key = os.getenv('ELEVENLABS_API_KEY')
+            self.elevenlabs_key = os.getenv('ELEVENLABS_API_KEY')
             self.voice_id = '21m00Tcm4TlvDq8ikWAM'  # Default voice ID
+            self.google_tts_available = True  # gTTS doesn't need key
         else:
             self.voice = 'en'  # Default voice
             self.speed = 180  # Words per minute
             self.pitch = 50   # 0-99
             self.volume = 100  # 0-100
         self.waveform_enabled = True
+
+    def _play_audio(self, file_path):
+        system = platform.system()
+        if system == 'Darwin':  # macOS
+            subprocess.run(['afplay', file_path])
+        elif system == 'Linux':
+            subprocess.run(['aplay', file_path])  # or mpg123 for mp3
+        elif system == 'Windows':
+            subprocess.run(['start', file_path], shell=True)
+        else:
+            pass  # No play
 
     def set_voice(self, voice_type):
         if voice_type == 'male':
@@ -51,8 +64,8 @@ class TextToSpeechModule:
     def speak(self, text):
         if self.waveform_enabled:
             self._display_waveform(text)
-        if self.online_mode and self.api_key:
-            self._speak_online(text)
+        if self.online_mode:
+            self._speak_huggingface(text)
         else:
             self._speak_offline(text)
 
@@ -60,29 +73,23 @@ class TextToSpeechModule:
         cmd = ['espeak-ng', '-v', self.voice, '-s', str(self.speed), '-p', str(self.pitch), '-a', str(self.volume), text]
         subprocess.run(cmd, capture_output=True)
 
-    def _speak_online(self, text):
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{self.voice_id}"
-        headers = {
-            "Accept": "audio/mpeg",
-            "Content-Type": "application/json",
-            "xi-api-key": self.api_key
-        }
-        data = {
-            "text": text,
-            "model_id": "eleven_monolingual_v1",
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.5
-            }
-        }
-        response = requests.post(url, json=data, headers=headers)
-        if response.status_code == 200:
-            # Play the audio, but since no player, perhaps save and play
-            with open('/tmp/tts.mp3', 'wb') as f:
-                f.write(response.content)
-            subprocess.run(['afplay', '/tmp/tts.mp3'])  # macOS
+    def _speak_huggingface(self, text):
+        hf_key = os.getenv('HUGGINGFACE_API_KEY')
+        if hf_key:
+            try:
+                headers = {'Authorization': f'Bearer {hf_key}'}
+                payload = {"inputs": text}
+                response = requests.post('https://api-inference.huggingface.co/models/microsoft/speecht5_tts', headers=headers, json=payload)
+                if response.status_code == 200:
+                    # Assuming it returns audio bytes
+                    with open('/tmp/tts_hf.wav', 'wb') as f:
+                        f.write(response.content)
+                    self._play_audio('/tmp/tts_hf.wav')
+                else:
+                    self._speak_offline(text)
+            except Exception as e:
+                self._speak_offline(text)
         else:
-            # Fallback to offline
             self._speak_offline(text)
 
     def _display_waveform(self, text):
