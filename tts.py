@@ -1,13 +1,20 @@
 import subprocess
 import time
 import sys
+import os
+import requests
 
 class TextToSpeechModule:
-    def __init__(self):
-        self.voice = 'en'  # Default voice
-        self.speed = 180  # Words per minute
-        self.pitch = 50   # 0-99
-        self.volume = 100  # 0-100
+    def __init__(self, online_mode=False):
+        self.online_mode = online_mode
+        if self.online_mode:
+            self.api_key = os.getenv('ELEVENLABS_API_KEY')
+            self.voice_id = '21m00Tcm4TlvDq8ikWAM'  # Default voice ID
+        else:
+            self.voice = 'en'  # Default voice
+            self.speed = 180  # Words per minute
+            self.pitch = 50   # 0-99
+            self.volume = 100  # 0-100
         self.waveform_enabled = True
 
     def set_voice(self, voice_type):
@@ -44,8 +51,39 @@ class TextToSpeechModule:
     def speak(self, text):
         if self.waveform_enabled:
             self._display_waveform(text)
+        if self.online_mode and self.api_key:
+            self._speak_online(text)
+        else:
+            self._speak_offline(text)
+
+    def _speak_offline(self, text):
         cmd = ['espeak-ng', '-v', self.voice, '-s', str(self.speed), '-p', str(self.pitch), '-a', str(self.volume), text]
         subprocess.run(cmd, capture_output=True)
+
+    def _speak_online(self, text):
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{self.voice_id}"
+        headers = {
+            "Accept": "audio/mpeg",
+            "Content-Type": "application/json",
+            "xi-api-key": self.api_key
+        }
+        data = {
+            "text": text,
+            "model_id": "eleven_monolingual_v1",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.5
+            }
+        }
+        response = requests.post(url, json=data, headers=headers)
+        if response.status_code == 200:
+            # Play the audio, but since no player, perhaps save and play
+            with open('/tmp/tts.mp3', 'wb') as f:
+                f.write(response.content)
+            subprocess.run(['afplay', '/tmp/tts.mp3'])  # macOS
+        else:
+            # Fallback to offline
+            self._speak_offline(text)
 
     def _display_waveform(self, text):
         # Simple ASCII waveform simulation

@@ -22,7 +22,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'modules'))
 from memory import ConversationMemory
 from logging_storage import LoggingAndStorage
 from settings import Settings
-from nlp import UltraLightNLPModule
+from natural_dialogue_engine import NaturalDialogueEngine
 from tts import TextToSpeechModule
 from screen_reader import ScreenReaderModule
 from screen_control import ScreenControlModule
@@ -30,6 +30,8 @@ from wake_word import WakeWordDetectionModule
 from stt import SpeechToTextModule
 from plugins import PluginModule
 from offline_online_switch import OfflineOnlineSwitchModule
+from performance_optimizer import PerformanceOptimizerModule
+from security_privacy import SecurityAndPrivacyModule
 
 # Initialize core components
 memory = ConversationMemory(enable_long_term=True)
@@ -37,14 +39,13 @@ logger = LoggingAndStorage()
 settings = Settings()
 plugins = PluginModule()
 plugins.load_plugins()
-try:
-    nlp = UltraLightNLPModule()
-except ImportError:
-    nlp = None
 tts = TextToSpeechModule()
 screen_reader = ScreenReaderModule(tts_module=tts)
 screen_control = ScreenControlModule()
 switch = OfflineOnlineSwitchModule()
+natural_dialogue = NaturalDialogueEngine(switch)
+optimizer = PerformanceOptimizerModule()
+security = SecurityAndPrivacyModule()
 
 # Voice components
 access_key = os.getenv('PICOVOICE_ACCESS_KEY')
@@ -69,20 +70,29 @@ def process_input(user_input):
 
     # Command parsing
     if "read screen" in user_input.lower():
-        text = screen_reader.read_screen_area()
-        response = f"Screen text: {text[:500]}..."
+        if security.check_permission("screen_reading"):
+            text = screen_reader.read_screen_area()
+            response = f"Screen text: {text[:500]}..."
+        else:
+            response = "Screen reading permission denied"
     elif user_input.lower().startswith("type "):
-        text_to_type = user_input[5:]
-        screen_control.type_text(text_to_type)
-        response = f"Typed: {text_to_type}"
+        if security.check_permission("keyboard_mouse_control"):
+            text_to_type = user_input[5:]
+            screen_control.type_text(text_to_type)
+            response = f"Typed: {text_to_type}"
+        else:
+            response = "Keyboard control permission denied"
     elif "click at" in user_input.lower():
-        parts = user_input.split()
-        try:
-            x, y = int(parts[-2]), int(parts[-1])
-            screen_control.click_at(x, y)
-            response = f"Clicked at {x}, {y}"
-        except:
-            response = "Invalid coordinates"
+        if security.check_permission("keyboard_mouse_control"):
+            parts = user_input.split()
+            try:
+                x, y = int(parts[-2]), int(parts[-1])
+                screen_control.click_at(x, y)
+                response = f"Clicked at {x}, {y}"
+            except:
+                response = "Invalid coordinates"
+        else:
+            response = "Mouse control permission denied"
     elif "time" in user_input.lower():
         response = f"The time is {datetime.now().strftime('%H:%M:%S')}"
     elif user_input.lower().startswith('plugin '):
@@ -94,25 +104,40 @@ def process_input(user_input):
     elif "list plugins" in user_input.lower():
         response = "Available plugins: " + ', '.join(plugins.list_plugins())
     elif "summarize screen" in user_input.lower():
-        text = screen_reader.read_screen_area()
-        response = screen_reader.summarize_content(text)
+        if security.check_permission("screen_reading"):
+            text = screen_reader.read_screen_area()
+            response = screen_reader.summarize_content(text)
+        else:
+            response = "Screen reading permission denied"
     elif user_input.lower().startswith("search screen for "):
-        keyword = user_input[17:]
-        text = screen_reader.read_screen_area()
-        found = screen_reader.search_for_keyword(text, keyword)
-        response = f"Keyword '{keyword}' found" if found else f"Keyword '{keyword}' not found"
+        if security.check_permission("screen_reading"):
+            keyword = user_input[17:]
+            text = screen_reader.read_screen_area()
+            found = screen_reader.search_for_keyword(text, keyword)
+            response = f"Keyword '{keyword}' found" if found else f"Keyword '{keyword}' not found"
+        else:
+            response = "Screen reading permission denied"
     elif "convert screen to speech" in user_input.lower():
-        text = screen_reader.read_screen_area()
-        response = screen_reader.convert_to_speech(text)
+        if security.check_permission("screen_reading"):
+            text = screen_reader.read_screen_area()
+            response = screen_reader.convert_to_speech(text)
+        else:
+            response = "Screen reading permission denied"
     elif user_input.lower().startswith("highlight keywords "):
-        keywords_str = user_input[18:]
-        keywords = keywords_str.split()
-        text = screen_reader.read_screen_area()
-        highlighted = screen_reader.highlight_keywords(text, keywords)
-        response = highlighted[:500] + "..." if len(highlighted) > 500 else highlighted
+        if security.check_permission("screen_reading"):
+            keywords_str = user_input[18:]
+            keywords = keywords_str.split()
+            text = screen_reader.read_screen_area()
+            highlighted = screen_reader.highlight_keywords(text, keywords)
+            response = highlighted[:500] + "..." if len(highlighted) > 500 else highlighted
+        else:
+            response = "Screen reading permission denied"
     elif "recognize tables" in user_input.lower():
-        text = screen_reader.read_screen_area()
-        response = screen_reader.recognize_tables(text)
+        if security.check_permission("screen_reading"):
+            text = screen_reader.read_screen_area()
+            response = screen_reader.recognize_tables(text)
+        else:
+            response = "Screen reading permission denied"
     elif "clear logs" in user_input.lower():
         logger.clear_logs()
         response = "Logs cleared"
@@ -139,28 +164,35 @@ def process_input(user_input):
         tts.set_profile(profile)
         response = f"Profile set to {profile}"
     elif "close window" in user_input.lower():
-        # Interactive confirmation
-        confirm = input("Are you sure you want to close the current window? (y/n): ").lower().strip()
-        if confirm == 'y':
+        if security.check_permission("keyboard_mouse_control"):
             screen_control.close_window()
             response = "Window closed"
         else:
-            response = "Action cancelled"
+            response = "Keyboard/mouse control permission denied"
     elif "scroll up" in user_input.lower():
-        screen_control.scroll('up')
-        response = "Scrolled up"
+        if security.check_permission("keyboard_mouse_control"):
+            screen_control.scroll('up')
+            response = "Scrolled up"
+        else:
+            response = "Keyboard/mouse control permission denied"
     elif "scroll down" in user_input.lower():
-        screen_control.scroll('down')
-        response = "Scrolled down"
+        if security.check_permission("keyboard_mouse_control"):
+            screen_control.scroll('down')
+            response = "Scrolled down"
+        else:
+            response = "Keyboard/mouse control permission denied"
     elif user_input.lower().startswith("open "):
-        app = user_input[5:].strip()
-        # Simple, assume command
-        import subprocess
-        try:
-            subprocess.run([app])
-            response = f"Opened {app}"
-        except:
-            response = f"Failed to open {app}"
+        if security.check_permission("keyboard_mouse_control"):
+            app = user_input[5:].strip()
+            # Simple, assume command
+            import subprocess
+            try:
+                subprocess.run([app])
+                response = f"Opened {app}"
+            except:
+                response = f"Failed to open {app}"
+        else:
+            response = "Keyboard/mouse control permission denied"
     elif "toggle offline" in user_input.lower():
         if switch.get_mode() == 'offline':
             switch.switch_to_online()
@@ -170,6 +202,8 @@ def process_input(user_input):
     elif "pause" in user_input.lower():
         # Simple pause, maybe stop listening
         response = "Assistant paused"
+    elif "help" in user_input.lower():
+        response = "Available commands: read screen, type <text>, click at <x> <y>, time, plugin <name>, list plugins, summarize screen, search screen for <keyword>, convert screen to speech, highlight keywords <kw>, recognize tables, clear logs, set voice <type>, set speed <0.9-1.2>, set pitch <offset>, set profile <formal/casual/energetic>, close window, scroll up/down, open <app>, toggle offline, pause, quit"
     elif "quit" in user_input.lower():
         response = "Goodbye"
     else:
@@ -179,55 +213,9 @@ def process_input(user_input):
         for turn in context:
             prompt += f"User: {turn['user']}\nAI: {turn['response']}\n"
         prompt += f"User: {user_input}\nAI:"
+        response = natural_dialogue.respond(prompt)
 
-        switch.auto_switch()  # Check mode
-        if switch.get_mode() == 'offline':
-            if nlp:
-                try:
-                    response = nlp.generate_response(prompt)
-                except Exception as e:
-                    response = "NLP error: " + str(e)
-            else:
-                response = "Offline NLP not available. " + user_input[::-1]  # Simple reverse for test
-        else:
-            # Try Hugging Face first (free tier)
-            hf_key = os.getenv('HUGGINGFACE_API_KEY')
-            if hf_key:
-                try:
-                    import requests
-                    headers = {"Authorization": f"Bearer {hf_key}"}
-                    payload = {"inputs": prompt, "parameters": {"max_new_tokens": 100, "temperature": 0.7}}
-                    response_api = requests.post("https://api-inference.huggingface.co/models/distilgpt2", headers=headers, json=payload)
-                    if response_api.status_code == 200:
-                        result = response_api.json()
-                        if isinstance(result, list) and result:
-                            generated = result[0].get("generated_text", "")
-                            if generated.startswith(prompt):
-                                response = generated[len(prompt):].strip()
-                            else:
-                                response = generated.strip()
-                        else:
-                            response = "HF API error: unexpected response"
-                    else:
-                        response = f"HF API error: {response_api.status_code} {response_api.text}"
-                except Exception as e:
-                    response = "HF error: " + str(e)
-            else:
-                # Fallback to OpenAI
-                try:
-                    import openai
-                    openai.api_key = os.getenv('OPENAI_API_KEY')
-                    client = openai.OpenAI()
-                    completion = client.chat.completions.create(
-                        model="gpt-3.5-turbo",
-                        messages=[{"role": "user", "content": prompt}],
-                        max_tokens=100,
-                        temperature=0.7
-                    )
-                    response = completion.choices[0].message.content.strip()
-                except Exception as e:
-                    response = "Online error: " + str(e)
-
+    optimizer.update_activity()
     memory.add_interaction(user_input, response)
     logger.log_interaction(user_input, response)
     return response
