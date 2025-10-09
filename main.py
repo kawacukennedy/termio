@@ -285,20 +285,36 @@ def push_to_talk(hotkey='f12'):
 def main_curses(stdscr):
     curses.curs_set(1)
     curses.start_color()
-    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Light theme
-    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # Dark theme
+    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Light theme background
+    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # Dark theme background
+    curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)   # User input
+    curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK) # AI response
+    curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK) # Hints
+    curses.init_pair(6, curses.COLOR_RED, curses.COLOR_BLACK)    # Errors
+    curses.init_pair(7, curses.COLOR_BLUE, curses.COLOR_BLACK)   # Status
     theme = 1  # 1 light, 2 dark
     stdscr.bkgd(curses.color_pair(theme))
     stdscr.clear()
-    stdscr.addstr(0, 0, "Auralis - Terminal AI Assistant", curses.color_pair(theme))
-    stdscr.addstr(1, 0, f"Type commands or use {hotkey.upper()} for voice input. Type 'quit' to exit.", curses.color_pair(theme))
+
+    # Header with ASCII art
+    header = [
+        "  ___  _   _ _   _ _ _   ",
+        " / _ \\| | | | | | | | |  ",
+        "| | | | | | | | | | | |  ",
+        "| | | | |_| | |_| | | |  ",
+        "|_| |_|\\___/ \\___/|_|_|  ",
+        "Terminal AI Assistant    "
+    ]
+    for i, line in enumerate(header):
+        stdscr.addstr(i, 0, line, curses.color_pair(4 if theme == 1 else 3))
+    stdscr.addstr(6, 0, f"Commands: {hotkey.upper()} for voice | 'help' for commands | 'quit' to exit", curses.color_pair(7))
+
     history = []
     show_history = True
-    activity_indicator = False
     commands = ["read screen", "type", "click at", "time", "plugin", "list plugins", "summarize screen", "search screen for", "convert screen to speech", "highlight keywords", "recognize tables", "clear logs", "set voice", "set speed", "set pitch", "set profile", "close window", "scroll up", "scroll down", "open", "toggle offline", "pause", "interrupt", "quit", "toggle history", "toggle theme"]
-    y = 3
+    y = 8
     while True:
-        stdscr.addstr(y, 0, "> ", curses.color_pair(theme))
+        stdscr.addstr(y, 0, "> ", curses.color_pair(3))
         curses.echo()
         user_input = stdscr.getstr(y, 2).decode()
         curses.noecho()
@@ -306,10 +322,10 @@ def main_curses(stdscr):
         if user_input:
             suggestions = [cmd for cmd in commands if cmd.startswith(user_input.lower())]
             if suggestions and len(suggestions) <= 3:
-                stdscr.addstr(y+1, 0, f"Suggestions: {', '.join(suggestions[:3])}", curses.color_pair(theme))
+                stdscr.addstr(y+1, 0, f"Suggestions: {', '.join(suggestions[:3])}", curses.color_pair(5))
                 stdscr.refresh()
-                curses.napms(1000)  # Show for 1s
-                stdscr.addstr(y+1, 0, " " * 50, curses.color_pair(theme))  # Clear
+                curses.napms(1500)  # Show for 1.5s
+                stdscr.addstr(y+1, 0, " " * 80, curses.color_pair(theme))  # Clear
         if user_input.lower() == 'quit':
             break
         elif user_input.lower() == 'toggle history':
@@ -319,23 +335,19 @@ def main_curses(stdscr):
             theme = 2 if theme == 1 else 1
             stdscr.bkgd(curses.color_pair(theme))
             stdscr.clear()
-            stdscr.addstr(0, 0, "Auralis - Terminal AI Assistant", curses.color_pair(theme))
-            stdscr.addstr(1, 0, f"Type commands or use {hotkey.upper()} for voice input. Type 'quit' to exit.", curses.color_pair(theme))
+            # Redraw header
+            for i, line in enumerate(header):
+                stdscr.addstr(i, 0, line, curses.color_pair(4 if theme == 1 else 3))
+            stdscr.addstr(6, 0, f"Commands: {hotkey.upper()} for voice | 'help' for commands | 'quit' to exit", curses.color_pair(7))
             response = f"Theme switched to {'dark' if theme == 2 else 'light'}"
-            y = 3
+            y = 8
         else:
-            activity_indicator = True
-            stdscr.addstr(y+1, 0, "Processing...", curses.color_pair(theme))
+            stdscr.addstr(y+1, 0, "Processing...", curses.color_pair(7))
             stdscr.refresh()
             response = process_input(user_input)
-            activity_indicator = False
-            activity_indicator = True
-            stdscr.addstr(y+1, 0, "Processing...", curses.color_pair(theme))
-            stdscr.refresh()
-            response = process_input(user_input)
-            activity_indicator = False
+            stdscr.addstr(y+1, 0, " " * 20, curses.color_pair(theme))  # Clear processing
         y += 1
-        stdscr.addstr(y, 0, f"AI: {response}", curses.color_pair(theme))
+        stdscr.addstr(y, 0, f"AI: {response}", curses.color_pair(4))
         # Contextual hints
         if "screen" in user_input.lower():
             hint = "Try: summarize screen, search screen for <keyword>"
@@ -345,47 +357,76 @@ def main_curses(stdscr):
             hint = ""
         if hint:
             y += 1
-            stdscr.addstr(y, 0, f"Hint: {hint}", curses.color_pair(theme))
+            stdscr.addstr(y, 0, f"Hint: {hint}", curses.color_pair(5))
         history.append(f"User: {user_input}")
         history.append(f"AI: {response}")
-        if len(history) > 10:  # Keep last 5 exchanges
-            history = history[-10:]
+        if len(history) > 20:  # Keep more history
+            history = history[-20:]
         y += 1
         if show_history and y < curses.LINES - 5:
-            for i, line in enumerate(history[-4:]):  # Show last 4 lines
-                stdscr.addstr(y + i, 0, line, curses.color_pair(theme))
-            y += 4
-        if y > curses.LINES - 2:
-            y = 3
+            for i, line in enumerate(history[-6:]):  # Show last 6 lines
+                color = curses.color_pair(3) if "User:" in line else curses.color_pair(4)
+                stdscr.addstr(y + i, 0, line, color)
+            y += 6
+        if y > curses.LINES - 3:
+            y = 8
             stdscr.clear()
-            stdscr.addstr(0, 0, "Auralis - Terminal AI Assistant", curses.color_pair(theme))
-            stdscr.addstr(1, 0, f"Type commands or use {hotkey.upper()} for voice input. Type 'quit' to exit.", curses.color_pair(theme))
+            # Redraw header
+            for i, line in enumerate(header):
+                stdscr.addstr(i, 0, line, curses.color_pair(4 if theme == 1 else 3))
+            stdscr.addstr(6, 0, f"Commands: {hotkey.upper()} for voice | 'help' for commands | 'quit' to exit", curses.color_pair(7))
         stdscr.refresh()
         optimizer.update_activity()
         tts.speak(response)
         optimizer.optimize()  # Sleep if idle
 
 def simple_cli_text():
-    print("Auralis - Text Conversation Mode")
+    print("\n" + "="*50)
+    print("  ___  _   _ _   _ _ _   ")
+    print(" / _ \\| | | | | | | | |  ")
+    print("| | | | | | | | | | | |  ")
+    print("| | | | |_| | |_| | | |  ")
+    print("|_| |_|\\___/ \\___/|_|_|  ")
+    print("Terminal AI Assistant - Text Mode")
+    print("="*50)
+    print("Type 'help' for commands, 'quit' to exit.\n")
     while True:
-        user_input = input("> ")
-        if user_input.lower() == 'quit':
+        try:
+            user_input = input("You: ")
+            if user_input.lower() == 'quit':
+                print("Goodbye!")
+                break
+            print("Processing...", end="", flush=True)
+            response = process_input(user_input)
+            print("\r" + " " * 20 + "\r", end="")
+            print(f"Auralis: {response}")
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
             break
-        response = process_input(user_input)
-        print(f"AI: {response}")
 
 def simple_cli_voice():
-    print("Auralis - Voice Conversation Mode")
+    print("\n" + "="*50)
+    print("  ___  _   _ _   _ _ _   ")
+    print(" / _ \\| | | | | | | | |  ")
+    print("| | | | | | | | | | | |  ")
+    print("| | | | |_| | |_| | | |  ")
+    print("|_| |_|\\___/ \\___/|_|_|  ")
+    print("Terminal AI Assistant - Voice Mode")
+    print("="*50)
     print("Hello Sir!")
     tts.speak("Hello Sir!")
     if not HAS_SOUNDDEVICE:
-        print("Voice not available.")
+        print("Voice input not available. Falling back to text mode.")
+        simple_cli_text()
         return
     threading.Thread(target=wake_thread, daemon=True).start()
-    print("Say 'Auralis' to start a conversation.")
-    while True:
-        # Keep running
-        pass
+    print("Listening for wake word 'Auralis'... Press Ctrl+C to exit.")
+    try:
+        while True:
+            pass
+    except KeyboardInterrupt:
+        print("\nGoodbye!")
+        return
 
 def simple_cli():
     print("Auralis - Simple CLI Mode (Curses not available)")
