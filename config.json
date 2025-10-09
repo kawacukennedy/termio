@@ -1,0 +1,306 @@
+{
+  "app_name": "Auralis",
+  "version": "1.0.0",
+  "launch_command": "auralis",
+  "description": "Auralis is a terminal-based AI assistant providing full offline-first natural voice and text conversation, real-time screen reading and control, push-to-talk voice interaction, optional online enhancements, minimal CPU/GPU usage, and storage under 100MB.",
+  "storage_budget": "<100MB",
+  "platforms": {
+    "supported_os": ["Windows 10+", "macOS 11+", "Linux Ubuntu 20.04+"],
+    "core_language": "Python 3.11+",
+    "terminal_interface": {
+      "display_mode": "ASCII terminal with optional waveform visualization for voice input",
+      "interactive_prompt": "typed commands and push-to-talk voice input",
+      "logging_display": "toggleable, compressed, configurable retention",
+      "cpu_gpu_optimized": true
+    }
+  },
+  "architecture": {
+    "layers": [
+      "Input Layer: microphone with push-to-talk, wake word detection, keyboard input",
+      "Processing Layer: lightweight NLP engine, command parser, screen OCR, screen control executor, conversation memory manager, natural dialogue engine",
+      "Output Layer: text-to-speech, terminal text output, screen action executor"
+    ],
+    "modules": [
+      "WakeWordDetectionModule",
+      "SpeechToTextModule",
+      "UltraLightNLPModule",
+      "TextToSpeechModule",
+      "ScreenReaderModule",
+      "ScreenControlModule",
+      "ConversationMemoryModule",
+      "LoggingAndStorageModule",
+      "SettingsModule",
+      "PluginModule",
+      "SecurityAndPrivacyModule",
+      "PerformanceOptimizerModule",
+      "OfflineOnlineSwitchModule",
+      "NaturalDialogueEngine"
+    ]
+  },
+  "offline_mode": {
+    "purpose": "Fully functional AI conversation, screen reading, screen control, and natural spoken dialogue without internet",
+    "storage_budget": "<100MB including models",
+    "cpu_gpu_optimization": {
+      "STT": "Vosk ultra-light (~20MB), CPU-only, streaming recognition",
+      "NLP": "MicroGPT/TinyGPT (~50MB), lightweight transformer, CPU-optimized, natural dialogue support",
+      "TTS": "espeak-ng (~5MB), CPU-only, real-time speech",
+      "OCR": "Tesseract minimal (~20MB), CPU-only",
+      "lazy_loading": true,
+      "low_thread_usage": true,
+      "idle_sleep": true
+    },
+    "speech_to_text": {
+      "engine": "Vosk ultra-light",
+      "features": [
+        "streaming recognition",
+        "push-to-talk support",
+        "partial transcription for long utterances",
+        "multi-turn offline conversation support",
+        "low CPU usage"
+      ]
+    },
+    "nlp_brain": {
+      "engine": "MicroGPT/TinyGPT",
+      "features": [
+        "context-aware responses",
+        "last 3 interactions stored in RAM",
+        "definitions, arithmetic, summarization, casual conversation",
+        "lightweight reasoning",
+        "supports natural spoken responses"
+      ]
+    },
+    "text_to_speech": {
+      "engine": "espeak-ng",
+      "features": [
+        "offline real-time speech synthesis",
+        "male/female/neutral voices",
+        "adjustable pitch and speed",
+        "CPU-efficient",
+        "ASCII waveform visualization optional",
+        "natural conversational replies"
+      ]
+    },
+    "conversation_flow": {
+      "wake_word": "Auralis",
+      "push_to_talk": true,
+      "continuous_listening": false,
+      "context_memory": "last 3 interactions",
+      "interruption_support": true,
+      "natural_conversation": true,
+      "voice_response_enabled": true
+    }
+  },
+  "online_mode": {
+    "purpose": "Optional advanced reasoning, translation, creative output, long-term memory, enhanced natural conversation",
+    "constraints": "activated only when internet is available",
+    "cpu_gpu_optimization": {
+      "low_bandwidth_mode": true,
+      "fallback_to_offline": true,
+      "async_processing": true
+    },
+    "speech_to_text": {
+      "engine": "OpenAI Whisper API / Google STT",
+      "features": ["high accuracy", "multi-language support", "streaming transcription"]
+    },
+    "nlp_brain": {
+      "engine": "OpenAI GPT-3.5 / GPT-4",
+      "features": [
+        "long-term context",
+        "complex reasoning",
+        "translation",
+        "creative output",
+        "multi-turn dialogue",
+        "context-aware task execution",
+        "natural spoken responses"
+      ]
+    },
+    "text_to_speech": {
+      "engine": "Google TTS / ElevenLabs",
+      "features": ["human-like voice", "emotional intonation", "low-latency streaming"]
+    },
+    "fallback_logic": "auto-switch to offline mode if internet is unavailable"
+  },
+  "voice_interface": {
+    "wake_word": {
+      "engine": "Porcupine ultra-light (~1MB)",
+      "phrase": "Auralis",
+      "sensitivity": "medium",
+      "always_on": false,
+      "push_to_talk_hotkey": "configurable",
+      "response_latency": "<100ms"
+    },
+    "conversation_flow": {
+      "interruption_support": true,
+      "context_window": "last 3 interactions",
+      "voice_feedback": true,
+      "terminal_visual_feedback": "ASCII waveform real-time activity",
+      "natural_conversational_replies": true
+    },
+    "voice_customization": {
+      "available_voices": ["male_default","female_default","neutral"],
+      "speed_range": "0.9x-1.2x",
+      "pitch_range": "-3 to +3 semitones",
+      "volume_control": "0-100%",
+      "preset_profiles": ["formal", "casual", "energetic"]
+    }
+  },
+  "screen_interaction": {
+    "screen_reading": {
+      "engine": "Tesseract OCR minimal (~20MB)",
+      "capabilities": [
+        "read text from terminal and GUI apps",
+        "summarize content",
+        "highlight keywords",
+        "convert screen text to speech",
+        "recognize tables, prompts, logs",
+        "search for specific text"
+      ],
+      "performance": {
+        "capture_area": "user-selected",
+        "refresh_rate": "manual",
+        "accuracy": "80-95%",
+        "cpu_optimized": true
+      },
+      "commands": [
+        "Read screen section",
+        "Summarize content",
+        "Extract highlighted text",
+        "Convert screen text to audio",
+        "Search screen for keywords"
+      ]
+    },
+    "screen_control": {
+      "engine": "PyAutoGUI lightweight (~5MB)",
+      "capabilities": [
+        "mouse movement, clicks, drag-and-drop",
+        "keyboard typing and hotkeys",
+        "basic window management",
+        "automation scripts",
+        "interactive confirmation before destructive actions",
+        "coordinate/UI element commands"
+      ],
+      "example_commands": [
+        "Type 'Hello' in terminal",
+        "Close window",
+        "Scroll down",
+        "Open application",
+        "Click button at coordinates",
+        "Run terminal script"
+      ]
+    }
+  },
+  "terminal_ui_ux": {
+    "style": "Minimal ASCII terminal interface",
+    "features": [
+      "interactive command prompt",
+      "waveform visualization for voice input",
+      "toggleable chat history",
+      "dark/light ASCII themes",
+      "inline command suggestions",
+      "error handling and fallback suggestions",
+      "contextual hints",
+      "real-time activity indicator",
+      "CPU-efficient rendering",
+      "supports natural voice conversation"
+    ]
+  },
+  "conversation_memory": {
+    "short_term": {"location": "RAM", "max_turns": 3},
+    "long_term": {
+      "optional": "encrypted SQLite database if enabled",
+      "purpose": "persistent notes, command history, user preferences"
+    }
+  },
+  "logging_and_storage": {
+    "conversation_logs": {
+      "format": "JSON",
+      "compression": "gzip",
+      "rotation_policy": "max 1MB or 7 days",
+      "storage_location": "user home directory",
+      "privacy": "user can clear anytime",
+      "cpu_optimized": true
+    },
+    "model_storage": {
+      "offline_model": "~50MB MicroGPT",
+      "STT_model": "~20MB Vosk tiny",
+      "TTS_model": "~5MB espeak-ng",
+      "OCR_model": "~20MB Tesseract minimal"
+    },
+    "optimization": {
+      "minimal_disk_usage": true,
+      "delete_temp_files": true,
+      "cache_last_outputs_only": true,
+      "lazy_load_modules": true,
+      "CPU/GPU_low_intensity": true
+    }
+  },
+  "security_privacy": {
+    "permissions": ["microphone", "keyboard/mouse control optional"],
+    "offline_privacy": "100% local processing",
+    "online_security": ["HTTPS API calls only", "optional API key encryption"],
+    "user_control": [
+      "pause assistant",
+      "clear logs",
+      "toggle offline/online",
+      "custom wake word",
+      "disable microphone or screen control at any time"
+    ]
+  },
+  "extensibility": {
+    "plugin_system": {
+      "concept": "user-defined scripts for new commands",
+      "examples": ["calculator", "weather", "music control", "automation scripts"],
+      "API": "Python scripts <1MB each, dynamically loadable, access to screen/text/terminal"
+    }
+  },
+  "performance_requirements": {
+    "minimum": {"RAM":"2GB","CPU":"dual-core 1.5GHz","GPU":"optional"},
+    "optimization_strategies": [
+      "lazy-load modules",
+      "sleep when idle",
+      "sub-100ms wake word response",
+      "compress logs",
+      "memory-efficient conversation caching",
+      "CPU/GPU-efficient inference",
+      "offline-prioritized execution",
+      "low-latency natural voice responses"
+    ]
+  },
+  "example_commands": {
+    "voice": [
+      "Auralis, what time is it?",
+      "Auralis, type 'Hello' in terminal",
+      "Auralis, read this section",
+      "Auralis, summarize output",
+      "Auralis, close this window",
+      "Auralis, search screen for 'error'",
+      "Auralis, open browser and go to 'example.com'",
+      "Auralis, tell me a joke",
+      "Auralis, explain this output to me"
+    ],
+    "chat": [
+      "Explain basic math",
+      "Tell a joke",
+      "Translate 'Hola' to English",
+      "Summarize last terminal output",
+      "Open browser",
+      "Define 'quantum computing'",
+      "Provide a summary of this document"
+    ]
+  },
+  "constraints": {
+    "budget": "$0",
+    "storage_limit": "<100MB including models",
+    "offline_priority": "fully functional offline",
+    "terminal_launch": true,
+    "executable_name": "auralis",
+    "user_control": "full permissions",
+    "cross_platform": true,
+    "CPU_GPU_low_usage": true,
+    "natural_voice_conversation": true,
+    "push_to_talk_supported": true,
+    "screen_reading_control": true,
+    "logs_minimized": true,
+    "voice_response_real_time": true
+  }
+}

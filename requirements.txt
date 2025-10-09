@@ -1,0 +1,16 @@
+vosk
+pvporcupine
+pyttsx3
+pytesseract
+pyautogui
+transformers
+torch
+pyaudio
+numpy
+pillow
+opencv-python
+mss
+openai
+pynput
+cryptography
+requests
