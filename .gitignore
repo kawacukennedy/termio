@@ -24,6 +24,7 @@ coverage.xml
 dist/
 build/
 model/
+vosk-model-small-en-us-0.15/
 logs/
 *.db
 *.key
