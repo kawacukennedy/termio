@@ -244,19 +244,39 @@ def process_voice(text):
         print(f"Response: {response}")
 
 def wake_thread():
-    if not HAS_SOUNDDEVICE or not stt:
+    if not HAS_SOUNDDEVICE:
         return
-    import queue
-    q = queue.Queue()
-    def audio_callback(indata, frames, time, status):
-        q.put(indata.copy())
-    with sd.InputStream(callback=audio_callback, channels=1, samplerate=16000, blocksize=8000):
-        while True:
-            data = q.get()
-            pcm = data.flatten().astype('int16').tobytes()
-            text = stt.transcribe(pcm)
-            if text and 'auralis' in text.lower():
+    from pvporcupine import create
+    import struct
+    access_key = os.getenv('PICOVOICE_ACCESS_KEY')
+    if not access_key:
+        print("PICOVOICE_ACCESS_KEY not set. Using fallback STT for wake word.")
+        # Fallback to STT
+        import queue
+        q = queue.Queue()
+        def audio_callback(indata, frames, time, status):
+            q.put(indata.copy())
+        with sd.InputStream(callback=audio_callback, channels=1, samplerate=16000, blocksize=8000):
+            while True:
+                data = q.get()
+                pcm = data.flatten().astype('int16').tobytes()
+                text = stt.transcribe(pcm) if stt else None
+                if text and 'auralis' in text.lower():
+                    listen_thread()
+        return
+    try:
+        handle = create(access_key=access_key, keywords=['auralis'])
+        def audio_callback(indata, frames, time, status):
+            pcm = indata.flatten().astype('int16')
+            if handle.process(pcm) >= 0:
                 listen_thread()
+        with sd.InputStream(callback=audio_callback, channels=1, samplerate=16000, blocksize=handle.frame_length):
+            print("Listening for wake word 'Auralis' with Porcupine...")
+            while True:
+                pass
+    except Exception as e:
+        print(f"Porcupine failed: {e}. Using STT fallback.")
+        # Fallback code
 
 def listen_thread():
     if not HAS_SOUNDDEVICE or not stt:
