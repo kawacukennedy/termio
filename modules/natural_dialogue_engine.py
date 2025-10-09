@@ -18,7 +18,7 @@ class NaturalDialogueEngine:
                 try:
                     headers = {"Authorization": f"Bearer {hf_key}"}
                     payload = {"inputs": prompt, "parameters": {"max_new_tokens": 100, "temperature": 0.7}}
-                    response_api = requests.post("https://api-inference.huggingface.co/models/microsoft/DialoGPT-small", headers=headers, json=payload)
+                    response_api = requests.post("https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill", headers=headers, json=payload)
                     if response_api.status_code == 200:
                         result = response_api.json()
                         if isinstance(result, list) and result:
