@@ -4,6 +4,11 @@ import sys
 import os
 import requests
 import platform
+try:
+    import pyttsx3
+    HAS_PYTTsx3 = True
+except ImportError:
+    HAS_PYTTsx3 = False
 
 class TextToSpeechModule:
     def __init__(self, online_mode=False):
@@ -70,8 +75,16 @@ class TextToSpeechModule:
             self._speak_offline(text)
 
     def _speak_offline(self, text):
-        cmd = ['espeak-ng', '-v', self.voice, '-s', str(self.speed), '-p', str(self.pitch), '-a', str(self.volume), text]
-        subprocess.run(cmd, capture_output=True)
+        if HAS_PYTTsx3:
+            engine = pyttsx3.init()
+            engine.setProperty('voice', self.voice)
+            engine.setProperty('rate', self.speed)
+            engine.setProperty('volume', self.volume)
+            engine.say(text)
+            engine.runAndWait()
+        else:
+            cmd = ['espeak-ng', '-v', self.voice, '-s', str(self.speed), '-p', str(self.pitch), '-a', str(self.volume), text]
+            subprocess.run(cmd, capture_output=True)
 
     def _speak_huggingface(self, text):
         hf_key = os.getenv('HUGGINGFACE_API_KEY')
