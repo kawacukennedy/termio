@@ -255,26 +255,32 @@ def wake_thread():
 
 def listen_thread():
     if not HAS_SOUNDDEVICE or not stt:
+        print("Sound device or STT not available.")
         return
     duration = 5  # seconds
     fs = 16000
     print("Listening...")
-    recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
-    sd.wait()
-    data = recording.flatten().tobytes()
-    # Simple waveform
-    pcm = struct.unpack_from("h" * len(recording) // 2, data)
-    max_val = max(abs(x) for x in pcm) if pcm else 0
-    bars = int(max_val / 1000)
-    print('|' * bars)
-    text = stt.transcribe(data)
-    print(f"Heard: '{text}'" if text else "Heard: (nothing)")
-    if text:
-        process_voice(text)
-    else:
-        apology = "I'm sorry, I didn't catch that. Could you please repeat?"
-        print(f"Response: {apology}")
-        tts.speak(apology)
+    try:
+        recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
+        sd.wait()
+        print("Recording finished.")
+        data = recording.flatten().tobytes()
+        print(f"Data length: {len(data)} bytes")
+        # Simple waveform
+        pcm = struct.unpack_from("h" * len(recording) // 2, data)
+        max_val = max(abs(x) for x in pcm) if pcm else 0
+        bars = int(max_val / 1000)
+        print('Waveform: ' + '|' * bars)
+        text = stt.transcribe(data)
+        print(f"Heard: '{text}'" if text else "Heard: (nothing)")
+        if text:
+            process_voice(text)
+        else:
+            apology = "I'm sorry, I didn't catch that. Could you please repeat?"
+            print(f"Response: {apology}")
+            tts.speak(apology)
+    except Exception as e:
+        print(f"Error in recording: {e}")
 
 def push_to_talk(hotkey='f12'):
     if not HAS_SOUNDDEVICE:
