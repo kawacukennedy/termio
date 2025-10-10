@@ -63,6 +63,7 @@ backup_restore = BackupRestoreModule(config)
 language = LanguageSupportModule(config)
 dashboard = WebDashboard(config, performance, memory, backup_restore)
 automation = AutomationModule(config, security)
+dashboard = WebDashboard(config, performance, memory, backup_restore)
 
 # Current mode
 current_mode = 'offline'
@@ -319,6 +320,19 @@ def process_input(user_input):
     elif user_input.lower() == 'automation status':
         status = automation.get_automation_status()
         response = f"Automation system: {status['scheduled_tasks']} tasks, {status['macros']} macros"
+    elif user_input.lower() == 'start dashboard' or user_input.lower() == 'open dashboard':
+        if dashboard.start():
+            response = "Web dashboard started at http://localhost:5000"
+        else:
+            response = "Dashboard is already running"
+    elif user_input.lower() == 'stop dashboard':
+        dashboard.stop()
+        response = "Web dashboard stopped"
+    elif user_input.lower() == 'dashboard status':
+        if dashboard.is_active():
+            response = "Web dashboard is running at http://localhost:5000"
+        else:
+            response = "Web dashboard is not running"
     elif user_input.lower().startswith('get api key '):
         service = user_input.replace('get api key ', '').strip()
         api_key = security.get_api_key(service)
