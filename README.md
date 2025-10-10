@@ -49,6 +49,29 @@
 - **Command Extensions**: Custom commands via plugin interface
 - **Secure Execution**: Restricted execution environment
 
+### 🌐 External Integrations
+- **Weather API**: Real-time weather information
+- **News API**: Top headlines from various sources
+- **Joke API**: Random jokes and humor
+- **Quote API**: Inspirational and motivational quotes
+- **Time API**: World time and timezone support
+- **Currency API**: Exchange rate calculations
+- **Wikipedia API**: Knowledge base search and summaries
+
+### 💾 Data Management
+- **Backup System**: Complete system backups with compression
+- **Restore Functionality**: Selective or full system restoration
+- **Conversation Export**: Chat history in JSON/text formats
+- **Import Support**: Restore conversations from backups
+- **Auto Cleanup**: Automatic old backup removal
+
+### 🌍 Multi-Language Support
+- **11 Languages**: English, Spanish, French, German, Italian, Portuguese, Japanese, Korean, Chinese, Russian, Arabic
+- **Language Detection**: Automatic language recognition
+- **Translation System**: Localized responses and commands
+- **Voice Profiles**: Language-specific voice synthesis
+- **Cultural Adaptation**: Region-appropriate responses
+
 ### 🎨 User Experience
 - **Cinematic Boot**: Animated startup sequence with progress indicators
 - **Visual Feedback**: ASCII waveforms, status bars, thinking animations
@@ -81,14 +104,36 @@ chmod +x bin/auralis
 4. **Mode Switching**: Say "switch to online" for enhanced features
 
 ### Example Commands
+**Voice & Conversation:**
 - "Auralis, read screen" - OCR current screen
 - "Auralis, summarize output" - Summarize visible content
 - "Auralis, search screen for error" - Find keywords
 - "Auralis, close window" - Window management
-- "Auralis, tell me a joke" - Fun responses
 - "set voice to formal" - Change voice profile
 - "be creative about [topic]" - Generate ideas
-- "store api key huggingface sk-..." - Secure key storage
+
+**External Services:**
+- "weather New York" - Get weather information
+- "news technology" - Get top news headlines
+- "tell me a joke" - Random jokes
+- "inspire me" - Motivational quotes
+- "what time is it in Tokyo" - World time
+- "currency USD to EUR" - Exchange rates
+- "wikipedia artificial intelligence" - Search Wikipedia
+
+**System Management:**
+- "store api key openweather YOUR_KEY" - Secure API key storage
+- "create backup my_backup" - Create system backup
+- "list backups" - Show available backups
+- "restore backup my_backup" - Restore from backup
+- "export conversations" - Export chat history
+- "set language to es" - Switch to Spanish
+- "supported languages" - List available languages
+
+**Advanced Features:**
+- "fine tune nlp training_data.txt" - Train custom NLP model
+- "plugin myplugin execute_command" - Run plugin commands
+- "training status" - Check model training capabilities
 
 ## 🏗️ Architecture
 
@@ -105,6 +150,9 @@ chmod +x bin/auralis
 - **SecurityModule**: Encryption and permissions
 - **PerformanceOptimizerModule**: Resource management
 - **ModelTrainingModule**: Custom model training
+- **ExternalAPIModule**: Third-party service integration
+- **BackupRestoreModule**: Data backup and restoration
+- **LanguageSupportModule**: Multi-language support
 
 ### Data Flow
 ```
