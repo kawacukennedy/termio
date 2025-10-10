@@ -9,8 +9,51 @@ class TTSModuleOffline:
         self.voice_settings = config['voice_interface']['voice_response']
         self.current_process = None
         self.is_speaking = False
+        self.current_profile = 'neutral'
 
-    def speak(self, text, voice='neutral', speed=1.0, pitch=0, volume=80):
+        # Voice profiles
+        self.profiles = {
+            'formal': {'voice': 'en+m3', 'speed': 0.9, 'pitch': -1, 'volume': 85},
+            'casual': {'voice': 'en+m2', 'speed': 1.0, 'pitch': 0, 'volume': 90},
+            'energetic': {'voice': 'en+f2', 'speed': 1.1, 'pitch': 2, 'volume': 95}
+        }
+
+
+
+    def set_voice_profile(self, profile_name):
+        """Set voice profile"""
+        if profile_name in self.profiles:
+            self.current_profile = profile_name
+            return f"Voice profile set to {profile_name}"
+        else:
+            return f"Unknown profile: {profile_name}. Available: {', '.join(self.profiles.keys())}"
+
+    def get_voice_profiles(self):
+        """Get available voice profiles"""
+        return list(self.profiles.keys())
+
+    def customize_voice(self, voice=None, speed=None, pitch=None, volume=None):
+        """Customize voice parameters"""
+        if voice:
+            self.profiles[self.current_profile]['voice'] = voice
+        if speed:
+            self.profiles[self.current_profile]['speed'] = max(0.5, min(2.0, speed))
+        if pitch:
+            self.profiles[self.current_profile]['pitch'] = max(-3, min(3, pitch))
+        if volume:
+            self.profiles[self.current_profile]['volume'] = max(0, min(100, volume))
+
+        return f"Voice customized: {self.profiles[self.current_profile]}"
+
+    def speak(self, text, voice=None, speed=None, pitch=None, volume=None):
+        # Use profile settings or overrides
+        profile = self.profiles.get(self.current_profile, self.profiles['neutral'])
+
+        voice = voice or profile['voice']
+        speed = speed if speed is not None else profile['speed']
+        pitch = pitch if pitch is not None else profile['pitch']
+        volume = volume if volume is not None else profile['volume']
+
         # Stop any current speech
         self.stop()
 
@@ -22,7 +65,7 @@ class TTSModuleOffline:
                 'female': 'en+f1',
                 'neutral': 'en'
             }
-            espeak_voice = voice_map.get(voice, 'en')
+            espeak_voice = voice_map.get(voice, voice)  # Allow custom voices
 
             # Adjust speed (80-450 wpm, default 175)
             speed_wpm = int(175 * speed)

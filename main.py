@@ -47,7 +47,7 @@ screen_control = ScreenControlModule(config)
 memory = ConversationMemoryModule(config)
 logging_mod = LoggingModule(config)
 settings = SettingsModule(config)
-security = SecurityModule(config)
+security = SecurityModule(config, settings)
 performance = PerformanceOptimizerModule(config)
 plugins = PluginHostModule(config)
 
@@ -184,6 +184,46 @@ def process_input(user_input):
         # Generate creative response
         creative_idea = nlp.generate_creative_task(user_input)
         response = f"Here's a creative idea: {creative_idea}"
+    elif user_input.lower().startswith('set voice to '):
+        profile = user_input.lower().replace('set voice to ', '').strip()
+        response = tts.set_voice_profile(profile)
+    elif user_input.lower() == 'list voice profiles':
+        profiles = tts.get_voice_profiles()
+        response = f"Available voice profiles: {', '.join(profiles)}"
+    elif user_input.lower().startswith('customize voice '):
+        # Parse customization command
+        parts = user_input.lower().replace('customize voice ', '').split()
+        params = {}
+        for part in parts:
+            if '=' in part:
+                key, value = part.split('=', 1)
+                try:
+                    if key in ['speed', 'pitch', 'volume']:
+                        params[key] = float(value)
+                    elif key == 'voice':
+                        params[key] = value
+                except ValueError:
+                    pass
+        if params:
+            response = tts.customize_voice(**params)
+        else:
+            response = "Usage: customize voice speed=1.0 pitch=0 volume=80 voice=male"
+    elif user_input.lower().startswith('store api key '):
+        # Format: store api key service_name your_api_key_here
+        parts = user_input.split(' ', 4)
+        if len(parts) >= 5:
+            service = parts[3]
+            api_key = parts[4]
+            response = security.store_api_key(service, api_key)
+        else:
+            response = "Usage: store api key <service> <key>"
+    elif user_input.lower().startswith('get api key '):
+        service = user_input.replace('get api key ', '').strip()
+        api_key = security.get_api_key(service)
+        if api_key:
+            response = f"API key for {service}: {api_key[:8]}..."  # Show only first 8 chars
+        else:
+            response = f"No API key stored for {service}"
     else:
         # Generate response
         ux.show_thinking_animation()
