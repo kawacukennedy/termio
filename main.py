@@ -36,6 +36,8 @@ from model_training import ModelTrainingModule
 from external_api import ExternalAPIModule
 from backup_restore import BackupRestoreModule
 from language_support import LanguageSupportModule
+from web_dashboard import WebDashboard
+from automation import AutomationModule
 import subprocess
 
 # Initialize modules
@@ -59,6 +61,8 @@ training = ModelTrainingModule(config)
 external_api = ExternalAPIModule(config, security)
 backup_restore = BackupRestoreModule(config)
 language = LanguageSupportModule(config)
+dashboard = WebDashboard(config, performance, memory, backup_restore)
+automation = AutomationModule(config, security)
 
 # Current mode
 current_mode = 'offline'
@@ -243,15 +247,78 @@ def process_input(user_input):
             response = "Please specify import file path"
     elif user_input.lower() == 'cleanup backups':
         response = backup_restore.cleanup_old_backups()
-    elif user_input.lower() == 'run cleanup' or user_input.lower() == 'optimize size':
-        try:
-            result = subprocess.run(['python3', 'scripts/cleanup.py'], capture_output=True, text=True, cwd='.')
-            response = "Cleanup completed. Check output above."
-            print(result.stdout)
-            if result.stderr:
-                print("Errors:", result.stderr)
-        except Exception as e:
-            response = f"Cleanup failed: {e}"
+    elif user_input.lower() == 'start dashboard' or user_input.lower() == 'open dashboard':
+        if dashboard.start():
+            response = "Web dashboard started at http://localhost:5000"
+        else:
+            response = "Dashboard is already running"
+    elif user_input.lower() == 'stop dashboard':
+        dashboard.stop()
+        response = "Web dashboard stopped"
+    elif user_input.lower() == 'dashboard status':
+        if dashboard.is_active():
+            response = "Web dashboard is running at http://localhost:5000"
+        else:
+            response = "Web dashboard is not running"
+    elif user_input.lower().startswith('send email to '):
+        parts = user_input.split(' ', 3)
+        if len(parts) >= 4:
+            to_email = parts[3]
+            subject = "Message from Auralis"
+            body = "This is an automated message from your Auralis AI assistant."
+            response = automation.send_email(to_email, subject, body)
+        else:
+            response = "Usage: send email to <email> [subject] [body]"
+    elif user_input.lower() == 'check emails' or user_input.lower() == 'read emails':
+        emails = automation.check_emails()
+        if isinstance(emails, list):
+            email_list = "\n".join([f"• {e['subject']} from {e['sender']}" for e in emails[:3]])
+            response = f"Recent emails:\n{email_list}"
+        else:
+            response = emails
+    elif user_input.lower().startswith('schedule task '):
+        parts = user_input.split(' ', 4)
+        if len(parts) >= 5:
+            task_name = parts[2]
+            delay = int(parts[3]) if parts[3].isdigit() else 0
+            command = parts[4]
+            response = automation.schedule_task(task_name, command, delay)
+        else:
+            response = "Usage: schedule task <name> <delay_minutes> <command>"
+    elif user_input.lower() == 'list tasks' or user_input.lower() == 'scheduled tasks':
+        tasks = automation.list_scheduled_tasks()
+        if tasks:
+            task_list = "\n".join([f"• {t['name']}: {t['command']} at {t['scheduled_time']}" for t in tasks])
+            response = f"Scheduled tasks:\n{task_list}"
+        else:
+            response = "No scheduled tasks"
+    elif user_input.lower().startswith('create macro '):
+        parts = user_input.split(' ', 3)
+        if len(parts) >= 4:
+            macro_name = parts[2]
+            commands_str = parts[3]
+            commands = [cmd.strip() for cmd in commands_str.split(';')]
+            response = automation.create_macro(macro_name, commands)
+        else:
+            response = "Usage: create macro <name> <command1; command2; command3>"
+    elif user_input.lower().startswith('run macro '):
+        macro_name = user_input.replace('run macro ', '').strip()
+        response = automation.run_macro(macro_name)
+    elif user_input.lower() == 'list macros':
+        macros = automation.list_macros()
+        if macros:
+            macro_list = "\n".join([f"• {m['name']}: {m['commands']} commands" for m in macros])
+            response = f"Available macros:\n{macro_list}"
+        else:
+            response = "No macros defined"
+    elif user_input.lower().startswith('scrape website '):
+        url = user_input.replace('scrape website ', '').strip()
+        response = automation.web_scraper(url)
+    elif user_input.lower() == 'system info':
+        response = automation.system_info()
+    elif user_input.lower() == 'automation status':
+        status = automation.get_automation_status()
+        response = f"Automation system: {status['scheduled_tasks']} tasks, {status['macros']} macros"
     elif user_input.lower().startswith('get api key '):
         service = user_input.replace('get api key ', '').strip()
         api_key = security.get_api_key(service)
