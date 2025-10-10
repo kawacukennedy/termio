@@ -5,6 +5,7 @@ import sys
 import os
 import time
 import threading
+import random
 
 with open('config.json') as f:
     config = json.load(f)
@@ -64,6 +65,7 @@ nlp_online.initialize()
 tts_online.initialize()
 screen_reader.initialize()
 screen_control.initialize()
+plugins.load_plugins()
 
 # Boot
 ux.show_boot_sequence()
@@ -163,7 +165,25 @@ def process_input(user_input):
             webbrowser.open('https://www.google.com')
             response = "Opened browser to Google"
     elif 'tell me a joke' in user_input.lower():
-        response = "Why don't scientists trust atoms? Because they make up everything!"
+        jokes = [
+            "Why don't scientists trust atoms? Because they make up everything!",
+            "Why did the computer go to the doctor? It had a virus!",
+            "What do you call a fake noodle? An impasta!",
+            "Why don't eggs tell jokes? They'd crack each other up!"
+        ]
+        response = random.choice(jokes)
+    elif user_input.lower().startswith('plugin '):
+        # Handle plugin commands
+        parts = user_input.lower().split(' ', 2)
+        if len(parts) >= 3:
+            plugin_name, command = parts[1], parts[2]
+            response = plugins.execute_plugin(plugin_name, command)
+        else:
+            response = "Usage: plugin <name> <command>"
+    elif 'be creative' in user_input.lower() or 'creative' in user_input.lower():
+        # Generate creative response
+        creative_idea = nlp.generate_creative_task(user_input)
+        response = f"Here's a creative idea: {creative_idea}"
     else:
         # Generate response
         ux.show_thinking_animation()
@@ -173,13 +193,25 @@ def process_input(user_input):
         response = nlp.generate_response(user_input, context)
         ux.stop_thinking_animation()
 
-    print(f"Auralis: {response}")
+    # Show cinematic conversation flow
+    ux.show_conversation_flow(user_input, response)
+
     # Speak
     tts.speak(response)
+
     # Memory
     memory.add_turn(user_input, response)
-    # Log
-    logging_mod.log({'user': user_input, 'ai': response, 'mode': current_mode})
+
+    # Log with performance metrics
+    perf_status = performance.get_status()
+    logging_mod.log({
+        'user': user_input,
+        'ai': response,
+        'mode': current_mode,
+        'performance': perf_status,
+        'timestamp': time.time()
+    })
+
     return None
 
 # Start voice loops in background
@@ -188,6 +220,15 @@ voice_thread.start()
 
 push_to_talk_thread = threading.Thread(target=push_to_talk_loop, daemon=True)
 push_to_talk_thread.start()
+
+# Start performance monitoring thread
+def performance_monitor():
+    while True:
+        ux.update_performance_status(performance)
+        time.sleep(5)  # Update every 5 seconds
+
+perf_thread = threading.Thread(target=performance_monitor, daemon=True)
+perf_thread.start()
 
 # Main loop for text input
 while True:
