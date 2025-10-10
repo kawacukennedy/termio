@@ -36,6 +36,7 @@ from model_training import ModelTrainingModule
 from external_api import ExternalAPIModule
 from backup_restore import BackupRestoreModule
 from language_support import LanguageSupportModule
+import subprocess
 
 # Initialize modules
 ux = UXFlowManager(config)
@@ -242,20 +243,15 @@ def process_input(user_input):
             response = "Please specify import file path"
     elif user_input.lower() == 'cleanup backups':
         response = backup_restore.cleanup_old_backups()
-    elif user_input.lower().startswith('set language to ') or user_input.lower().startswith('switch to '):
-        lang = user_input.lower().replace('set language to ', '').replace('switch to ', '').strip()
-        response = language.set_language(lang)
-    elif user_input.lower() == 'current language' or user_input.lower() == 'what language':
-        lang_info = language.get_current_language()
-        response = f"Current language: {lang_info['name']} ({lang_info['code']})"
-    elif user_input.lower() == 'supported languages' or user_input.lower() == 'list languages':
-        langs = language.get_supported_languages()
-        lang_list = "\n".join([f"• {code}: {name}" for code, name in langs.items()])
-        response = f"Supported languages:\n{lang_list}"
-    elif user_input.lower().startswith('translate '):
-        text = user_input.replace('translate ', '').strip()
-        detected = language.detect_language(text)
-        response = f"Detected language: {language.get_supported_languages().get(detected, 'Unknown')}"
+    elif user_input.lower() == 'run cleanup' or user_input.lower() == 'optimize size':
+        try:
+            result = subprocess.run(['python3', 'scripts/cleanup.py'], capture_output=True, text=True, cwd='.')
+            response = "Cleanup completed. Check output above."
+            print(result.stdout)
+            if result.stderr:
+                print("Errors:", result.stderr)
+        except Exception as e:
+            response = f"Cleanup failed: {e}"
     elif user_input.lower().startswith('get api key '):
         service = user_input.replace('get api key ', '').strip()
         api_key = security.get_api_key(service)
