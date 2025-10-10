@@ -1,0 +1,201 @@
+{
+  "app_identity": {
+    "name": "Auralis",
+    "version": "1.0.0",
+    "launch_command": "auralis",
+    "description": "Auralis is a Jarvis-inspired terminal AI assistant with offline-first neural core, voice conversation, screen reading/control, HuggingFace API augmentation, and minimal footprint (<100MB).",
+    "tagline": "Your intelligent, conversational, desktop AI companion."
+  },
+  "resource_constraints": {
+    "total_storage": "<100MB",
+    "model_budget": {
+      "offline_stt": "Vosk tiny ~20MB",
+      "offline_nlp": "TinyGPT/distilled model ~50MB",
+      "offline_tts": "espeak-ng ~5MB",
+      "ocr": "Tesseract minimal ~20MB",
+      "other_modules": "<5MB"
+    },
+    "cpu_gpu_limits": {
+      "cpu_usage": "<20% typical",
+      "gpu_usage": "<5% optional",
+      "ram_max": "2GB",
+      "threads": "low concurrency, lazy-loaded"
+    }
+  },
+  "runtime_modes": {
+    "offline": {
+      "description": "Core functions without network",
+      "features": [
+        "push-to-talk voice interaction",
+        "wakeword detection",
+        "screen reading/ocr",
+        "screen control",
+        "natural conversation with TinyGPT",
+        "basic automation"
+      ]
+    },
+    "online": {
+      "description": "Optional HuggingFace API augmentation",
+      "features": [
+        "Whisper-based ASR",
+        "GPT-based LLM for advanced dialogue",
+        "HiFi-GAN or WaveNet TTS",
+        "context-aware multi-turn conversations",
+        "creative task generation"
+      ]
+    }
+  },
+  "architecture": {
+    "layers": {
+      "input_layer": ["microphone/push-to-talk/wakeword", "keyboard input", "clipboard monitor", "system hooks for screen and window events"],
+      "processing_layer": [
+        "intent parser",
+        "TinyGPT offline NLP",
+        "HuggingFace NLP API integration (optional online mode)",
+        "screen OCR & summarizer",
+        "screen control executor",
+        "memory manager",
+        "conversation manager",
+        "error handler"
+      ],
+      "output_layer": ["TTS engine", "terminal text output", "screen action executor", "ASCII waveform and HUD visualizer"]
+    },
+    "modules": [
+      "WakeWordDetectionModule",
+      "STTModuleOffline",
+      "STTModuleHFAPI",
+      "NLPModuleOffline",
+      "NLPModuleHFAPI",
+      "TTSModuleOffline",
+      "TTSModuleHFAPI",
+      "ScreenReaderModule",
+      "ScreenControlModule",
+      "ConversationMemoryModule",
+      "LoggingModule",
+      "SettingsModule",
+      "PluginHostModule",
+      "SecurityModule",
+      "PerformanceOptimizerModule",
+      "UXFlowManager"
+    ]
+  },
+  "hf_model_registry": {
+    "stt": ["Whisper-tiny-quantized", "fallback: Vosk tiny offline"],
+    "nlp": ["Llama2-7B-quantized small/distilled model", "TinyGPT offline", "fallback: simplified responses"],
+    "tts": ["HiFi-GAN/WaveNet vocoder online", "espeak-ng offline"],
+    "ocr": ["Tesseract minimal"]
+  },
+  "model_loading_policy": {
+    "lazy_loading": true,
+    "unload_triggers": ["inactive for 5 minutes", "memory limit exceeded"],
+    "chunked_inference": true,
+    "cache_embeddings": true
+  },
+  "logging_and_storage": {
+    "conversation_logs": {"format": "JSONL", "compression": "gzip", "rotation_policy": "1MB or 7 days"},
+    "model_storage": {"offline_stt": "~20MB", "offline_nlp": "~50MB", "offline_tts": "~5MB", "ocr": "~20MB"},
+    "optimization": {"lazy_load": true, "delete_temp_files": true, "prune_memory": true}
+  },
+  "voice_interface": {
+    "wakeword": {"phrase": "Auralis", "engine": "Porcupine ultra-light", "sensitivity": "medium", "latency_ms": 100},
+    "push_to_talk": {"key": "SPACE", "feedback": ["mic ON icon","ASCII waveform","status 'LISTENING...'"]},
+    "voice_response": {
+      "interruptible": true,
+      "voices": ["male","female","neutral"],
+      "speed_range": "0.9x-1.2x",
+      "pitch_range": "-3 to +3",
+      "volume_range": "0-100%",
+      "preset_profiles": ["formal","casual","energetic"]
+    }
+  },
+  "screen_interaction": {
+    "screen_reading": {
+      "engine": "Tesseract minimal",
+      "capabilities": ["read text","summarize","highlight keywords","convert to speech","recognize tables","search text","capture region"],
+      "polling_interval_ms": 500
+    },
+    "screen_control": {
+      "engine": "PyAutoGUI",
+      "capabilities": ["mouse move/click","drag-drop","keyboard typing","window management","automation scripts","confirmation prompts"],
+      "permissions_prompt": true
+    }
+  },
+  "terminal_ui_ux": {
+    "boot_sequence": [
+      "[*        ] Initializing core...",
+      "[**       ] Loading offline models...",
+      "[***      ] Activating voice interface...",
+      "[****     ] Preparing screen modules...",
+      "[*****    ] Optimizing CPU/GPU footprint...",
+      "[******   ] Calibrating microphone...",
+      "[*******  ] Warming up NLP interpreter...",
+      "[******** ] Ready..."
+    ],
+    "idle_screen": {
+      "visual_style": "minimal terminal",
+      "hint_text": "Hold [SPACE] to talk or type 'help'",
+      "background_mode": "dark default",
+      "micro_animation": "pulse around hint every 2s"
+    },
+    "conversation_flow": {
+      "voice_input": true,
+      "text_input": true,
+      "interruptible": true,
+      "context_window": 3,
+      "fallback_to_text": true
+    },
+    "visual_feedback": {
+      "ascii_waveform": true,
+      "status_bar_elements": ["mic_status","mode_indicator","cpu_usage","network_status"],
+      "thinking_animation": "dots cycling",
+      "error_messages": ["misheard_voice","unknown_command","ocr_failure","action_denied"]
+    }
+  },
+  "memory_management": {
+    "short_term": {"location": "RAM", "max_turns": 3},
+    "long_term": {"encrypted_sqlite": true, "purpose": ["history","notes","preferences"], "prune_policy": "LRU semantic decay"}
+  },
+  "security_privacy": {
+    "permissions": ["microphone","keyboard/mouse optional"],
+    "offline_privacy": "100% local",
+    "online_security": ["HTTPS","optional API key encryption"],
+    "user_controls": ["pause","clear logs","toggle offline/online","custom wake word","disable microphone/screen control"]
+  },
+  "plugins_and_extensibility": {
+    "plugin_system": {
+      "sandboxed_scripts": true,
+      "max_memory_mb": 10,
+      "runtime": ["Python <1MB","quickjs","deno-lite"],
+      "permission_scopes": ["filesystem_read","filesystem_write","network_safe"]
+    }
+  },
+  "performance_optimizations": {
+    "lazy_load_modules": true,
+    "idle_sleep": true,
+    "memory_efficient_caching": true,
+    "low_thread_usage": true,
+    "sub100ms_wakeword_response": true
+  },
+  "automation_examples": {
+    "commands": [
+      "Auralis, read screen",
+      "Auralis, summarize output",
+      "Auralis, search screen for 'error'",
+      "Auralis, close window",
+      "Auralis, open browser and go to 'example.com'",
+      "Auralis, tell me a joke"
+    ]
+  },
+  "ux_cinematic_flows": {
+    "startup_sequence": "Boot animation with ASCII progress, waveform pulses, mic calibration, NLP load",
+    "conversation_sequence": "User speaks -> STT -> NLP -> Memory -> Response -> TTS -> Terminal waveform",
+    "screen_interaction_sequence": "User command -> OCR scan -> optional TTS summary -> optional control execution -> feedback"
+  },
+  "developer_notes": {
+    "code_from_scratch": true,
+    "trainable_models": ["offline_nlp","offline_stt","offline_tts","screen_ocr embeddings"],
+    "hf_online_only": true,
+    "modular_design": true,
+    "logging_minimal": true
+  }
+}
