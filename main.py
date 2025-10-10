@@ -33,6 +33,8 @@ from security import SecurityModule
 from performance import PerformanceOptimizerModule
 from plugins import PluginHostModule
 from model_training import ModelTrainingModule
+from external_api import ExternalAPIModule
+from backup_restore import BackupRestoreModule
 
 # Initialize modules
 ux = UXFlowManager(config)
@@ -52,6 +54,8 @@ security = SecurityModule(config, settings)
 performance = PerformanceOptimizerModule(config)
 plugins = PluginHostModule(config)
 training = ModelTrainingModule(config)
+external_api = ExternalAPIModule(config, security)
+backup_restore = BackupRestoreModule(config)
 
 # Current mode
 current_mode = 'offline'
@@ -210,15 +214,32 @@ def process_input(user_input):
             response = tts.customize_voice(**params)
         else:
             response = "Usage: customize voice speed=1.0 pitch=0 volume=80 voice=male"
-    elif user_input.lower().startswith('store api key '):
-        # Format: store api key service_name your_api_key_here
-        parts = user_input.split(' ', 4)
-        if len(parts) >= 5:
-            service = parts[3]
-            api_key = parts[4]
-            response = security.store_api_key(service, api_key)
+    elif user_input.lower().startswith('create backup'):
+        name = user_input.lower().replace('create backup', '').strip()
+        response = backup_restore.create_backup(name if name else None)
+    elif user_input.lower() == 'list backups':
+        backups = backup_restore.list_backups()
+        if backups:
+            backup_list = "\n".join([f"• {b['name']} ({b['size_mb']}MB) - {b['created_at']}" for b in backups])
+            response = f"Available backups:\n{backup_list}"
         else:
-            response = "Usage: store api key <service> <key>"
+            response = "No backups found"
+    elif user_input.lower().startswith('restore backup'):
+        name = user_input.lower().replace('restore backup', '').strip()
+        if name:
+            response = backup_restore.restore_backup(name)
+        else:
+            response = "Please specify backup name: restore backup <name>"
+    elif user_input.lower() == 'export conversations':
+        response = backup_restore.export_conversations('json')
+    elif user_input.lower().startswith('import conversations'):
+        path = user_input.lower().replace('import conversations', '').strip()
+        if path:
+            response = backup_restore.import_conversations(path)
+        else:
+            response = "Please specify import file path"
+    elif user_input.lower() == 'cleanup backups':
+        response = backup_restore.cleanup_old_backups()
     elif user_input.lower().startswith('get api key '):
         service = user_input.replace('get api key ', '').strip()
         api_key = security.get_api_key(service)
@@ -241,6 +262,38 @@ def process_input(user_input):
     elif user_input.lower() == 'training status':
         status = training.get_training_status()
         response = f"Training capabilities: {', '.join(status['supported_models'])}"
+    elif user_input.lower().startswith('weather'):
+        city = user_input.lower().replace('weather', '').strip() or 'New York'
+        response = external_api.get_weather(city)
+    elif user_input.lower().startswith('news'):
+        parts = user_input.lower().split()
+        category = parts[1] if len(parts) > 1 else 'technology'
+        response = external_api.get_news(category)
+    elif user_input.lower() == 'tell me a joke':
+        response = external_api.get_joke()
+    elif user_input.lower() == 'inspire me' or user_input.lower() == 'give me a quote':
+        response = external_api.get_quote()
+    elif user_input.lower().startswith('what time is it'):
+        tz = user_input.lower().replace('what time is it', '').replace('in', '').strip()
+        response = external_api.get_time(tz if tz else None)
+    elif user_input.lower().startswith('currency') or user_input.lower().startswith('exchange rate'):
+        parts = user_input.lower().split()
+        if len(parts) >= 4:
+            from_curr = parts[2].upper()
+            to_curr = parts[4].upper()
+            response = external_api.get_currency_rate(from_curr, to_curr)
+        else:
+            response = external_api.get_currency_rate()
+    elif user_input.lower().startswith('wikipedia') or user_input.lower().startswith('search wiki'):
+        query = user_input.lower().replace('wikipedia', '').replace('search wiki', '').strip()
+        if query:
+            response = external_api.search_wikipedia(query)
+        else:
+            response = "Please specify what to search on Wikipedia"
+    elif user_input.lower() == 'available services' or user_input.lower() == 'what can you do':
+        services = external_api.get_available_services()
+        service_list = "\n".join([f"• {name}: {desc}" for name, desc in services.items()])
+        response = f"I can help with:\n{service_list}\n\nPlus all the screen and voice features!"
     else:
         # Generate response
         ux.show_thinking_animation()
