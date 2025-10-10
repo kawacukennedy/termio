@@ -58,6 +58,21 @@
 - **Currency API**: Exchange rate calculations
 - **Wikipedia API**: Knowledge base search and summaries
 
+### 🤖 Advanced Automation
+- **Email Integration**: Send/receive emails with SMTP/IMAP
+- **Task Scheduling**: Schedule commands to run later
+- **Macro System**: Create and execute command sequences
+- **Web Scraping**: Extract data from websites
+- **File Operations**: Read, write, and manage files
+- **System Monitoring**: Comprehensive system information
+
+### 🌐 Web Dashboard
+- **Real-time Monitoring**: Live performance metrics and system status
+- **Remote Control**: Web interface for system management
+- **Backup Management**: View and manage backup archives
+- **Log Viewer**: Access and monitor system logs
+- **Control Panel**: Execute maintenance tasks remotely
+
 ### 💾 Data Management
 - **Backup System**: Complete system backups with compression
 - **Restore Functionality**: Selective or full system restoration
@@ -140,8 +155,21 @@ Auralis is designed to maintain a **<100MB footprint** as specified in config.js
 - "set language to es" - Switch to Spanish
 - "supported languages" - List available languages
 
+**Automation & Email:**
+- "send email to user@example.com" - Send automated emails
+- "check emails" - Read recent email messages
+- "schedule task reminder 5 say hello" - Schedule tasks
+- "create macro greeting say hello; wait 2; say how are you" - Create command macros
+- "run macro greeting" - Execute saved macros
+- "scrape website https://example.com" - Extract web content
+
+**Web Dashboard:**
+- "start dashboard" - Launch web monitoring interface
+- "dashboard status" - Check dashboard availability
+
 **System Management:**
 - "run cleanup" - Optimize app size and clean temp files
+- "system info" - Display comprehensive system information
 - "fine tune nlp training_data.txt" - Train custom NLP model
 - "plugin myplugin execute_command" - Run plugin commands
 - "training status" - Check model training capabilities
