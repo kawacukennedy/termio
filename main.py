@@ -32,6 +32,7 @@ from settings import SettingsModule
 from security import SecurityModule
 from performance import PerformanceOptimizerModule
 from plugins import PluginHostModule
+from model_training import ModelTrainingModule
 
 # Initialize modules
 ux = UXFlowManager(config)
@@ -50,6 +51,7 @@ settings = SettingsModule(config)
 security = SecurityModule(config, settings)
 performance = PerformanceOptimizerModule(config)
 plugins = PluginHostModule(config)
+training = ModelTrainingModule(config)
 
 # Current mode
 current_mode = 'offline'
@@ -224,6 +226,21 @@ def process_input(user_input):
             response = f"API key for {service}: {api_key[:8]}..."  # Show only first 8 chars
         else:
             response = f"No API key stored for {service}"
+    elif user_input.lower().startswith('fine tune nlp '):
+        data_path = user_input.lower().replace('fine tune nlp ', '').strip()
+        if os.path.exists(data_path):
+            response = "Starting NLP fine-tuning... This may take a while."
+            # Run in background thread
+            def train_nlp():
+                result = training.fine_tune_nlp(data_path)
+                print(f"NLP Training Complete: {result}")
+            import threading
+            threading.Thread(target=train_nlp, daemon=True).start()
+        else:
+            response = f"Training data file not found: {data_path}"
+    elif user_input.lower() == 'training status':
+        status = training.get_training_status()
+        response = f"Training capabilities: {', '.join(status['supported_models'])}"
     else:
         # Generate response
         ux.show_thinking_animation()
