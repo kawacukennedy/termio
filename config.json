@@ -56,7 +56,7 @@
     "screen_control":{"engine":"PyAutoGUI","capabilities":["mouse movement","clicks","drag-drop","keyboard typing","window management","automation scripts","confirmation prompts","coordinate/UI element interaction"]}
   },
   "terminal_ui_ux": {
-    "boot_sequence":{"ASCII_animation_frames":["[*        ] Initializing core...","[**       ] Loading offline models...","[***      ] Activating voice interface...","[****     ] Preparing screen modules...","[*****    ] Optimizing CPU/GPU footprint...","[******   ] Calibrating microphone...","[*******  ] Warming up NLP interpreter...","[******** ] Ready..."],"status_bar_elements":["mic_status","mode_indicator","cpu_usage","network_status"],"final_prompt":"Auralis ready. Press [SPACE] to talk or type a command."},
+    "boot_sequence":{"ASCII_animation_frames":["[ *       ] Initializing core...","[ **      ] Loading offline models...","[ ***     ] Activating voice interface...","[ ****    ] Preparing screen modules...","[ *****   ] Optimizing CPU/GPU footprint...","[ ******  ] Calibrating mic...","[  READY  ] Auralis ready — hold [SPACE] to speak"],"status_bar_elements":["mic_status","mode_indicator","cpu_usage","network_status"],"final_prompt":"Auralis ready — hold [SPACE] to speak, or type 'help'."},
     "idle_screen":{"visual_style":"minimal terminal","hint_text":"Hold [SPACE] to talk or type 'help'","background_mode":"dark default, toggleable","micro_animation":"pulse around hint every 2s"},
     "push_to_talk_flow":{"key":"SPACE","ui_feedback":["mic ON icon","ASCII waveform","status 'LISTENING...'"],"transcribing_state":{"indicator":"Processing...","thinking_animation":"dots cycling"},"interrupt_logic":"SPACE or 'Stop' halts TTS/STT"},
     "text_input_flow":{"auto_suggest":true,"submit_key":"ENTER","post_submit_animation":"thinking dots"},
@@ -81,11 +81,16 @@
       "offline_enabled": true,
       "hf_api_key": null,
       "tts_voice_profile": "male_default",
-      "wakeword_enabled": true,
+      "wakeword_enabled": false,
       "push_to_talk_key": "SPACE",
       "log_level": "INFO",
       "long_term_memory_enabled": false,
-      "auto_confirm_screen_actions": false
+      "auto_confirm_screen_actions": false,
+      "voice_mode": "neutral",
+      "ambient_listen": false,
+      "cloud_sync": false,
+      "telemetry": false,
+      "auto_update": true
     }
   }
 }

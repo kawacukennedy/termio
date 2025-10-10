@@ -15,3 +15,7 @@ cryptography
 transformers
 torch
 pytest
+sentence-transformers
+hnswlib
+selenium
+requests-oauthlib

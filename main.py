@@ -50,6 +50,7 @@ from plugins import PluginModule
 from offline_online_switch import OfflineOnlineSwitchModule
 from performance_optimizer import PerformanceOptimizerModule
 from security_privacy import SecurityAndPrivacyModule
+from task_orchestrator import TaskOrchestrator
 
 # Initialize core components
 memory = ConversationMemory(enable_long_term=True)
@@ -65,6 +66,7 @@ switch = OfflineOnlineSwitchModule()
 natural_dialogue = NaturalDialogueEngine(switch, memory)
 optimizer = PerformanceOptimizerModule()
 security = SecurityAndPrivacyModule()
+orchestrator = TaskOrchestrator(security, screen_control, screen_reader, tts, plugins)
 
 # Rich console
 console = Console() if HAS_RICH else None
@@ -298,13 +300,21 @@ def listen_thread():
         recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
         sd.wait()
         print("Recording finished.")
-        data = recording.flatten().tobytes()
-        print(f"Data length: {len(data)} bytes")
-        # Simple waveform
-        pcm = struct.unpack_from("h" * len(recording) // 2, data)
-        max_val = max(abs(x) for x in pcm) if pcm else 0
-        bars = int(max_val / 1000)
-        print('Waveform: ' + '|' * bars)
+         data = recording.flatten().tobytes()
+         print(f"Data length: {len(data)} bytes")
+         # ASCII waveform from spec
+         waveform_frames = [
+             "│   ▂   │",
+             "│  ▂█▂  │",
+             "│ ▂███▂ │",
+             "│▂█████▂│",
+             "│ ▂███▂ │",
+             "│  ▂█▂  │"
+         ]
+         for frame in waveform_frames:
+             print(f"Waveform: {frame}")
+             import time
+             time.sleep(0.04)  # 40ms per frame
         text = stt.transcribe(data)
         print(f"Heard: '{text}'" if text else "Heard: (nothing)")
         if text:
@@ -476,7 +486,13 @@ def simple_cli_text():
                     response = process_input(user_input)
                 console.print(f"[bold cyan]Auralis:[/bold cyan] {response}")
             else:
-                print("Processing...", end="", flush=True)
+                print("THINKING.", end="", flush=True)
+                import time
+                time.sleep(0.25)
+                print("\rTHINKING..", end="", flush=True)
+                time.sleep(0.25)
+                print("\rTHINKING...", end="", flush=True)
+                time.sleep(0.25)
                 response = process_input(user_input)
                 print("\r" + " " * 20 + "\r", end="")
                 print(f"Auralis: {response}")

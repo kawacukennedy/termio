@@ -21,11 +21,19 @@ class ScreenReaderModule:
     def read_screen_area(self, x=0, y=0, width=800, height=600):
         if not self.available:
             return "Tesseract not installed"
+        print("[SCAN] ░░░░░░░░ 0%")
         with mss.mss() as sct:
             monitor = {"top": y, "left": x, "width": width, "height": height}
             img = sct.grab(monitor)
+            print("[SCAN] █░░░░░░░ 12%")
             img = Image.frombytes("RGB", img.size, img.bgra, "raw", "BGRX")
+            print("[SCAN] ██░░░░░░ 25%")
             text = pytesseract.image_to_string(img)
+            print("[SCAN] ███░░░░░ 37%")
+            print("[SCAN] ████░░░░ 50%")
+            print("[SCAN] █████░░░ 62%")
+            print("[SCAN] ██████░░ 75%")
+            print("[SCAN] ████████ 100%")
             return text
 
     def summarize_content(self, text):
@@ -63,3 +71,31 @@ class ScreenReaderModule:
             if re.search(r'(\|.*\|)|(\t.*\t)|( {2,}.* {2,})', line):
                 table_lines.append(line)
         return '\n'.join(table_lines) if table_lines else "No tables detected"
+
+    def analyze_layout(self, image=None):
+        # Layout analysis using OpenCV for text blocks
+        import cv2
+        if image is None:
+            # Capture screen
+            with mss.mss() as sct:
+                monitor = sct.monitors[1]
+                img = sct.grab(monitor)
+                img = Image.frombytes("RGB", img.size, img.bgra, "raw", "BGRX")
+        else:
+            img = image
+        # Convert to CV2
+        img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        # Simple layout: find contours or use pytesseract with config
+        # For simplicity, use pytesseract with hOCR for bounding boxes
+        data = pytesseract.image_to_data(img_cv, output_type=pytesseract.Output.DICT)
+        layout = []
+        for i in range(len(data['text'])):
+            if int(data['conf'][i]) > 60:
+                layout.append({
+                    'text': data['text'][i],
+                    'x': data['left'][i],
+                    'y': data['top'][i],
+                    'w': data['width'][i],
+                    'h': data['height'][i]
+                })
+        return layout
