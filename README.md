@@ -88,14 +88,24 @@ git clone https://github.com/kawacukennedy/auralis.git
 cd auralis
 
 # Install dependencies (example - adjust for your system)
-pip install vosk pyaudio pvporcupine transformers torch pytesseract pyautogui cryptography psutil
+pip install vosk pyaudio pvporcupine transformers torch pytesseract pyautogui cryptography psutil requests
 
 # Make executable
 chmod +x bin/auralis
 
+# Run cleanup to optimize size (maintains <100MB footprint)
+python3 scripts/cleanup.py
+
 # Run
 ./bin/auralis
 ```
+
+### Size Optimization
+Auralis is designed to maintain a **<100MB footprint** as specified in config.json:
+- **Current size**: ~85MB (after cleanup)
+- **Automatic cleanup**: Run `python3 scripts/cleanup.py` or say "run cleanup"
+- **Size monitoring**: Built-in compliance checking
+- **Lazy loading**: Models downloaded only when needed
 
 ### Basic Usage
 1. **Voice Commands**: Say "Auralis" to wake, then speak your command
@@ -130,7 +140,8 @@ chmod +x bin/auralis
 - "set language to es" - Switch to Spanish
 - "supported languages" - List available languages
 
-**Advanced Features:**
+**System Management:**
+- "run cleanup" - Optimize app size and clean temp files
 - "fine tune nlp training_data.txt" - Train custom NLP model
 - "plugin myplugin execute_command" - Run plugin commands
 - "training status" - Check model training capabilities
