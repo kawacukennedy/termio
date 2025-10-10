@@ -16,6 +16,17 @@ except ImportError:
     HAS_SOUNDDEVICE = False
     sd = None
 
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.text import Text
+    from rich.live import Live
+    from rich.columns import Columns
+    from rich.align import Align
+    HAS_RICH = True
+except ImportError:
+    HAS_RICH = False
+
 # Load config
 with open('config.json', 'r') as f:
     config = json.load(f)
@@ -47,12 +58,16 @@ settings = Settings()
 plugins = PluginModule()
 plugins.load_plugins()
 tts = TextToSpeechModule(online_mode=True)
+tts.set_voice(settings.get('tts_voice_profile', 'male_default'))
 screen_reader = ScreenReaderModule(tts_module=tts)
 screen_control = ScreenControlModule()
 switch = OfflineOnlineSwitchModule()
-natural_dialogue = NaturalDialogueEngine(switch)
+natural_dialogue = NaturalDialogueEngine(switch, memory)
 optimizer = PerformanceOptimizerModule()
 security = SecurityAndPrivacyModule()
+
+# Rich console
+console = Console() if HAS_RICH else None
 
 # Voice components
 hotkey = ' '  # SPACE for push-to-talk
@@ -243,40 +258,34 @@ def process_voice(text):
         print(f"Voice input: {text}")
         print(f"Response: {response}")
 
-def wake_thread():
+def continuous_listen():
     if not HAS_SOUNDDEVICE:
         return
-    from pvporcupine import create
-    import struct
-    access_key = os.getenv('PICOVOICE_ACCESS_KEY')
-    if not access_key:
-        print("PICOVOICE_ACCESS_KEY not set. Using fallback STT for wake word.")
-        # Fallback to STT
-        import queue
-        q = queue.Queue()
-        def audio_callback(indata, frames, time, status):
-            q.put(indata.copy())
-        with sd.InputStream(callback=audio_callback, channels=1, samplerate=16000, blocksize=8000):
-            while True:
-                data = q.get()
-                pcm = data.flatten().astype('int16').tobytes()
-                text = stt.transcribe(pcm) if stt else None
-                if text and 'auralis' in text.lower():
-                    listen_thread()
-        return
-    try:
-        handle = create(access_key=access_key, keywords=['auralis'])
-        def audio_callback(indata, frames, time, status):
-            pcm = indata.flatten().astype('int16')
-            if handle.process(pcm) >= 0:
-                listen_thread()
-        with sd.InputStream(callback=audio_callback, channels=1, samplerate=16000, blocksize=handle.frame_length):
-            print("Listening for wake word 'Auralis' with Porcupine...")
-            while True:
-                pass
-    except Exception as e:
-        print(f"Porcupine failed: {e}. Using STT fallback.")
-        # Fallback code
+    print("Continuous listening mode...")
+    import queue
+    q = queue.Queue()
+    def audio_callback(indata, frames, time, status):
+        q.put(indata.copy())
+    with sd.InputStream(callback=audio_callback, channels=1, samplerate=16000, blocksize=8000):
+        buffer = []
+        silence_count = 0
+        while True:
+            data = q.get()
+            pcm = data.flatten().astype('int16').tobytes()
+            text = stt.transcribe(pcm) if stt else None
+            if text and len(text.strip()) > 0:
+                print(f"Heard: {text}")
+                buffer.append(text)
+                silence_count = 0
+            else:
+                silence_count += 1
+            if silence_count > 5 and buffer:  # After 5 silent chunks, process buffer
+                full_text = ' '.join(buffer)
+                if len(full_text.strip()) > 3:  # Minimum length
+                    print(f"Processing: {full_text}")
+                    process_voice(full_text)
+                buffer = []
+                silence_count = 0
 
 def listen_thread():
     if not HAS_SOUNDDEVICE or not stt:
@@ -332,13 +341,15 @@ def main_curses(stdscr):
     stdscr.clear()
 
     # Boot sequence
-    boot_frames = config['terminal_ui_ux']['boot_sequence']['ASCII_animation_frames']
+    boot_frames = config['startup_flow']['terminal_boot_sequence']['animation_frames']
+    frame_duration = config['startup_flow']['terminal_boot_sequence']['frame_duration_ms']
     for frame in boot_frames:
         stdscr.clear()
         stdscr.addstr(0, 0, frame, curses.color_pair(7))
         stdscr.refresh()
-        curses.napms(500)  # 0.5s per frame
-    stdscr.addstr(1, 0, config['terminal_ui_ux']['boot_sequence']['final_prompt'], curses.color_pair(4))
+        curses.napms(frame_duration)
+    final_prompt = config['startup_flow']['terminal_boot_sequence']['final_prompt_text']
+    stdscr.addstr(1, 0, final_prompt, curses.color_pair(4))
     stdscr.refresh()
     curses.napms(2000)  # Show for 2s
     stdscr.clear()
@@ -436,21 +447,45 @@ def main_curses(stdscr):
         optimizer.optimize()  # Sleep if idle
 
 def simple_cli_text():
-    print("\n" + "="*50)
-    print("  ___  _   _ _   _ _ _   ")
-    print(" / _ \\| | | | | | | | |  ")
-    print("| | | | | | | | | | | |  ")
-    print("| | | | |_| | |_| | | |  ")
-    print("|_| |_|\\___/ \\___/|_|_|  ")
-    print("Terminal AI Assistant - Text Mode")
-    print("="*50)
-    print("Type 'help' for commands, 'quit' to exit.\n")
+    if console:
+        title = Text("Auralis - Terminal AI Assistant", style="bold blue")
+        panel = Panel(title, title_align="center", border_style="blue")
+        console.print(panel)
+        console.print("Type 'help' for commands, 'quit' to exit.\n", style="dim")
+    else:
+        print("\n" + "="*50)
+        print("  ___  _   _ _   _ _ _   ")
+        print(" / _ \| | | | | | | | |  ")
+        print("| | | | | | | | | | | |  ")
+        print("| | | | |_| | |_| | | |  ")
+        print("|_| |_|\\___/ \\___/|_|_|  ")
+        print("Terminal AI Assistant - Text Mode")
+        print("="*50)
+        print("Type 'help' for commands, 'quit' to exit.\n")
     while True:
         try:
-            user_input = input("You: ")
+            user_input = input("You: ") if not console else console.input("You: ")
             if user_input.lower() == 'quit':
-                print("Goodbye!")
+                if console:
+                    console.print("Goodbye!", style="green")
+                else:
+                    print("Goodbye!")
                 break
+            if console:
+                with console.status("[bold green]Processing..."):
+                    response = process_input(user_input)
+                console.print(f"[bold cyan]Auralis:[/bold cyan] {response}")
+            else:
+                print("Processing...", end="", flush=True)
+                response = process_input(user_input)
+                print("\r" + " " * 20 + "\r", end="")
+                print(f"Auralis: {response}")
+        except KeyboardInterrupt:
+            if console:
+                console.print("\nGoodbye!", style="green")
+            else:
+                print("\nGoodbye!")
+            break
             print("Processing...", end="", flush=True)
             response = process_input(user_input)
             print("\r" + " " * 20 + "\r", end="")
@@ -461,11 +496,11 @@ def simple_cli_text():
 
 def simple_cli_voice():
     print("\n" + "="*50)
-    print("  ___  _   _ _   _ _ _   ")
-    print(" / _ \\| | | | | | | | |  ")
-    print("| | | | | | | | | | | |  ")
-    print("| | | | |_| | |_| | | |  ")
-    print("|_| |_|\\___/ \\___/|_|_|  ")
+    print(r"  ___  _   _ _   _ _ _   ")
+    print(r" / _ \ | | | | | | | | |  ")
+    print(r"| | | | | | | | | | | |  ")
+    print(r"| | | | |_| | |_| | | |  ")
+    print(r"|_| |_| \___/ \___/|_|_|  ")
     print("Terminal AI Assistant - Voice Mode")
     print("="*50)
     print("Hello Sir!")
@@ -474,8 +509,8 @@ def simple_cli_voice():
         print("Voice input not available. Falling back to text mode.")
         simple_cli_text()
         return
-    threading.Thread(target=wake_thread, daemon=True).start()
-    print("Listening for wake word 'Auralis'... Press Ctrl+C to exit.")
+    threading.Thread(target=continuous_listen, daemon=True).start()
+    print("Continuous listening active. Speak naturally. Press Ctrl+C to exit.")
     try:
         while True:
             pass
@@ -492,8 +527,8 @@ def simple_cli():
         print("Voice not available, falling back to text-only.")
         voice_enabled = False
     if voice_enabled:
-        threading.Thread(target=wake_thread, daemon=True).start()
-        print("Voice mode enabled. Say 'Auralis' to wake, then speak.")
+        threading.Thread(target=continuous_listen, daemon=True).start()
+        print("Voice mode enabled. Continuous listening active.")
     while True:
         user_input = input("> ")
         if user_input.lower() == 'quit':

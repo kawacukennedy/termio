@@ -28,37 +28,6 @@
       "visual_elements": ["status_bar","waveform_visualization","prompt_text","scrollable output","error messages","mini-progress bars","interactive hints"]
     }
   },
-  "architecture": {
-    "layers": [
-      "Input Layer: microphone (push-to-talk), wake word detection, keyboard input, text input fallback",
-      "Processing Layer: HuggingFace NLP API, lightweight offline NLP engine, command parser, screen OCR, screen control executor, conversation memory manager, natural dialogue engine, error handling",
-      "Output Layer: HuggingFace TTS API, offline TTS fallback, terminal text output, screen action executor, visual feedback"
-    ],
-    "modules": [
-      "WakeWordDetectionModule",
-      "HuggingFaceSTTModule",
-      "OfflineSTTModule",
-      "HuggingFaceNLPModule",
-      "OfflineNLPModule",
-      "HuggingFaceTTSModule",
-      "OfflineTTSModule",
-      "ScreenReaderModule",
-      "ScreenControlModule",
-      "ConversationMemoryModule",
-      "LoggingAndStorageModule",
-      "SettingsModule",
-      "PluginModule",
-      "SecurityAndPrivacyModule",
-      "PerformanceOptimizerModule",
-      "OfflineOnlineSwitchModule",
-      "NaturalDialogueEngine",
-      "ErrorHandlingModule",
-      "HelpMenuModule",
-      "ThemeManagerModule",
-      "CommandParserModule",
-      "FeedbackVisualizerModule"
-    ]
-  },
   "offline_mode": {
     "description": "Casual conversation, screen reading, and control without internet",
     "STT_engine": {"type":"Vosk tiny","size":"~20MB","cpu_only":true,"push_to_talk":true,"wake_word_support":true,"latency_ms":"<100"},
@@ -105,5 +74,18 @@
   "security_privacy":{"permissions":["microphone","keyboard/mouse optional"],"offline_privacy":"100% local processing","online_security":["HTTPS API calls","optional API key encryption"],"user_control":["pause","clear logs","toggle offline/online","custom wake word","disable microphone/screen control"]},
   "extensibility":{"plugin_system":{"user_scripts":"Python <1MB dynamically loadable","examples":["calculator","weather","automation"]}},
   "performance_requirements":{"minimum":{"RAM":"2GB","CPU":"dual-core 1.5GHz","GPU":"optional"},"optimization_strategies":["lazy-load","idle sleep","sub-100ms wake word response","compress logs","memory-efficient caching","CPU/GPU-efficient inference","offline-prioritized execution"]},
-  "example_commands":{"voice":["Auralis, what time is it?","Auralis, read screen","Auralis, summarize output","Auralis, close window","Auralis, search screen for 'error'","Auralis, open browser and go to 'example.com'","Auralis, tell me a joke","Auralis, explain this output"],"chat":["Explain basic math","Tell a joke","Translate 'Hola' to English","Summarize last terminal output","Open browser","Define 'quantum computing'","Provide a summary of this document"]}
+  "example_commands":{"voice":["Auralis, what time is it?","Auralis, read screen","Auralis, summarize output","Auralis, close window","Auralis, search screen for 'error'","Auralis, open browser and go to 'example.com'","Auralis, tell me a joke","Auralis, explain this output"],"chat":["Explain basic math","Tell a joke","Translate 'Hola' to English","Summarize last terminal output","Open browser","Define 'quantum computing'","Provide a summary of this document"]},
+  "settings_and_persistence": {
+    "config_file": "~/.auralis/config.json",
+    "default_settings": {
+      "offline_enabled": true,
+      "hf_api_key": null,
+      "tts_voice_profile": "male_default",
+      "wakeword_enabled": true,
+      "push_to_talk_key": "SPACE",
+      "log_level": "INFO",
+      "long_term_memory_enabled": false,
+      "auto_confirm_screen_actions": false
+    }
+  }
 }

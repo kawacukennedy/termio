@@ -2,8 +2,9 @@ vosk
 pyttsx3
 pytesseract
 pyautogui
-transformers
-torch
+rich
+click
+requests
 sounddevice
 numpy
 pillow
@@ -11,5 +12,6 @@ opencv-python
 mss
 pynput
 cryptography
-requests
+transformers
+torch
 pytest
