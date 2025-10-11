@@ -1,9 +1,20 @@
 import pytesseract
-import pyautogui
+try:
+    import pyautogui
+    PYAUTOGUI_AVAILABLE = True
+except ImportError:
+    PYAUTOGUI_AVAILABLE = False
+    print("Warning: pyautogui not available. Screen capture will not work.")
+
 from PIL import Image
 import time
-import cv2
-import numpy as np
+try:
+    import cv2
+    import numpy as np
+    OPENCV_AVAILABLE = True
+except ImportError:
+    OPENCV_AVAILABLE = False
+    print("Warning: OpenCV not available. Advanced OCR features disabled.")
 
 class ScreenReaderModule:
     def __init__(self, config):
@@ -16,6 +27,11 @@ class ScreenReaderModule:
         pass
 
     def read_screen(self, region=None):
+        try:
+            import pyautogui
+        except ImportError:
+            return "Screen capture not available (pyautogui not installed)"
+
         # Capture screen or region
         if region:
             screenshot = pyautogui.screenshot(region=region)
@@ -72,6 +88,11 @@ class ScreenReaderModule:
 
     def recognize_tables(self, image=None):
         """Extract tables from screen or image"""
+        if not PYAUTOGUI_AVAILABLE:
+            return []
+        if not OPENCV_AVAILABLE:
+            return []
+
         if image is None:
             image = pyautogui.screenshot()
 
@@ -137,11 +158,15 @@ class ScreenReaderModule:
 
     def get_screen_resolution(self):
         """Get current screen resolution"""
+        if not PYAUTOGUI_AVAILABLE:
+            return (0, 0)
         screen_width, screen_height = pyautogui.size()
         return screen_width, screen_height
 
     def capture_window(self, window_title=None):
         """Capture specific window content"""
+        if not PYAUTOGUI_AVAILABLE:
+            return "Screen capture not available"
         # This would require additional libraries like pygetwindow
         # For now, return full screen
         return self.read_screen()

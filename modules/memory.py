@@ -17,14 +17,21 @@ class ConversationMemoryModule:
 
     def _load_or_generate_key(self):
         key_file = 'memory_key.key'
-        if os.path.exists(key_file):
+        if os.path.exists(key_file) and os.path.getsize(key_file) > 0:
             with open(key_file, 'rb') as f:
-                return f.read()
-        else:
-            key = Fernet.generate_key()
-            with open(key_file, 'wb') as f:
-                f.write(key)
-            return key
+                key = f.read()
+                # Validate the key
+                try:
+                    Fernet(key)
+                    return key
+                except:
+                    pass  # Invalid key, generate new one
+
+        # Generate new key
+        key = Fernet.generate_key()
+        with open(key_file, 'wb') as f:
+            f.write(key)
+        return key
 
     def _init_db(self):
         self.conn.execute('''CREATE TABLE IF NOT EXISTS turns (

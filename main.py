@@ -48,7 +48,7 @@ except ImportError:
 from screen_reader import ScreenReaderModule
 from screen_control import ScreenControlModule
 from memory import ConversationMemoryModule
-from logging import LoggingModule
+from modules.logging import LoggingModule
 from settings import SettingsModule
 from security import SecurityModule
 from performance import PerformanceOptimizerModule
