@@ -161,9 +161,21 @@ def switch_mode(new_mode):
         return f"Already in {new_mode} mode."
 
     if new_mode == 'online':
-        stt = stt_online
-        nlp = nlp_online
-        tts = tts_online
+        if stt_online:
+            stt = stt_online
+        else:
+            stt = stt_offline
+            print("Warning: Online STT not available, using offline")
+        if nlp_online:
+            nlp = nlp_online
+        else:
+            nlp = nlp_offline
+            print("Warning: Online NLP not available, using offline")
+        if tts_online:
+            tts = tts_online
+        else:
+            tts = tts_offline
+            print("Warning: Online TTS not available, using offline")
         ux.update_status('network_status', 'online')
     elif new_mode == 'offline':
         stt = stt_offline

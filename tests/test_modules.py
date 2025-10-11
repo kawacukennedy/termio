@@ -62,10 +62,21 @@ class TestAuralisModules(unittest.TestCase):
         ux.show_error_message('misheard_voice')
         # Should not raise exception
 
-    @patch('memory.Fernet.generate_key', return_value=b'test_key')
-    @patch.dict('sys.modules', {'cryptography': MagicMock(), 'cryptography.fernet': MagicMock(), 'sqlite3': MagicMock()})
-    def test_memory_module(self, mock_generate_key):
+    @patch('memory.Fernet')
+    @patch('memory.sqlite3')
+    def test_memory_module(self, mock_sqlite, mock_fernet):
         """Test memory module basic functionality"""
+        # Mock Fernet
+        mock_fernet.generate_key.return_value = b'test_key'
+        mock_fernet.return_value.encrypt.return_value = b'encrypted'
+        mock_fernet.return_value.decrypt.return_value = b'decrypted'
+
+        # Mock sqlite3
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_sqlite.connect.return_value = mock_conn
+
         from memory import ConversationMemoryModule
 
         memory = ConversationMemoryModule(self.mock_config)
@@ -84,9 +95,11 @@ class TestAuralisModules(unittest.TestCase):
         result = settings.get_setting('app_identity.name')
         self.assertEqual(result, 'Auralis')
 
-    @patch.dict('sys.modules', {'cryptography': MagicMock(), 'cryptography.fernet': MagicMock()})
-    def test_security_module(self):
+    @patch('security.Fernet')
+    def test_security_module(self, mock_fernet):
         """Test security module"""
+        mock_fernet.generate_key.return_value = b'test_key'
+
         from security import SecurityModule
 
         security = SecurityModule(self.mock_config)
