@@ -12,6 +12,10 @@ class UXFlowManager:
         self.voice_active = False
         self.memory_module = None
 
+    def update_status(self, key, value):
+        """Update status bar element"""
+        self.status_bar[key] = value
+
     def show_boot_sequence(self):
         """Cinematic boot sequence with enhanced visuals"""
         print("🚀 Initializing Auralis...\n")
@@ -197,10 +201,7 @@ class UXFlowManager:
         # Clear final waveform
         print(" " * (amplitude * amplitude))
 
-    def show_thinking_animation(self):
-        dots = "." * ((self.thinking_dots % 3) + 1)
-        print(f"Thinking{dots}", end="\r", flush=True)
-        self.thinking_dots += 1
+
 
     def stop_thinking_animation(self):
         print(" " * 20, end="\r", flush=True)

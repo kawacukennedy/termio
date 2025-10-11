@@ -57,14 +57,16 @@ class SecurityModule:
         """Securely store API key"""
         encrypted = self.encrypt_api_key(api_key)
         # Store in settings or secure location
-        settings.set_setting(f"api_keys.{service}", encrypted)
+        if hasattr(self, 'settings') and self.settings:
+            self.settings.set_setting(f"api_keys.{service}", encrypted)
         return f"API key for {service} stored securely"
 
     def get_api_key(self, service):
         """Retrieve and decrypt API key"""
-        encrypted = settings.get_setting(f"api_keys.{service}")
-        if encrypted:
-            return self.decrypt_api_key(encrypted)
+        if hasattr(self, 'settings') and self.settings:
+            encrypted = self.settings.get_setting(f"api_keys.{service}")
+            if encrypted:
+                return self.decrypt_api_key(encrypted)
         return None
 
     def encrypt_data(self, data):

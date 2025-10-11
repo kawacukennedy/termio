@@ -50,13 +50,25 @@ class ConversationMemoryModule:
         self.conn.commit()
 
     def get_recent_turns(self, n=3):
-        cursor = self.conn.execute("SELECT user, ai FROM turns ORDER BY id DESC LIMIT ?", (n,))
+        cursor = self.conn.execute("SELECT user, ai, timestamp FROM turns ORDER BY id DESC LIMIT ?", (n,))
         turns = []
         for row in cursor:
             user = self.cipher.decrypt(row[0]).decode()
             ai = self.cipher.decrypt(row[1]).decode()
-            turns.append({'user': user, 'ai': ai})
+            timestamp = row[2]
+            turns.append({'user': user, 'ai': ai, 'timestamp': timestamp})
         return turns[::-1]  # Reverse to chronological order
+
+    def get_all_conversations(self):
+        """Get all conversations for export"""
+        cursor = self.conn.execute("SELECT user, ai, timestamp FROM turns ORDER BY id")
+        conversations = []
+        for row in cursor:
+            user = self.cipher.decrypt(row[0]).decode()
+            ai = self.cipher.decrypt(row[1]).decode()
+            timestamp = row[2]
+            conversations.append((user, ai, timestamp))
+        return conversations
 
     def prune_memory(self):
         # LRU pruning - keep only recent entries

@@ -145,7 +145,7 @@ class BackupRestoreModule:
         """Export conversations to file"""
         export_path = None
         try:
-            conversations = self.memory_module.get_all_conversations()
+            conversations = self.memory_module.get_recent_turns(1000) if self.memory_module else []
 
             if format == 'json':
                 # Export as JSON
