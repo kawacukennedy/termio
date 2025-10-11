@@ -165,6 +165,5 @@ class PerformanceOptimizerModule:
 
         cpu = f"CPU:{status['cpu_percent']:.1f}%"
         mem = f"MEM:{status['memory_percent']:.1f}%"
-        gpu = f"GPU:{status['gpu_percent']:.1f}%" if status['gpu_percent'] != 'N/A' else "GPU:N/A"
 
-        return f"{cpu} {mem} {gpu}"
+        return f"{cpu} {mem}"
