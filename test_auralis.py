@@ -29,6 +29,9 @@ def run_tests():
         env=env
     )
 
+    # Give it time to start
+    time.sleep(15)
+
     # Wait for startup
     time.sleep(15)
 

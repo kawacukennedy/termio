@@ -13,6 +13,7 @@ class TTSModuleOffline:
 
         # Voice profiles
         self.profiles = {
+            'neutral': {'voice': 'en+m1', 'speed': 1.0, 'pitch': 0, 'volume': 80},
             'formal': {'voice': 'en+m3', 'speed': 0.9, 'pitch': -1, 'volume': 85},
             'casual': {'voice': 'en+m2', 'speed': 1.0, 'pitch': 0, 'volume': 90},
             'energetic': {'voice': 'en+f2', 'speed': 1.1, 'pitch': 2, 'volume': 95}
