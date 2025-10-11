@@ -115,6 +115,10 @@ plugins.load_plugins()
 ux.show_boot_sequence()
 ux.update_status('mode_indicator', 'offline')
 ux.update_status('network_status', 'offline')
+
+# Start web dashboard
+dashboard.start()
+
 print("Auralis ready")
 
 # Idle
@@ -477,8 +481,13 @@ def process_input(user_input):
 voice_thread = threading.Thread(target=voice_loop, daemon=True)
 voice_thread.start()
 
-push_to_talk_thread = threading.Thread(target=push_to_talk_loop, daemon=True)
-push_to_talk_thread.start()
+# Only start push-to-talk if keyboard is available
+try:
+    import keyboard
+    push_to_talk_thread = threading.Thread(target=push_to_talk_loop, daemon=True)
+    push_to_talk_thread.start()
+except ImportError:
+    print("Push-to-talk thread not started (keyboard module not available)")
 
 # Start performance monitoring thread
 def performance_monitor():
