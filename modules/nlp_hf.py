@@ -5,7 +5,7 @@ class NLPModuleHFAPI:
     def __init__(self, config, security_module=None):
         self.config = config
         self.security = security_module
-        self.api_url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-small"
+        self.api_url = "https://api-inference.huggingface.co/models/gpt2"
         self.headers = {}
         self.last_used = 0
 
