@@ -33,6 +33,7 @@ except ImportError:
     print("Warning: Online features not available (missing requests)")
 
 from nlp_offline import NLPModuleOffline
+from tts_offline import TTSModuleOffline
 
 from screen_reader import ScreenReaderModule
 from screen_control import ScreenControlModule
