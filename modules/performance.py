@@ -12,6 +12,8 @@ class PerformanceOptimizerModule:
         self.idle_sleep_enabled = self.optimizations.get('idle_sleep', True)
         self.memory_cache = {}
         self.chunked_inference_enabled = True
+        self.active_models = {}
+        self.start_time = time.time()
 
     def monitor_cpu(self):
         return psutil.cpu_percent(interval=1)
