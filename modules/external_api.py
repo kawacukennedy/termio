@@ -13,7 +13,10 @@ class ExternalAPIModule:
             'joke': 'https://official-joke-api.appspot.com/random_joke',
             'quote': 'https://api.quotable.io/random',
             'time': 'http://worldtimeapi.org/api/ip',
-            'currency': 'https://api.exchangerate-api.com/v4/latest/USD'
+            'currency': 'https://api.exchangerate-api.com/v4/latest/USD',
+            'stock': 'https://www.alphavantage.co/query',
+            'recipe': 'https://www.themealdb.com/api/json/v1/1/random.php',
+            'wikipedia': 'https://en.wikipedia.org/api/rest_v1/page/summary/'
         }
 
     def get_weather(self, city='New York'):
@@ -143,6 +146,48 @@ class ExternalAPIModule:
                 return "Currency service error"
         except Exception as e:
             return f"Currency service unavailable: {e}"
+
+    def get_stock_price(self, symbol='AAPL'):
+        """Get stock price information"""
+        api_key = self.security.get_api_key('alphavantage')
+        if not api_key:
+            return "Alpha Vantage API key not configured. Use 'store api key alphavantage YOUR_KEY'"
+
+        try:
+            params = {
+                'function': 'GLOBAL_QUOTE',
+                'symbol': symbol.upper(),
+                'apikey': api_key
+            }
+            response = requests.get(self.api_endpoints['stock'], params=params, timeout=10)
+            data = response.json()
+
+            if response.status_code == 200 and 'Global Quote' in data:
+                quote = data['Global Quote']
+                price = quote.get('05. price', 'N/A')
+                change = quote.get('09. change', 'N/A')
+                return f"{symbol.upper()}: ${price} (Change: {change})"
+            else:
+                return f"Stock data for {symbol} not found"
+        except Exception as e:
+            return f"Stock service unavailable: {e}"
+
+    def get_recipe(self):
+        """Get a random recipe"""
+        try:
+            response = requests.get(self.api_endpoints['recipe'], timeout=10)
+            data = response.json()
+
+            if response.status_code == 200 and data.get('meals'):
+                meal = data['meals'][0]
+                name = meal.get('strMeal', 'Unknown')
+                category = meal.get('strCategory', 'Unknown')
+                instructions = meal.get('strInstructions', 'No instructions')
+                return f"Recipe: {name}\nCategory: {category}\nInstructions: {instructions[:200]}..."
+            else:
+                return "No recipe found"
+        except Exception as e:
+            return f"Recipe service unavailable: {e}"
 
     def search_wikipedia(self, query):
         """Search Wikipedia for information"""

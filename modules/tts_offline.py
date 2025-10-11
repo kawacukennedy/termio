@@ -45,7 +45,67 @@ class TTSModuleOffline:
 
         return f"Voice customized: {self.profiles[self.current_profile]}"
 
-    def speak(self, text, voice=None, speed=None, pitch=None, volume=None):
+    def _preprocess_text(self, text):
+        """Preprocess text for better TTS"""
+        import re
+
+        # Expand abbreviations
+        abbreviations = {
+            'Dr.': 'Doctor',
+            'Mr.': 'Mister',
+            'Mrs.': 'Misses',
+            'Ms.': 'Miss',
+            'vs.': 'versus',
+            'etc.': 'et cetera',
+            'i.e.': 'that is',
+            'e.g.': 'for example',
+            'approx.': 'approximately',
+            'min.': 'minimum',
+            'max.': 'maximum'
+        }
+
+        for abbr, full in abbreviations.items():
+            text = re.sub(r'\b' + re.escape(abbr) + r'\b', full, text, flags=re.IGNORECASE)
+
+        # Handle numbers (simple cases)
+        text = re.sub(r'\b(\d{1,2})\b', lambda m: self._number_to_words(int(m.group(1))), text)
+
+        # Clean up punctuation
+        text = re.sub(r'\s+', ' ', text)  # Multiple spaces
+        text = re.sub(r'([.!?])\1+', r'\1', text)  # Multiple punctuation
+
+        return text.strip()
+
+    def _number_to_words(self, num):
+        """Convert small numbers to words"""
+        words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+                'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
+        return words[num] if 0 <= num < len(words) else str(num)
+
+    def stop_speaking(self):
+        """Stop current speech"""
+        if self.current_process and self.is_speaking:
+            try:
+                os.killpg(os.getpgid(self.current_process.pid), signal.SIGTERM)
+                self.current_process = None
+                self.is_speaking = False
+                return True
+            except:
+                pass
+        return False
+
+    def speak(self, text, voice=None, speed=None, pitch=None, volume=None, interruptible=True):
+        """Enhanced speech synthesis with preprocessing"""
+        if not text or not text.strip():
+            return
+
+        # Stop any current speech if interruptible
+        if interruptible and self.is_speaking:
+            self.stop_speaking()
+
+        # Preprocess text for better speech
+        processed_text = self._preprocess_text(text)
+
         # Use profile settings or overrides
         profile = self.profiles.get(self.current_profile, self.profiles['neutral'])
 
@@ -59,42 +119,45 @@ class TTSModuleOffline:
 
         # Use espeak-ng for TTS
         try:
-            # Map voice to espeak voice
-            voice_map = {
-                'male': 'en+m1',
-                'female': 'en+f1',
-                'neutral': 'en'
-            }
-            espeak_voice = voice_map.get(voice, voice)  # Allow custom voices
-
-            # Adjust speed (80-450 wpm, default 175)
-            speed_wpm = int(175 * speed)
-            speed_wpm = max(80, min(450, speed_wpm))
-
-            # Adjust pitch (-3 to +3, map to -10% to +10%)
-            pitch_percent = pitch * 10
-
-            # Volume 0-100
-            volume = max(0, min(100, volume))
-
+            # Build espeak command with enhanced options
             cmd = [
                 'espeak-ng',
-                '-v', espeak_voice,
-                '-s', str(speed_wpm),
-                '-p', str(50 + pitch_percent),  # pitch 0-100
-                '-a', str(volume),
-                text
+                '-v', voice,
+                '-s', str(int(175 * speed)),  # Speed in words per minute
+                '-p', str(50 + pitch * 10),   # Pitch (0-100, default 50)
+                '-a', str(volume),            # Amplitude/volume
+                '-g', '2',                    # Word gap
+                '-m'                          # Interpret SSML markup
             ]
 
+            # Add text (processed)
+            cmd.append(processed_text)
+
+            # Execute in background
+            self.current_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                preexec_fn=os.setsid
+            )
             self.is_speaking = True
-            self.current_process = subprocess.Popen(cmd)
-            self.current_process.wait()
-            self.is_speaking = False
+
+            # Monitor process in background
+            def monitor_speech():
+                if self.current_process:
+                    self.current_process.wait()
+                self.is_speaking = False
+                self.current_process = None
+
+            threading.Thread(target=monitor_speech, daemon=True).start()
+
+        except FileNotFoundError:
+            print("espeak-ng not found. Install with: sudo apt install espeak-ng")
         except Exception as e:
             print(f"TTS error: {e}")
+            self.is_speaking = False
             # Fallback to print
             print(f"[TTS]: {text}")
-            self.is_speaking = False
 
     def stop(self):
         """Stop current speech"""
@@ -109,3 +172,8 @@ class TTSModuleOffline:
                     pass
             self.is_speaking = False
             self.current_process = None
+
+    def unload_model(self):
+        """Unload TTS resources"""
+        self.stop()  # Stop any current speech
+        # espeak-ng doesn't load large models, so just clean up

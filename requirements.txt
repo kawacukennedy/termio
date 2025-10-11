@@ -1,0 +1,15 @@
+cryptography
+psutil
+pvporcupine
+vosk
+flask
+pyautogui
+pytesseract
+pygame
+speechrecognition
+gtts
+requests
+beautifulsoup4
+lxml
+schedule
+pyyaml

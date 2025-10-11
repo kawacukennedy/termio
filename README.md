@@ -102,8 +102,8 @@
 git clone https://github.com/kawacukennedy/auralis.git
 cd auralis
 
-# Install dependencies (example - adjust for your system)
-pip install vosk pyaudio pvporcupine transformers torch pytesseract pyautogui cryptography psutil requests
+# Install dependencies
+pip install -r requirements.txt
 
 # Make executable
 chmod +x bin/auralis
@@ -117,7 +117,7 @@ python3 scripts/cleanup.py
 
 ### Size Optimization
 Auralis is designed to maintain a **<100MB footprint** as specified in config.json:
-- **Current size**: ~85MB (after cleanup)
+- **Current size**: ~87MB (after cleanup)
 - **Automatic cleanup**: Run `python3 scripts/cleanup.py` or say "run cleanup"
 - **Size monitoring**: Built-in compliance checking
 - **Lazy loading**: Models downloaded only when needed
@@ -125,8 +125,9 @@ Auralis is designed to maintain a **<100MB footprint** as specified in config.js
 ### Basic Usage
 1. **Voice Commands**: Say "Auralis" to wake, then speak your command
 2. **Push-to-Talk**: Hold SPACE key and speak
-3. **Text Input**: Type commands directly
-4. **Mode Switching**: Say "switch to online" for enhanced features
+3. **Voice Conversation**: Say "start voice conversation" for continuous dialogue
+4. **Text Input**: Type commands directly
+5. **Mode Switching**: Say "switch to online" for enhanced features
 
 ### Example Commands
 **Voice & Conversation:**
@@ -144,7 +145,15 @@ Auralis is designed to maintain a **<100MB footprint** as specified in config.js
 - "inspire me" - Motivational quotes
 - "what time is it in Tokyo" - World time
 - "currency USD to EUR" - Exchange rates
+- "stock price AAPL" - Get stock prices
+- "give me a recipe" - Random recipe suggestions
 - "wikipedia artificial intelligence" - Search Wikipedia
+
+**Voice Conversation:**
+- "start voice conversation" - Begin natural voice dialogue
+- "toggle voice mode" - Switch between push-to-talk and continuous
+- "set voice to formal" - Change voice profile
+- "customize voice speed=1.0 pitch=0" - Adjust voice parameters
 
 **System Management:**
 - "store api key openweather YOUR_KEY" - Secure API key storage
@@ -158,6 +167,10 @@ Auralis is designed to maintain a **<100MB footprint** as specified in config.js
 **Automation & Email:**
 - "send email to user@example.com" - Send automated emails
 - "check emails" - Read recent email messages
+- "schedule task backup in 30 minutes" - Schedule automated tasks
+- "set reminder buy groceries in 3600 seconds" - Create timed reminders
+- "record macro my_macro action1 action2" - Record command macros
+- "play macro my_macro" - Execute recorded macros
 - "schedule task reminder 5 say hello" - Schedule tasks
 - "create macro greeting say hello; wait 2; say how are you" - Create command macros
 - "run macro greeting" - Execute saved macros

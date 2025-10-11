@@ -8,6 +8,9 @@ class UXFlowManager:
         self.config = config
         self.status_bar = {}
         self.thinking_dots = 0
+        self.conversation_mode = 'push_to_talk'  # or 'continuous'
+        self.voice_active = False
+        self.memory_module = None
 
     def show_boot_sequence(self):
         """Cinematic boot sequence with enhanced visuals"""
@@ -51,9 +54,127 @@ class UXFlowManager:
                 status.append(f"{elem}: {self.status_bar[elem]}")
         print(" | ".join(status))
 
-    def update_status(self, key, value):
-        self.status_bar[key] = value
-        self.show_status_bar()
+    def start_voice_conversation(self, stt_module, nlp_module, tts_module, wake_word_module=None, memory_module=None):
+        """Start voice conversation loop"""
+        print("🎤 Voice conversation started. Say 'exit' or 'quit' to stop.")
+
+        self.memory_module = memory_module
+        self.voice_active = True
+        self.update_status('mode', 'VOICE')
+
+        try:
+            while self.voice_active:
+                # Wake word detection if available
+                if wake_word_module and self.conversation_mode == 'continuous':
+                    if wake_word_module.detect_wake_word():
+                        print("🎯 Wake word detected!")
+                    else:
+                        continue
+
+                # Get speech input
+                if self.conversation_mode == 'push_to_talk':
+                    user_input = stt_module.transcribe_push_to_talk()
+                else:
+                    user_input = stt_module.transcribe(duration=3)
+
+                if not user_input:
+                    continue
+
+                print(f"You: {user_input}")
+
+                # Check for exit commands
+                if user_input.lower() in ['exit', 'quit', 'stop', 'goodbye']:
+                    response = "Goodbye! Have a great day."
+                    tts_module.speak(response)
+                    if self.memory_module:
+                        self.memory_module.add_turn(user_input, response)
+                    break
+
+                # Show thinking animation
+                self.show_thinking_animation()
+
+                # Generate response
+                intent, entities = nlp_module.get_intent_and_entities(user_input)
+
+                if intent == 'command':
+                    # Handle commands
+                    response = self.process_voice_command(user_input, entities)
+                else:
+                    # Generate conversational response
+                    response = nlp_module.generate_contextual_response(user_input)
+
+                # Validate response
+                if not nlp_module.validate_response(response):
+                    response = nlp_module.generate_fallback_response(user_input)
+
+                print(f"Auralis: {response}")
+
+                # Speak response
+                tts_module.speak(response)
+
+                # Store in memory
+                if self.memory_module:
+                    self.memory_module.add_turn(user_input, response)
+
+        except KeyboardInterrupt:
+            print("\n🛑 Voice conversation interrupted")
+        except Exception as e:
+            print(f"❌ Voice conversation error: {e}")
+        finally:
+            self.voice_active = False
+            self.update_status('mode', 'IDLE')
+
+    def process_voice_command(self, command, entities):
+        """Process voice commands"""
+        command_lower = command.lower()
+
+        # Basic command handling
+        if 'time' in command_lower:
+            from datetime import datetime
+            current_time = datetime.now().strftime("%I:%M %p")
+            return f"The current time is {current_time}"
+
+        elif 'date' in command_lower:
+            from datetime import datetime
+            current_date = datetime.now().strftime("%A, %B %d, %Y")
+            return f"Today is {current_date}"
+
+        elif 'weather' in command_lower:
+            # Would integrate with external API
+            return "I'd need to check the weather service for current conditions."
+
+        elif 'reminder' in command_lower or 'remind' in command_lower:
+            # Would integrate with automation
+            return "I'll help you set a reminder."
+
+        elif 'joke' in command_lower:
+            # Would integrate with external API
+            return "Why don't scientists trust atoms? Because they make up everything!"
+
+        else:
+            return "I'm not sure how to handle that command. Can you try rephrasing?"
+
+    def show_thinking_animation(self):
+        """Show thinking animation during processing"""
+        import time
+        dots = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        for _ in range(10):  # ~1 second
+            for dot in dots:
+                print(f"\r🤔 Thinking {dot}", end="", flush=True)
+                time.sleep(0.05)
+        print("\r" + " " * 20 + "\r", end="", flush=True)  # Clear line
+
+    def toggle_conversation_mode(self):
+        """Toggle between push-to-talk and continuous mode"""
+        if self.conversation_mode == 'push_to_talk':
+            self.conversation_mode = 'continuous'
+            mode_text = 'continuous'
+        else:
+            self.conversation_mode = 'push_to_talk'
+            mode_text = 'push-to-talk'
+
+        self.update_status('voice_mode', mode_text)
+        return f"Voice mode switched to {mode_text}"
 
     def update_performance_status(self, performance_module):
         """Update status bar with real-time performance metrics"""

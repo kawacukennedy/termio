@@ -7,8 +7,9 @@ from datetime import datetime
 from pathlib import Path
 
 class BackupRestoreModule:
-    def __init__(self, config):
+    def __init__(self, config, memory_module=None):
         self.config = config
+        self.memory_module = memory_module
         self.backup_dir = Path('backups')
         self.backup_dir.mkdir(exist_ok=True)
 
@@ -141,17 +142,10 @@ class BackupRestoreModule:
             return f"Backup not found: {backup_name}"
 
     def export_conversations(self, format='json'):
-        """Export conversation history in various formats"""
+        """Export conversations to file"""
+        export_path = None
         try:
-            import sqlite3
-
-            conn = sqlite3.connect('memory.db')
-            cursor = conn.cursor()
-
-            # Get all conversations
-            cursor.execute("SELECT user, ai, timestamp FROM turns ORDER BY timestamp")
-            conversations = cursor.fetchall()
-            conn.close()
+            conversations = self.memory_module.get_all_conversations()
 
             if format == 'json':
                 # Export as JSON
@@ -176,6 +170,8 @@ class BackupRestoreModule:
                         f.write(f"[{dt.strftime('%Y-%m-%d %H:%M:%S')}]\n")
                         f.write(f"User: {user}\n")
                         f.write(f"Auralis: {ai}\n\n")
+            else:
+                return "Unsupported export format. Use 'json' or 'txt'."
 
             return f"Conversations exported to: {export_path}"
         except Exception as e:

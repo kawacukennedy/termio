@@ -15,15 +15,36 @@ print(f"Starting {config['app_identity']['name']} v{config['app_identity']['vers
 # Add modules to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'modules'))
 
-# Import modules
+# Import modules (with fallbacks for missing dependencies)
 from ux_flow_manager import UXFlowManager
 from wake_word import WakeWordDetectionModule
 from stt_offline import STTModuleOffline
-from stt_hf import STTModuleHFAPI
+
+try:
+    from stt_hf import STTModuleHFAPI
+    STT_HF_AVAILABLE = True
+except ImportError:
+    STT_HF_AVAILABLE = False
+    print("Warning: Online STT not available (missing transformers)")
+
 from nlp_offline import NLPModuleOffline
-from nlp_hf import NLPModuleHFAPI
+
+try:
+    from nlp_hf import NLPModuleHFAPI
+    NLP_HF_AVAILABLE = True
+except ImportError:
+    NLP_HF_AVAILABLE = False
+    print("Warning: Online NLP not available (missing transformers)")
+
 from tts_offline import TTSModuleOffline
-from tts_hf import TTSModuleHFAPI
+
+try:
+    from tts_hf import TTSModuleHFAPI
+    TTS_HF_AVAILABLE = True
+except ImportError:
+    TTS_HF_AVAILABLE = False
+    print("Warning: Online TTS not available (missing transformers)")
+
 from screen_reader import ScreenReaderModule
 from screen_control import ScreenControlModule
 from memory import ConversationMemoryModule
@@ -32,7 +53,14 @@ from settings import SettingsModule
 from security import SecurityModule
 from performance import PerformanceOptimizerModule
 from plugins import PluginHostModule
-from model_training import ModelTrainingModule
+
+try:
+    from model_training import ModelTrainingModule
+    MODEL_TRAINING_AVAILABLE = True
+except ImportError:
+    MODEL_TRAINING_AVAILABLE = False
+    print("Warning: Model training not available (missing transformers)")
+
 from external_api import ExternalAPIModule
 from backup_restore import BackupRestoreModule
 from language_support import LanguageSupportModule
@@ -44,11 +72,11 @@ import subprocess
 ux = UXFlowManager(config)
 wakeword = WakeWordDetectionModule(config)
 stt_offline = STTModuleOffline(config)
-stt_online = STTModuleHFAPI(config)
+stt_online = STTModuleHFAPI(config) if STT_HF_AVAILABLE else None
 nlp_offline = NLPModuleOffline(config)
-nlp_online = NLPModuleHFAPI(config)
+nlp_online = NLPModuleHFAPI(config) if NLP_HF_AVAILABLE else None
 tts_offline = TTSModuleOffline(config)
-tts_online = TTSModuleHFAPI(config)
+tts_online = TTSModuleHFAPI(config) if TTS_HF_AVAILABLE else None
 screen_reader = ScreenReaderModule(config)
 screen_control = ScreenControlModule(config)
 memory = ConversationMemoryModule(config)
@@ -57,13 +85,12 @@ settings = SettingsModule(config)
 security = SecurityModule(config, settings)
 performance = PerformanceOptimizerModule(config)
 plugins = PluginHostModule(config)
-training = ModelTrainingModule(config)
+training = ModelTrainingModule(config) if MODEL_TRAINING_AVAILABLE else None
 external_api = ExternalAPIModule(config, security)
-backup_restore = BackupRestoreModule(config)
+backup_restore = BackupRestoreModule(config, memory)
 language = LanguageSupportModule(config)
-dashboard = WebDashboard(config, performance, memory, backup_restore)
 automation = AutomationModule(config, security)
-dashboard = WebDashboard(config, performance, memory, backup_restore)
+dashboard = WebDashboard(config, performance, memory, backup_restore, external_api, plugins, language, automation)
 
 # Current mode
 current_mode = 'offline'
@@ -74,9 +101,12 @@ tts = tts_offline
 # Initialize modules
 wakeword.initialize()
 stt_offline.initialize()
-stt_online.initialize()
-nlp_online.initialize()
-tts_online.initialize()
+if stt_online:
+    stt_online.initialize()
+if nlp_online:
+    nlp_online.initialize()
+if tts_online:
+    tts_online.initialize()
 screen_reader.initialize()
 screen_control.initialize()
 plugins.load_plugins()
@@ -248,6 +278,20 @@ def process_input(user_input):
             response = "Please specify import file path"
     elif user_input.lower() == 'cleanup backups':
         response = backup_restore.cleanup_old_backups()
+    elif user_input.lower() == 'start voice conversation' or user_input.lower() == 'voice mode':
+        # Determine which STT and TTS to use
+        if current_mode == 'online':
+            current_stt = stt_online
+            current_tts = tts_online
+        else:
+            current_stt = stt_offline
+            current_tts = tts_offline
+
+        # Start voice conversation
+        ux.start_voice_conversation(current_stt, nlp_offline, current_tts, wakeword, memory)
+        response = "Voice conversation ended"
+    elif user_input.lower() == 'toggle voice mode':
+        response = ux.toggle_conversation_mode()
     elif user_input.lower() == 'start dashboard' or user_input.lower() == 'open dashboard':
         if dashboard.start():
             response = "Web dashboard started at http://localhost:5000"

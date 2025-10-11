@@ -6,11 +6,15 @@ import os
 from pathlib import Path
 
 class WebDashboard:
-    def __init__(self, config, performance_module, memory_module, backup_module):
+    def __init__(self, config, performance_module, memory_module, backup_module, external_api_module=None, plugins_module=None, language_module=None, automation_module=None):
         self.config = config
         self.performance = performance_module
         self.memory = memory_module
         self.backup = backup_module
+        self.external_api = external_api_module
+        self.plugins = plugins_module
+        self.language = language_module
+        self.automation = automation_module
         self.app = Flask(__name__,
                         template_folder='../templates',
                         static_folder='../static')
@@ -84,6 +88,115 @@ class WebDashboard:
                     })
 
                 return jsonify(log_files)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/external/<service>')
+        def get_external_data(service):
+            if not self.external_api:
+                return jsonify({'error': 'External API module not available'}), 503
+
+            try:
+                if service == 'weather':
+                    data = self.external_api.get_weather('New York')  # Default location
+                elif service == 'news':
+                    data = self.external_api.get_news('technology')
+                elif service == 'time':
+                    data = self.external_api.get_world_time('Tokyo')
+                elif service == 'stock':
+                    data = self.external_api.get_stock_price('AAPL')
+                elif service == 'recipe':
+                    data = self.external_api.get_recipe()
+                elif service == 'joke':
+                    data = self.external_api.get_joke()
+                elif service == 'quote':
+                    data = self.external_api.get_quote()
+                else:
+                    return jsonify({'error': f'Unknown service: {service}'}), 400
+
+                return jsonify({'result': data})
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/voice/test', methods=['POST'])
+        def test_voice():
+            # Placeholder for voice testing
+            return jsonify({'message': 'Voice test endpoint - implementation pending'})
+
+        @self.app.route('/api/screen/test', methods=['POST'])
+        def test_screen():
+            # Placeholder for screen testing
+            return jsonify({'message': 'Screen test endpoint - implementation pending'})
+
+        @self.app.route('/api/plugins')
+        def get_plugins():
+            if not self.plugins:
+                return jsonify({'error': 'Plugins module not available'}), 503
+
+            try:
+                plugins_list = self.plugins.list_plugins()
+                return jsonify(plugins_list)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/language/supported')
+        def get_supported_languages():
+            if not self.language:
+                return jsonify({'error': 'Language module not available'}), 503
+
+            try:
+                languages = self.language.get_supported_languages()
+                return jsonify(languages)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/language/translate', methods=['POST'])
+        def translate_text():
+            if not self.language:
+                return jsonify({'error': 'Language module not available'}), 503
+
+            try:
+                data = request.get_json()
+                text = data.get('text', '')
+                target_lang = data.get('target_lang', 'en')
+                translated = self.language.translate_text(text, target_lang)
+                return jsonify({'translated': translated})
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/automation/tasks')
+        def get_scheduled_tasks():
+            if not self.automation:
+                return jsonify({'error': 'Automation module not available'}), 503
+
+            try:
+                tasks = self.automation.list_scheduled_tasks()
+                return jsonify(tasks)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/automation/reminder', methods=['POST'])
+        def create_reminder():
+            if not self.automation:
+                return jsonify({'error': 'Automation module not available'}), 503
+
+            try:
+                data = request.get_json()
+                message = data.get('message', '')
+                delay = int(data.get('delay_seconds', 60))
+                result = self.automation.create_reminder(message, delay)
+                return jsonify({'result': result})
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/plugins/<plugin_name>', methods=['POST'])
+        def run_plugin(plugin_name):
+            if not self.plugins:
+                return jsonify({'error': 'Plugins module not available'}), 503
+
+            try:
+                result = self.plugins.execute_plugin(plugin_name, {})
+                return jsonify({'result': result})
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
 

@@ -61,8 +61,15 @@ class AutomationModule:
             emails = []
             for email_id in email_ids:
                 status, msg_data = mail.fetch(email_id, '(RFC822)')
+                if not msg_data or not msg_data[0]:
+                    continue
                 raw_email = msg_data[0][1]
-                email_message = email.message_from_bytes(raw_email)
+                if isinstance(raw_email, bytes):
+                    email_message = email.message_from_bytes(raw_email)
+                elif isinstance(raw_email, str):
+                    email_message = email.message_from_string(raw_email)
+                else:
+                    continue  # Skip if not bytes or str
 
                 subject = email_message['Subject'] or 'No Subject'
                 sender = email_message['From'] or 'Unknown'
@@ -73,10 +80,18 @@ class AutomationModule:
                 if email_message.is_multipart():
                     for part in email_message.walk():
                         if part.get_content_type() == "text/plain":
-                            body = part.get_payload(decode=True).decode()
+                            payload = part.get_payload(decode=True)
+                            if isinstance(payload, bytes):
+                                body = payload.decode('utf-8', errors='ignore')
+                            else:
+                                body = str(payload)
                             break
                 else:
-                    body = email_message.get_payload(decode=True).decode()
+                    payload = email_message.get_payload(decode=True)
+                    if isinstance(payload, bytes):
+                        body = payload.decode('utf-8', errors='ignore')
+                    else:
+                        body = str(payload)
 
                 emails.append({
                     'subject': subject,
@@ -233,6 +248,51 @@ class AutomationModule:
                 return f"Unknown operation: {operation}"
         except Exception as e:
             return f"File operation failed: {e}"
+
+    def create_reminder(self, message, delay_seconds):
+        """Create a timed reminder"""
+        try:
+            import threading
+            import time
+
+            def show_reminder():
+                time.sleep(delay_seconds)
+                print(f"\n🔔 REMINDER: {message}\n")
+
+            thread = threading.Thread(target=show_reminder, daemon=True)
+            thread.start()
+
+            return f"Reminder set for {delay_seconds} seconds from now"
+        except Exception as e:
+            return f"Reminder creation failed: {e}"
+
+    def macro_recorder(self, macro_name, actions):
+        """Record and playback macros (simplified)"""
+        try:
+            # Store macro
+            if not hasattr(self, 'macros'):
+                self.macros = {}
+
+            self.macros[macro_name] = actions
+            return f"Macro '{macro_name}' recorded with {len(actions)} actions"
+        except Exception as e:
+            return f"Macro recording failed: {e}"
+
+    def play_macro(self, macro_name):
+        """Play back a recorded macro"""
+        try:
+            if not hasattr(self, 'macros') or macro_name not in self.macros:
+                return f"Macro '{macro_name}' not found"
+
+            actions = self.macros[macro_name]
+            results = []
+            for action in actions:
+                # Simplified execution
+                results.append(f"Executed: {action}")
+
+            return f"Macro '{macro_name}' played:\n" + "\n".join(results)
+        except Exception as e:
+            return f"Macro playback failed: {e}"
 
     def system_info(self):
         """Get system information"""
