@@ -2,6 +2,7 @@ import subprocess
 import os
 import signal
 import threading
+import platform
 
 class TTSModuleOffline:
     def __init__(self, config):
@@ -118,29 +119,42 @@ class TTSModuleOffline:
         # Stop any current speech
         self.stop()
 
-        # Use espeak-ng for TTS
+        # Use system TTS (espeak-ng on Linux, say on macOS)
         try:
-            # Build espeak command with enhanced options
-            cmd = [
-                'espeak-ng',
-                '-v', voice,
-                '-s', str(int(175 * speed)),  # Speed in words per minute
-                '-p', str(50 + pitch * 10),   # Pitch (0-100, default 50)
-                '-a', str(volume),            # Amplitude/volume
-                '-g', '2',                    # Word gap
-                '-m'                          # Interpret SSML markup
-            ]
+            import platform
+            system = platform.system()
 
-            # Add text (processed)
-            cmd.append(processed_text)
+            if system == 'Darwin':  # macOS
+                # Use built-in 'say' command
+                cmd = ['say', '-v', voice, processed_text]
+                self.current_process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+            else:  # Linux/other
+                # Build espeak command with enhanced options
+                cmd = [
+                    'espeak-ng',
+                    '-v', voice,
+                    '-s', str(int(175 * speed)),  # Speed in words per minute
+                    '-p', str(50 + pitch * 10),   # Pitch (0-100, default 50)
+                    '-a', str(volume),            # Amplitude/volume
+                    '-g', '2',                    # Word gap
+                    '-m'                          # Interpret SSML markup
+                ]
 
-            # Execute in background
-            self.current_process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                preexec_fn=os.setsid
-            )
+                # Add text (processed)
+                cmd.append(processed_text)
+
+                # Execute in background
+                self.current_process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    preexec_fn=os.setsid
+                )
+
             self.is_speaking = True
 
             # Monitor process in background
@@ -153,7 +167,10 @@ class TTSModuleOffline:
             threading.Thread(target=monitor_speech, daemon=True).start()
 
         except FileNotFoundError:
-            print("espeak-ng not found. Install with: sudo apt install espeak-ng")
+            if platform.system() == 'Darwin':
+                print("macOS 'say' command not found")
+            else:
+                print("espeak-ng not found. Install with: sudo apt install espeak-ng")
         except Exception as e:
             print(f"TTS error: {e}")
             self.is_speaking = False
