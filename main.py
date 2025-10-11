@@ -20,30 +20,19 @@ from ux_flow_manager import UXFlowManager
 from wake_word import WakeWordDetectionModule
 from stt_offline import STTModuleOffline
 
+# HF modules now use API, always available if requests is available
 try:
-    from stt_hf import STTModuleHFAPI
+    import requests
     STT_HF_AVAILABLE = True
-except ImportError:
-    STT_HF_AVAILABLE = False
-    print("Warning: Online STT not available (missing transformers)")
-
-from nlp_offline import NLPModuleOffline
-
-try:
-    from nlp_hf import NLPModuleHFAPI
     NLP_HF_AVAILABLE = True
-except ImportError:
-    NLP_HF_AVAILABLE = False
-    print("Warning: Online NLP not available (missing transformers)")
-
-from tts_offline import TTSModuleOffline
-
-try:
-    from tts_hf import TTSModuleHFAPI
     TTS_HF_AVAILABLE = True
 except ImportError:
+    STT_HF_AVAILABLE = False
+    NLP_HF_AVAILABLE = False
     TTS_HF_AVAILABLE = False
-    print("Warning: Online TTS not available (missing transformers)")
+    print("Warning: Online features not available (missing requests)")
+
+from nlp_offline import NLPModuleOffline
 
 from screen_reader import ScreenReaderModule
 from screen_control import ScreenControlModule

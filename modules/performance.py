@@ -101,17 +101,45 @@ class PerformanceOptimizerModule:
         self.last_activity = time.time()
 
     def get_status(self):
-        """Get comprehensive system status"""
-        status = {
-            'cpu_percent': self.monitor_cpu(),
-            'memory_percent': self.monitor_memory(),
-            'memory_mb': psutil.virtual_memory().used / 1024 / 1024,
-            'active_time_seconds': time.time() - self.last_activity,
-            'disk_usage': psutil.disk_usage('/').percent,
-            'network_connections': len(psutil.net_connections()),
-            'cache_size': len(self.memory_cache),
-            'embedding_cache_size': len(getattr(self, 'embedding_cache', {}))
-        }
+        """Get current performance status"""
+        try:
+            cpu_percent = psutil.cpu_percent(interval=1)
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage('/')
+            network = psutil.net_io_counters()
+
+            # Network connections may require permissions on some systems
+            try:
+                network_connections = len(psutil.net_connections())
+            except (psutil.AccessDenied, PermissionError):
+                network_connections = 0
+
+            return {
+                'cpu_percent': cpu_percent,
+                'memory_percent': memory.percent,
+                'memory_used_mb': memory.used / (1024 * 1024),
+                'disk_percent': disk.percent,
+                'network_sent_mb': network.bytes_sent / (1024 * 1024),
+                'network_recv_mb': network.bytes_recv / (1024 * 1024),
+                'network_connections': network_connections,
+                'active_models': len(self.active_models),
+                'total_memory_mb': sum(model.get('memory_mb', 0) for model in self.active_models.values()),
+                'uptime_seconds': time.time() - self.start_time
+            }
+        except Exception as e:
+            print(f"Performance monitoring error: {e}")
+            return {
+                'cpu_percent': 0,
+                'memory_percent': 0,
+                'memory_used_mb': 0,
+                'disk_percent': 0,
+                'network_sent_mb': 0,
+                'network_recv_mb': 0,
+                'network_connections': 0,
+                'active_models': 0,
+                'total_memory_mb': 0,
+                'uptime_seconds': time.time() - self.start_time
+            }
 
         # Add GPU info if available
         try:
