@@ -35,6 +35,14 @@ except ImportError:
 from nlp_offline import NLPModuleOffline
 from tts_offline import TTSModuleOffline
 
+# HF modules (imported conditionally)
+if STT_HF_AVAILABLE:
+    from stt_hf import STTModuleHFAPI
+if NLP_HF_AVAILABLE:
+    from nlp_hf import NLPModuleHFAPI
+if TTS_HF_AVAILABLE:
+    from tts_hf import TTSModuleHFAPI
+
 from screen_reader import ScreenReaderModule
 from screen_control import ScreenControlModule
 from memory import ConversationMemoryModule
