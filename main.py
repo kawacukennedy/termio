@@ -400,6 +400,15 @@ def process_input(user_input):
             response = f"API key for {service}: {api_key[:8]}..."  # Show only first 8 chars
         else:
             response = f"No API key stored for {service}"
+    elif user_input.lower().startswith('set api key '):
+        parts = user_input.split(' ', 3)
+        if len(parts) >= 4:
+            service = parts[2]
+            key = parts[3]
+            settings.set_setting(f"api_keys.{service}", security.encrypt_api_key(key))
+            response = f"API key for {service} set"
+        else:
+            response = "Usage: set api key <service> <key>"
     elif user_input.lower().startswith('fine tune nlp '):
         data_path = user_input.lower().replace('fine tune nlp ', '').strip()
         if os.path.exists(data_path):
