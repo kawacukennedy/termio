@@ -1,18 +1,14 @@
+import requests
+import io
+import pygame
 import time
 
-try:
-    from transformers import pipeline
-    import sounddevice as sd
-    import numpy as np
-    DEPENDENCIES_AVAILABLE = True
-except ImportError:
-    DEPENDENCIES_AVAILABLE = False
-    print("Warning: HF TTS dependencies not available")
-
 class TTSModuleHFAPI:
-    def __init__(self, config):
+    def __init__(self, config, security_module=None):
         self.config = config
-        self.synthesizer = None
+        self.security = security_module
+        self.api_url = "https://api-inference.huggingface.co/models/espnet/kan-bayashi_ljspeech_vits"
+        self.headers = {}
         self.current_profile = 'neutral'
         self.profiles = {
             'formal': {'voice': 'en+m3'},
@@ -21,34 +17,31 @@ class TTSModuleHFAPI:
         }
 
     def initialize(self):
-        if not DEPENDENCIES_AVAILABLE:
-            return
-        try:
-            # Use a TTS model from HF
-            self.synthesizer = pipeline("text-to-speech", model="microsoft/speecht5_tts")
-        except Exception as e:
-            print(f"HF TTS initialization failed: {e}")
+        token = self.security.get_api_key("huggingface") if self.security else None
+        if token:
+            self.headers = {"Authorization": f"Bearer {token}"}
+        else:
+            print("Warning: No HuggingFace token configured for TTS")
 
     def speak(self, text, voice=None, speed=None, pitch=None, volume=None, interruptible=True):
-        """Synthesize speech using HF model"""
-        if not self.synthesizer:
-            print(f"[TTS]: {text}")
-            return
-
+        """Synthesize speech using HF Inference API"""
         try:
-            # Generate speech
-            result = self.synthesizer(text)
+            payload = {"inputs": text}
 
-            # Play audio
-            audio = result["audio"]
-            sample_rate = result["sampling_rate"]
-
-            # Convert to numpy array if needed
-            if isinstance(audio, list):
-                audio = np.array(audio)
-
-            sd.play(audio, samplerate=sample_rate)
-            sd.wait()
+            response = requests.post(self.api_url, headers=self.headers, json=payload)
+            if response.status_code == 200:
+                audio_bytes = response.content
+                # Play audio using pygame
+                pygame.mixer.init()
+                audio_stream = io.BytesIO(audio_bytes)
+                pygame.mixer.music.load(audio_stream)
+                pygame.mixer.music.play()
+                while pygame.mixer.music.get_busy():
+                    time.sleep(0.1)
+                pygame.mixer.quit()
+            else:
+                print(f"HF TTS API error: {response.status_code} - {response.text}")
+                print(f"[TTS]: {text}")
         except Exception as e:
             print(f"HF TTS failed: {e}")
             print(f"[TTS]: {text}")
@@ -75,15 +68,10 @@ class TTSModuleHFAPI:
     def stop(self):
         """Stop current speech"""
         try:
-            sd.stop()
+            pygame.mixer.music.stop()
         except:
             pass
 
     def unload_model(self):
-        """Unload the model"""
+        """Unload resources"""
         self.stop()
-        if self.synthesizer:
-            del self.synthesizer
-            self.synthesizer = None
-        import gc
-        gc.collect()
