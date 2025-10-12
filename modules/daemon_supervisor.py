@@ -66,6 +66,18 @@ class AuralisDaemon:
         from inference_worker import InferenceWorker
         from action_worker import ActionWorker
         from ui_worker import UIWorker
+        from security import SecurityModule
+        from settings import SettingsModule
+
+        # Initialize shared modules
+        settings = SettingsModule(self.config)
+        security = SecurityModule(self.config, settings)
+
+        # Check first-run permissions
+        if not security.check_first_run_permissions():
+            self.logger.error("First-run permissions not granted. Exiting.")
+            self.running = False
+            return
 
         # Audio worker
         self.workers['audio'] = Process(
@@ -81,9 +93,11 @@ class AuralisDaemon:
         )
         self.workers['inference'].start()
 
-        # Action worker
+        # Action worker (with security)
+        action_worker = ActionWorker(self.config, self.queues)
+        action_worker.security = security
         self.workers['action'] = Process(
-            target=ActionWorker(self.config, self.queues).run,
+            target=action_worker.run,
             name='action_worker'
         )
         self.workers['action'].start()

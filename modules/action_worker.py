@@ -14,6 +14,7 @@ class ActionWorker:
         self.config = config
         self.queues = queues
         self.logger = logging.getLogger('action_worker')
+        self.security = None  # Will be set by daemon
 
         # Screen control
         self.screen_control_available = False
@@ -38,9 +39,15 @@ class ActionWorker:
                 time.sleep(0.1)
 
     def execute_screen_action(self, action, params=None):
-        """Execute screen control action"""
+        """Execute screen control action with permission checks"""
         if not self.screen_control_available:
             return "Screen control not available"
+
+        # Check permissions
+        if self.security:
+            allowed, reason = self.security.check_action_permission('screen_control', {'action': action, 'params': params})
+            if not allowed:
+                return f"Permission denied: {reason}"
 
         try:
             import pyautogui
@@ -69,7 +76,13 @@ class ActionWorker:
             return f"Screen action failed: {e}"
 
     def execute_shell_command(self, command, sandboxed=True):
-        """Execute shell command in sandboxed mode"""
+        """Execute shell command in sandboxed mode with permission checks"""
+        # Check permissions for shell execution
+        if self.security:
+            allowed, reason = self.security.check_action_permission('run_command', {'command': command, 'sandboxed': sandboxed})
+            if not allowed:
+                return f"Permission denied: {reason}"
+
         if sandboxed:
             # Basic sandboxing - restrict to safe commands
             safe_commands = ['ls', 'pwd', 'echo', 'cat', 'head', 'tail', 'grep']
