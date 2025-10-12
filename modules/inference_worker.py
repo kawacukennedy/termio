@@ -45,6 +45,8 @@ class InferenceWorker:
                         self._switch_mode(message['mode'])
                     elif message['type'] == 'stt_result':
                         self._process_stt_result(message)
+                    elif message['type'] == 'fallback_message':
+                        self._process_fallback_message(message)
 
                 time.sleep(0.01)  # Small delay to prevent busy loop
 
@@ -95,6 +97,18 @@ class InferenceWorker:
             'text': text,
             'source': 'stt',
             'confidence': confidence
+        })
+
+    def _process_fallback_message(self, message):
+        """Process fallback messages (e.g., wakeword silence)"""
+        text = message.get('text', '')
+
+        # Send directly to TTS without NLP processing
+        self.queues['nlp->tts'].put({
+            'type': 'response',
+            'text': text,
+            'timestamp': time.time(),
+            'mode': 'fallback'
         })
 
     def _generate_offline_response(self, text):

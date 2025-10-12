@@ -37,6 +37,8 @@ class UIWorker:
                         self._handle_ptt_start()
                     elif message['type'] == 'ptt_end':
                         self._handle_ptt_end()
+                    elif message['type'] == 'wakeword_detected':
+                        self._handle_wakeword_detected()
 
                 # Check for TTS responses to display
                 if not self.queues['nlp->tts'].empty():
@@ -127,7 +129,13 @@ class UIWorker:
                 except ImportError:
                     pass
 
-            thread = threading.Thread(target=wait_for_retry, daemon=True)
-            thread.start()
+        thread = threading.Thread(target=wait_for_retry, daemon=True)
+        thread.start()
 
         self.ux.update_status('mic_status', 'OFF')
+
+    def _handle_wakeword_detected(self):
+        """Handle wakeword detection UI feedback"""
+        # Status 'LISTENING (wakeword)' - already set by audio worker
+        self.ux.update_status('last_action_summary', 'LISTENING (wakeword)')
+        self.ux.start_waveform()

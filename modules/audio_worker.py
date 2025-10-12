@@ -25,6 +25,7 @@ class AudioWorker:
         # Wakeword detection
         self.wakeword_enabled = config.get('wakeword', {}).get('enabled', False)
         self.wakeword_phrase = config.get('wakeword', {}).get('phrase', 'Auralis')
+        self.wakeword_active = False
 
         # Push-to-talk
         self.ptt_active = False
@@ -105,51 +106,89 @@ class AudioWorker:
                 time.sleep(0.1)
 
     def _wakeword_loop(self):
-        """Wakeword detection loop"""
-        self.logger.info("Wakeword detection enabled")
+        """Wakeword detection loop as per spec"""
+        if not self.wakeword_enabled:
+            return
+
+        self.logger.info("Wakeword detection enabled (passive listen)")
 
         while True:
             try:
-                # Simple wakeword detection (placeholder - integrate with Porcupine)
-                # For now, just listen for silence breaks
+                # Read audio chunk
                 data = self.stream.read(self.chunk_size, exception_on_overflow=False)
                 audio_chunk = np.frombuffer(data, dtype=np.int16)
 
-                # Check for wakeword (simplified)
+                # Check for wakeword
                 if self._detect_wakeword(audio_chunk):
                     self.logger.info("Wakeword detected!")
+
+                    # Immediate UI feedback: short_tick_sound + status 'LISTENING (wakeword)'
+                    print('\a', end='', flush=True)  # Short tick sound
                     self.queues['audio->stt'].put({
                         'type': 'wakeword_detected',
                         'timestamp': time.time()
                     })
 
-                    # Start capture window (4 seconds)
-                    self._capture_after_wakeword()
+                    # Start capture window (4000ms as per spec)
+                    self._capture_after_wakeword(4000)
 
             except Exception as e:
                 self.logger.error(f"Wakeword detection error: {e}")
                 time.sleep(0.1)
 
     def _detect_wakeword(self, audio_chunk):
-        """Simple wakeword detection (placeholder)"""
+        """Wakeword detection for 'Auralis' (placeholder - integrate with Porcupine)"""
+        # For now, use a simple energy-based detection
+        # In production, this would use Porcupine or similar
+
         # Calculate RMS amplitude
         rms = np.sqrt(np.mean(audio_chunk**2))
 
-        # Threshold for "wakeword" (just loud enough sound)
-        threshold = 500  # Adjust based on microphone
+        # Threshold for wakeword detection
+        threshold = 1000  # Adjust based on microphone sensitivity
 
-        return rms > threshold
+        # Additional check: look for speech-like patterns
+        # This is a very basic approximation
+        if rms > threshold:
+            # Check if it sounds like speech (rough heuristic)
+            # Look for variations in amplitude that suggest speech
+            chunk_size = len(audio_chunk) // 10
+            variations = []
+            for i in range(10):
+                start = i * chunk_size
+                end = (i + 1) * chunk_size
+                segment_rms = np.sqrt(np.mean(audio_chunk[start:end]**2))
+                variations.append(segment_rms)
 
-    def _capture_after_wakeword(self):
-        """Capture audio after wakeword detection"""
+            # If there's enough variation, it might be speech
+            variation_coeff = np.std(variations) / np.mean(variations) if np.mean(variations) > 0 else 0
+
+            return variation_coeff > 0.3  # Speech-like variation
+
+        return False
+
+    def _capture_after_wakeword(self, duration_ms=4000):
+        """Capture audio after wakeword detection with fallback"""
         start_time = time.time()
-        capture_duration = 4.0  # 4 seconds as per spec
+        capture_duration = duration_ms / 1000.0
+        silence_threshold = 0.5  # seconds of silence to trigger fallback
+        last_sound_time = start_time
+        audio_data = []
+
+        self.wakeword_active = True
 
         while time.time() - start_time < capture_duration:
             try:
                 data = self.stream.read(self.chunk_size, exception_on_overflow=False)
                 audio_chunk = np.frombuffer(data, dtype=np.int16)
 
+                # Check for silence
+                rms = np.sqrt(np.mean(audio_chunk**2))
+                if rms > 300:  # Sound detected
+                    last_sound_time = time.time()
+                    audio_data.append(audio_chunk)
+
+                # Send chunk to STT
                 self.queues['audio->stt'].put({
                     'type': 'audio_chunk',
                     'data': audio_chunk.tobytes(),
@@ -162,6 +201,18 @@ class AudioWorker:
             except Exception as e:
                 self.logger.error(f"Wakeword capture error: {e}")
                 break
+
+        self.wakeword_active = False
+
+        # Check for fallback: if silence or low confidence
+        silence_duration = time.time() - last_sound_time
+        if silence_duration > silence_threshold or len(audio_data) < 5:
+            # Fallback: 'I didn't catch that. Say again.'
+            self.queues['stt->nlp'].put({
+                'type': 'fallback_message',
+                'text': "I didn't catch that. Say again.",
+                'timestamp': time.time()
+            })
 
     def _ptt_monitor_loop(self):
         """Monitor for push-to-talk key presses with spec-compliant timing"""
