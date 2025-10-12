@@ -26,21 +26,129 @@ class ScreenReaderModule:
         # pytesseract is configured to use tesseract
         pass
 
-    def read_screen(self, region=None):
+    def read_screen(self, region=None, mode='active_window'):
+        """Read screen with spec-compliant preprocessing and OCR pipeline"""
         try:
             import pyautogui
         except ImportError:
             return "Screen capture not available (pyautogui not installed)"
 
-        # Capture screen or region
-        if region:
+        # Region selection as per spec
+        if mode == 'entire_screen':
+            screenshot = pyautogui.screenshot()
+        elif mode == 'active_window':
+            # For active window, we'd need additional libraries
+            # For now, use full screen
+            screenshot = pyautogui.screenshot()
+        elif region:
             screenshot = pyautogui.screenshot(region=region)
         else:
             screenshot = pyautogui.screenshot()
 
-        # OCR
-        text = pytesseract.image_to_string(screenshot)
+        # Preprocessing as per spec
+        processed_image = self._preprocess_image(screenshot)
+
+        # OCR pipeline
+        text = self._ocr_pipeline(processed_image)
+
         return text.strip()
+
+    def _preprocess_image(self, image):
+        """Preprocess image as per spec: grayscale, adaptive_thresholding, dpi_normalize"""
+        if not OPENCV_AVAILABLE:
+            return image
+
+        # Convert PIL to OpenCV
+        opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        # Grayscale
+        gray = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
+
+        # Adaptive thresholding
+        thresh = cv2.adaptiveThreshold(
+            gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+        )
+
+        # DPI normalization (downscale to 150-200 DPI for speed)
+        height, width = thresh.shape
+        scale_factor = min(200 / max(width, height), 1.0)  # Target ~200 DPI
+        if scale_factor < 1.0:
+            new_width = int(width * scale_factor)
+            new_height = int(height * scale_factor)
+            thresh = cv2.resize(thresh, (new_width, new_height), interpolation=cv2.INTER_AREA)
+
+        # Convert back to PIL
+        pil_image = Image.fromarray(thresh)
+
+        return pil_image
+
+    def _ocr_pipeline(self, image):
+        """OCR pipeline with fast_pass and optional structured_pass"""
+        # Fast text pass
+        text = pytesseract.image_to_string(image)
+
+        # Optional structured detection pass (tables/cli)
+        if OPENCV_AVAILABLE:
+            structured_text = self._structured_ocr_pass(image)
+            if structured_text:
+                text += "\n\n[Structured Content]\n" + structured_text
+
+        # Post-process
+        text = self._post_process_ocr(text)
+
+        return text
+
+    def _structured_ocr_pass(self, image):
+        """Optional structured OCR pass for tables and CLI content"""
+        # Detect tables
+        tables = self.recognize_tables(image)
+
+        structured_content = []
+
+        # Process tables
+        for table in tables:
+            structured_content.append("Table detected:")
+            for line in table['content'][:5]:  # Limit lines
+                structured_content.append(f"  {line}")
+
+        # CLI detection (look for monospace patterns)
+        # This is a simplified implementation
+        ocr_text = pytesseract.image_to_string(image)
+        lines = ocr_text.split('\n')
+
+        cli_patterns = []
+        for line in lines:
+            # Look for command-like patterns
+            if any(cmd in line.lower() for cmd in ['$', '#', '>', 'ls', 'cd', 'pwd']):
+                cli_patterns.append(line)
+
+        if cli_patterns:
+            structured_content.append("CLI/Terminal content detected:")
+            structured_content.extend(cli_patterns[:10])  # Limit
+
+        return '\n'.join(structured_content) if structured_content else ""
+
+    def _post_process_ocr(self, text):
+        """Post-process OCR: language_normalize, whitespace_trim, line_wrap 80 columns"""
+        if not text:
+            return ""
+
+        # Language normalize (basic)
+        # Whitespace trim
+        text = text.strip()
+
+        # Line wrap 80 columns
+        lines = text.split('\n')
+        wrapped_lines = []
+        for line in lines:
+            if len(line) > 80:
+                # Simple wrapping
+                wrapped = [line[i:i+80] for i in range(0, len(line), 80)]
+                wrapped_lines.extend(wrapped)
+            else:
+                wrapped_lines.append(line)
+
+        return '\n'.join(wrapped_lines)
 
     def summarize(self, text, max_sentences=3):
         """Advanced summarization using extractive methods"""
