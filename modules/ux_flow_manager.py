@@ -2,46 +2,239 @@ import time
 import threading
 import sys
 import os
+import shutil
+import psutil
 
 class UXFlowManager:
     def __init__(self, config):
         self.config = config
-        self.status_bar = {}
+        self.status_bar = {
+            'mic_status': 'OFF',
+            'last_action_summary': '',
+            'cpu_percent': '0%',
+            'mem_mb': '0MB',
+            'network_status': 'offline'
+        }
         self.thinking_dots = 0
         self.conversation_mode = 'push_to_talk'  # or 'continuous'
         self.voice_active = False
         self.memory_module = None
+        self.scrollback = []
+        self.max_scrollback = 1000
+        self.waveform_active = False
+        self.terminal_width = shutil.get_terminal_size().columns
+        self.terminal_height = shutil.get_terminal_size().lines
 
     def update_status(self, key, value):
         """Update status bar element"""
         self.status_bar[key] = value
+        self.refresh_hud()
+
+    def refresh_hud(self):
+        """Refresh the entire terminal HUD"""
+        # Clear screen and move to top
+        print("\033[2J\033[H", end="")
+
+        # Get current terminal size
+        self.terminal_width = shutil.get_terminal_size().columns
+        self.terminal_height = shutil.get_terminal_size().lines
+
+        # Render header
+        self._render_header()
+
+        # Render main window (scrollback)
+        self._render_main_window()
+
+        # Render waveform row (if active)
+        if self.waveform_active:
+            self._render_waveform_row()
+        else:
+            # Empty waveform space
+            print("│" + " " * (self.terminal_width - 2) + "│")
+
+        # Render status bar
+        self._render_status_bar()
+
+        # Render input prompt
+        self._render_input_prompt()
+
+    def _render_header(self):
+        """Render header: Auralis • offline | mode/time"""
+        app_name = "Auralis"
+        mode = self.status_bar.get('network_status', 'offline')
+        current_time = time.strftime("%H:%M")
+
+        header_left = f"{app_name} • {mode}"
+        header_right = current_time
+
+        # Calculate padding
+        total_width = self.terminal_width - 2  # Account for borders
+        padding = total_width - len(header_left) - len(header_right)
+
+        header_line = f"┌─ {header_left}{' ' * padding}{header_right} ─┐"
+        print(header_line)
+
+    def _render_main_window(self):
+        """Render main window with scrollback"""
+        content_height = self.terminal_height - 6  # Header + waveform + status + input + borders
+
+        # Get recent scrollback lines
+        recent_lines = self.scrollback[-content_height:] if len(self.scrollback) > content_height else self.scrollback
+
+        # Fill with empty lines if needed
+        while len(recent_lines) < content_height:
+            recent_lines.insert(0, "")
+
+        for line in recent_lines:
+            # Wrap long lines
+            wrapped_lines = self._wrap_text(line, self.terminal_width - 4)
+            for wrapped_line in wrapped_lines:
+                print(f"│ {wrapped_line:<{self.terminal_width-4}} │")
+
+    def _render_waveform_row(self):
+        """Render ASCII waveform row"""
+        waveform_height = 3
+        waveform_data = self._generate_waveform_data()
+
+        for i in range(waveform_height):
+            line = ""
+            for j in range(self.terminal_width - 2):
+                if j < len(waveform_data[i]):
+                    line += waveform_data[i][j]
+                else:
+                    line += " "
+            print(f"│{line}│")
+
+    def _render_status_bar(self):
+        """Render status bar: mic status | last action | cpu%|memMB|net"""
+        mic = self.status_bar.get('mic_status', 'OFF')
+        action = self.status_bar.get('last_action_summary', '')[:20]  # Truncate
+        cpu = self.status_bar.get('cpu_percent', '0%')
+        mem = self.status_bar.get('mem_mb', '0MB')
+        net = self.status_bar.get('network_status', 'offline')
+
+        left = f"mic:[{mic}]"
+        middle = action
+        right = f"{cpu}|{mem}|{net}"
+
+        # Calculate padding
+        total_width = self.terminal_width - 2
+        left_width = len(left)
+        right_width = len(right)
+        middle_width = total_width - left_width - right_width - 4  # Account for separators
+
+        status_line = f"├─ {left} {middle:<{middle_width}} {right} ─┤"
+        print(status_line)
+
+    def _render_input_prompt(self):
+        """Render input prompt"""
+        placeholder = "Type or hold SPACE to speak..."
+        prompt_line = f"└─ {placeholder}{' ' * (self.terminal_width - len(placeholder) - 5)} ─┘"
+        print(prompt_line)
+
+    def _wrap_text(self, text, width):
+        """Wrap text to fit width"""
+        if len(text) <= width:
+            return [text]
+
+        lines = []
+        while text:
+            if len(text) <= width:
+                lines.append(text)
+                break
+            # Find last space within width
+            cut = text.rfind(' ', 0, width)
+            if cut == -1:
+                cut = width
+            lines.append(text[:cut])
+            text = text[cut:].lstrip()
+        return lines
+
+    def _generate_waveform_data(self):
+        """Generate ASCII waveform data"""
+        # Simple sine wave for demo
+        import math
+        width = self.terminal_width - 2
+        height = 3
+        waveform = [[" " for _ in range(width)] for _ in range(height)]
+
+        for x in range(width):
+            # Sine wave
+            y = int((math.sin(x * 0.2 + time.time()) + 1) * (height - 1) / 2)
+            if 0 <= y < height:
+                waveform[y][x] = "~"
+
+        return waveform
+
+    def _performance_monitor(self):
+        """Monitor and update performance stats"""
+        while True:
+            try:
+                cpu_percent = f"{psutil.cpu_percent()}%"
+                mem_mb = f"{int(psutil.virtual_memory().used / 1024 / 1024)}MB"
+                self.update_status('cpu_percent', cpu_percent)
+                self.update_status('mem_mb', mem_mb)
+            except:
+                pass
+            time.sleep(5)
+
+    def add_to_scrollback(self, text):
+        """Add text to scrollback buffer"""
+        self.scrollback.append(text)
+        if len(self.scrollback) > self.max_scrollback:
+            self.scrollback.pop(0)
+        self.refresh_hud()
+
+    def start_waveform(self):
+        """Start waveform animation"""
+        self.waveform_active = True
+        self.refresh_hud()
+
+    def stop_waveform(self):
+        """Stop waveform animation"""
+        self.waveform_active = False
+        self.refresh_hud()
 
     def show_boot_sequence(self):
-        """Cinematic boot sequence with enhanced visuals"""
-        print("🚀 Initializing Auralis...\n")
+        """Detailed boot animation sequence as per spec"""
+        # Clear screen
+        print("\033[2J\033[H", end="")
 
-        boot_frames = self.config['terminal_ui_ux']['boot_sequence']
+        boot_frames = [
+            {"time_ms": 0, "line": "[*        ] Initializing core processes..."},
+            {"time_ms": 200, "line": "[**       ] Loading tiny models (quantized) — 85MB budget..."},
+            {"time_ms": 400, "line": "[***      ] Activating voice pipeline (push-to-talk ready)..."},
+            {"time_ms": 700, "line": "[****     ] Preparing screen reader & control modules..."},
+            {"time_ms": 1000, "line": "[*****    ] Optimizing runtime & CPU budget..."},
+            {"time_ms": 1400, "line": "[******   ] Finalizing security tokens & permissions..."},
+            {"time_ms": 1800, "line": "[******** ] Auralis ready — Press & hold [SPACE] to talk"}
+        ]
 
-        for i, frame in enumerate(boot_frames):
-            print(frame)
+        start_time = time.time() * 1000
+        for frame in boot_frames:
+            # Wait for the specified time
+            elapsed = time.time() * 1000 - start_time
+            wait_time = (frame["time_ms"] - elapsed) / 1000
+            if wait_time > 0:
+                time.sleep(wait_time)
 
-            # Add visual effects
-            if i == 0:
-                self.show_pulse_animation(2)
-            elif i == len(boot_frames) - 1:
-                print("✨ Ready!")
-                self.show_success_animation()
+            # Clear previous line and print new frame
+            print(f"\r{frame['line']}", end="", flush=True)
 
-            time.sleep(0.8)
+            # Add sound cues (simulated)
+            if frame["time_ms"] == 0:
+                print("\a", end="")  # Soft ping
+            elif frame["time_ms"] == 1800:
+                print("\a\a", end="")  # Chime
 
-        print("\n" + "="*50)
+        print()  # New line after boot
 
     def show_idle_screen(self):
-        hint = self.config['terminal_ui_ux']['idle_screen']['hint_text']
-        print(f"\n{hint}")
-        # Start pulse animation in background thread
-        self.idle_thread = threading.Thread(target=self._pulse_animation, daemon=True)
-        self.idle_thread.start()
+        """Show idle screen with HUD"""
+        self.add_to_scrollback("Auralis ready — Press & hold [SPACE] to talk")
+        # Start performance monitoring
+        self.perf_thread = threading.Thread(target=self._performance_monitor, daemon=True)
+        self.perf_thread.start()
 
     def _pulse_animation(self):
         while True:
@@ -58,75 +251,49 @@ class UXFlowManager:
                 status.append(f"{elem}: {self.status_bar[elem]}")
         print(" | ".join(status))
 
-    def start_voice_conversation(self, stt_module, nlp_module, tts_module, wake_word_module=None, memory_module=None):
-        """Start voice conversation loop"""
-        print("🎤 Voice conversation started. Say 'exit' or 'quit' to stop.")
+    def start_push_to_talk_flow(self, stt_module, nlp_module, tts_module, memory_module=None):
+        """Implement push-to-talk flow as per spec"""
+        # Trigger: User holds SPACE
+        self.update_status('mic_status', 'ON')
+        self.start_waveform()
 
-        self.memory_module = memory_module
-        self.voice_active = True
-        self.update_status('mode', 'VOICE')
+        # Capture window: 4000ms max
+        start_time = time.time()
+        user_input = stt_module.transcribe_push_to_talk()
 
-        try:
-            while self.voice_active:
-                # Wake word detection if available
-                if wake_word_module and self.conversation_mode == 'continuous':
-                    if wake_word_module.detect_wake_word():
-                        print("🎯 Wake word detected!")
-                    else:
-                        continue
+        self.stop_waveform()
+        self.update_status('mic_status', 'PROCESSING')
 
-                # Get speech input
-                if self.conversation_mode == 'push_to_talk':
-                    user_input = stt_module.transcribe_push_to_talk()
-                else:
-                    user_input = stt_module.transcribe(duration=3)
+        if user_input:
+            self.process_input_flow(user_input, nlp_module, tts_module, memory_module)
+        else:
+            self.add_to_scrollback("No speech detected")
+            self.update_status('last_action_summary', 'No speech detected')
 
-                if not user_input:
-                    continue
+        self.update_status('mic_status', 'OFF')
 
-                print(f"You: {user_input}")
+    def process_input_flow(self, user_input, nlp_module, tts_module, memory_module):
+        """Process input through NLP -> TTS flow"""
+        self.add_to_scrollback(f"You: {user_input}")
 
-                # Check for exit commands
-                if user_input.lower() in ['exit', 'quit', 'stop', 'goodbye']:
-                    response = "Goodbye! Have a great day."
-                    tts_module.speak(response)
-                    if self.memory_module:
-                        self.memory_module.add_turn(user_input, response)
-                    break
+        # NLP processing with latency target
+        start_time = time.time()
+        response = nlp_module.generate_contextual_response(user_input)
+        nlp_time = time.time() - start_time
 
-                # Show thinking animation
-                self.show_thinking_animation()
+        # Validate response
+        if not nlp_module.validate_response(response):
+            response = nlp_module.generate_fallback_response(user_input)
 
-                # Generate response
-                intent, entities = nlp_module.get_intent_and_entities(user_input)
+        self.add_to_scrollback(f"Auralis: {response}")
+        self.update_status('last_action_summary', f'Response ({nlp_time:.1f}s)')
 
-                if intent == 'command':
-                    # Handle commands
-                    response = self.process_voice_command(user_input, entities)
-                else:
-                    # Generate conversational response
-                    response = nlp_module.generate_contextual_response(user_input)
+        # TTS playback
+        tts_module.speak(response)
 
-                # Validate response
-                if not nlp_module.validate_response(response):
-                    response = nlp_module.generate_fallback_response(user_input)
-
-                print(f"Auralis: {response}")
-
-                # Speak response
-                tts_module.speak(response)
-
-                # Store in memory
-                if self.memory_module:
-                    self.memory_module.add_turn(user_input, response)
-
-        except KeyboardInterrupt:
-            print("\n🛑 Voice conversation interrupted")
-        except Exception as e:
-            print(f"❌ Voice conversation error: {e}")
-        finally:
-            self.voice_active = False
-            self.update_status('mode', 'IDLE')
+        # Memory
+        if memory_module:
+            memory_module.add_turn(user_input, response)
 
     def process_voice_command(self, command, entities):
         """Process voice commands"""
@@ -160,13 +327,8 @@ class UXFlowManager:
 
     def show_thinking_animation(self):
         """Show thinking animation during processing"""
-        import time
-        dots = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
-        for _ in range(10):  # ~1 second
-            for dot in dots:
-                print(f"\r🤔 Thinking {dot}", end="", flush=True)
-                time.sleep(0.05)
-        print("\r" + " " * 20 + "\r", end="", flush=True)  # Clear line
+        self.update_status('last_action_summary', 'Thinking...')
+        time.sleep(0.5)  # Brief pause
 
     def toggle_conversation_mode(self):
         """Toggle between push-to-talk and continuous mode"""
@@ -235,9 +397,8 @@ class UXFlowManager:
         print(f"❌ {error_msg}")
 
     def show_conversation_flow(self, user_input, ai_response):
-        """Show cinematic conversation flow"""
-        print(f"\n👤 {user_input}")
+        """Show cinematic conversation flow in scrollback"""
+        self.add_to_scrollback(f"You: {user_input}")
         self.show_thinking_animation()
+        self.add_to_scrollback(f"Auralis: {ai_response}")
         self.stop_thinking_animation()
-        print(f"🤖 {ai_response}")
-        print("-" * 40)
