@@ -64,21 +64,41 @@ class AudioWorker:
             self._cleanup()
 
     def _audio_capture_loop(self):
-        """Main audio capture and processing loop"""
+        """Main audio capture and processing loop with spec chunking"""
+        chunk_duration_ms = 1200  # 1200ms chunks as per spec
+        overlap_ms = 200  # 200ms overlap
+        samples_per_chunk = int(self.sample_rate * chunk_duration_ms / 1000)
+        samples_overlap = int(self.sample_rate * overlap_ms / 1000)
+
+        buffer = np.array([], dtype=np.int16)
+
         while True:
             try:
-                # Read audio chunk
+                # Read audio data
                 data = self.stream.read(self.chunk_size, exception_on_overflow=False)
                 audio_chunk = np.frombuffer(data, dtype=np.int16)
 
-                # Send to STT queue if PTT active or wakeword detected
-                if self.ptt_active:
-                    self.queues['audio->stt'].put({
-                        'type': 'audio_chunk',
-                        'data': audio_chunk.tobytes(),
-                        'timestamp': time.time(),
-                        'source': 'ptt'
-                    })
+                # Accumulate in buffer
+                buffer = np.concatenate([buffer, audio_chunk])
+
+                # Process chunks when we have enough data
+                while len(buffer) >= samples_per_chunk:
+                    # Extract chunk with overlap
+                    chunk = buffer[:samples_per_chunk]
+
+                    # Send to STT queue if PTT active or wakeword detected
+                    if self.ptt_active or hasattr(self, 'wakeword_active') and self.wakeword_active:
+                        source = 'ptt' if self.ptt_active else 'wakeword'
+                        self.queues['audio->stt'].put({
+                            'type': 'audio_chunk',
+                            'data': chunk.tobytes(),
+                            'timestamp': time.time(),
+                            'source': source,
+                            'chunk_duration_ms': chunk_duration_ms
+                        })
+
+                    # Remove processed samples, keeping overlap
+                    buffer = buffer[samples_per_chunk - samples_overlap:]
 
             except Exception as e:
                 self.logger.error(f"Audio capture error: {e}")
@@ -144,22 +164,30 @@ class AudioWorker:
                 break
 
     def _ptt_monitor_loop(self):
-        """Monitor for push-to-talk key presses"""
+        """Monitor for push-to-talk key presses with spec-compliant timing"""
         try:
             import keyboard
 
             def on_ptt_press():
+                start_time = time.time()
                 self.ptt_active = True
                 self.logger.info("Push-to-talk activated")
 
+                # UI feedback: 0-20ms status_bar.mic set ON; small click sound
+                self.queues['audio->stt'].put({
+                    'type': 'ptt_start',
+                    'timestamp': start_time
+                })
+
             def on_ptt_release():
+                end_time = time.time()
                 self.ptt_active = False
                 self.logger.info("Push-to-talk deactivated")
 
                 # Signal end of PTT capture
                 self.queues['audio->stt'].put({
                     'type': 'ptt_end',
-                    'timestamp': time.time()
+                    'timestamp': end_time
                 })
 
             keyboard.on_press_key(self.ptt_key, lambda _: on_ptt_press())

@@ -43,6 +43,8 @@ class InferenceWorker:
                         self._process_text_input(message)
                     elif message['type'] == 'switch_mode':
                         self._switch_mode(message['mode'])
+                    elif message['type'] == 'stt_result':
+                        self._process_stt_result(message)
 
                 time.sleep(0.01)  # Small delay to prevent busy loop
 
@@ -71,6 +73,28 @@ class InferenceWorker:
             'text': response,
             'timestamp': time.time(),
             'mode': 'online' if use_online else 'offline'
+        })
+
+    def _process_stt_result(self, message):
+        """Process STT transcription result"""
+        text = message.get('text', '')
+        confidence = message.get('confidence', 0.0)
+
+        if not text:
+            # Handle STT failure
+            self.queues['nlp->tts'].put({
+                'type': 'error',
+                'error': 'stt_fail',
+                'timestamp': time.time()
+            })
+            return
+
+        # Process the transcribed text
+        self._process_text_input({
+            'type': 'text_input',
+            'text': text,
+            'source': 'stt',
+            'confidence': confidence
         })
 
     def _generate_offline_response(self, text):
