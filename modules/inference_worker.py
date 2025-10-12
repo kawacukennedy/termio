@@ -8,6 +8,8 @@ import time
 import logging
 from nlp_offline import NLPModuleOffline
 from nlp_hf import NLPModuleHFAPI
+from command_parser import CommandParser
+from action_planner import ActionPlanner
 
 class InferenceWorker:
     def __init__(self, config, queues):
@@ -18,6 +20,10 @@ class InferenceWorker:
         # Models
         self.nlp_offline = NLPModuleOffline(config)
         self.nlp_online = None
+
+        # Command parsing and action planning
+        self.command_parser = CommandParser(config, self.nlp_offline, None)  # security passed later
+        self.action_planner = ActionPlanner(config, None)  # security passed later
 
         # Current mode
         self.current_mode = 'offline'
@@ -64,6 +70,15 @@ class InferenceWorker:
 
         self.logger.info(f"Processing input from {source}: {text[:50]}...")
 
+        # First, try command parsing
+        command_result = self.command_parser.parse_command(text)
+
+        if command_result['intent'] != 'general_conversation' and command_result['confidence'] > 0.6:
+            # Execute command
+            self._execute_command(command_result)
+            return
+
+        # Otherwise, generate conversational response
         # Check if we should use online mode
         use_online = self._should_use_online(text)
 
@@ -115,6 +130,30 @@ class InferenceWorker:
             'text': text,
             'timestamp': time.time(),
             'mode': 'fallback'
+        })
+
+    def _execute_command(self, command_result):
+        """Execute parsed command using action planner"""
+        intent = command_result['intent']
+        slots = command_result['slots']
+        action_plan = command_result['action_plan']
+
+        self.logger.info(f"Executing command: {intent} with plan of {len(action_plan)} steps")
+
+        # Execute action plan
+        result = self.action_planner.execute_plan(action_plan)
+
+        if result['success']:
+            response = f"Command executed successfully: {intent}"
+        else:
+            response = f"Command failed: {result['result']}"
+
+        # Send response
+        self.queues['nlp->tts'].put({
+            'type': 'response',
+            'text': response,
+            'timestamp': time.time(),
+            'mode': 'command'
         })
 
     def _generate_offline_response(self, text):
