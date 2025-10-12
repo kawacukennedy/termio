@@ -27,6 +27,13 @@ class UIWorker:
         # Show idle screen
         self.ux.show_idle_screen()
 
+        # TTS state
+        self.tts_active = False
+        self.tts_interrupt = False
+
+        # Start interrupt monitoring
+        self._start_interrupt_monitor()
+
         while self.running:
             try:
                 # Check for audio events
@@ -39,6 +46,8 @@ class UIWorker:
                         self._handle_ptt_end()
                     elif message['type'] == 'wakeword_detected':
                         self._handle_wakeword_detected()
+                    elif message['type'] == 'interrupt_tts':
+                        self._interrupt_tts()
 
                 # Check for TTS responses to display
                 if not self.queues['nlp->tts'].empty():
@@ -93,7 +102,7 @@ class UIWorker:
         thread.start()
 
     def _display_response(self, message):
-        """Display AI response in the UI"""
+        """Display AI response in the UI with TTS playback"""
         response_text = message.get('text', '')
         mode = message.get('mode', 'offline')
 
@@ -105,9 +114,89 @@ class UIWorker:
         # Add to scrollback
         self.ux.add_to_scrollback(f"Auralis: {response_text}")
 
-        # Speak response (this would trigger TTS)
-        # For now, just log
-        self.logger.info(f"Response: {response_text}")
+        # TTS playback behavior
+        self._play_tts_response(response_text)
+
+    def _play_tts_response(self, text):
+        """Play TTS response with preview and interrupt handling"""
+        # Before play: display preview text (first 2 lines)
+        lines = text.split('\n')[:2]
+        preview = '\n'.join(lines)
+        self.ux.add_to_scrollback(f"[Speaking] {preview}...")
+
+        # Start TTS playback
+        self.tts_active = True
+        self.tts_interrupt = False
+
+        try:
+            # Import TTS module (would be from tts_offline or tts_hf)
+            # For now, simulate TTS playback
+            import threading
+
+            def tts_playback():
+                self.logger.info(f"TTS: {text}")
+
+                # Simulate TTS timing (rough estimate: 150 words per minute)
+                words = len(text.split())
+                duration_sec = max(1, words / 2.5)  # ~150 wpm
+
+                start_time = time.time()
+                while time.time() - start_time < duration_sec and not self.tts_interrupt:
+                    # Could implement text highlighting here
+                    time.sleep(0.1)
+
+                if self.tts_interrupt:
+                    self.logger.info("TTS interrupted")
+                else:
+                    self.logger.info("TTS completed")
+
+                self.tts_active = False
+
+            # Start TTS in background
+            tts_thread = threading.Thread(target=tts_playback, daemon=True)
+            tts_thread.start()
+
+        except Exception as e:
+            self.logger.error(f"TTS error: {e}")
+            self.tts_active = False
+
+    def _interrupt_tts(self):
+        """Interrupt TTS playback with fadeout"""
+        if self.tts_active:
+            self.tts_interrupt = True
+            # Fadeout would happen in actual TTS implementation
+            time.sleep(0.05)  # 50-100ms fadeout
+            self.tts_active = False
+            self.ux.update_status('last_action_summary', 'TTS interrupted')
+
+    def _start_interrupt_monitor(self):
+        """Monitor for TTS interrupt commands"""
+        import threading
+
+        def monitor_interrupts():
+            try:
+                import keyboard
+
+                # Monitor for SPACE or 'stop' word
+                def on_space_press():
+                    if self.tts_active:
+                        self.queues['audio->stt'].put({
+                            'type': 'interrupt_tts',
+                            'timestamp': time.time()
+                        })
+
+                keyboard.on_press_key('space', lambda _: on_space_press())
+
+                # For 'stop' word detection, we'd need STT integration
+                # For now, just keyboard interrupt
+
+                keyboard.wait()  # Keep thread alive
+
+            except ImportError:
+                self.logger.warning("keyboard module not available, TTS interrupt disabled")
+
+        thread = threading.Thread(target=monitor_interrupts, daemon=True)
+        thread.start()
 
     def _handle_error(self, message):
         """Handle errors with spec-compliant messages"""

@@ -26,6 +26,9 @@ class InferenceWorker:
         self.max_concurrent_infers = 1
         self.active_infers = 0
 
+        # Conversation context (short-term: 3 turns)
+        self.conversation_context = []
+
     def run(self):
         """Main inference worker loop"""
         self.logger.info("Inference worker starting...")
@@ -68,6 +71,9 @@ class InferenceWorker:
             response = self._generate_online_response(text)
         else:
             response = self._generate_offline_response(text)
+
+        # Update conversation context
+        self._update_conversation_context(text, response)
 
         # Send to TTS queue
         self.queues['nlp->tts'].put({
@@ -112,7 +118,7 @@ class InferenceWorker:
         })
 
     def _generate_offline_response(self, text):
-        """Generate response using offline TinyGPT"""
+        """Generate response using offline TinyGPT with latency targets"""
         start_time = time.time()
 
         try:
@@ -125,8 +131,15 @@ class InferenceWorker:
             if not self.nlp_offline.validate_response(response):
                 response = self.nlp_offline.generate_fallback_response(text)
 
-            latency = time.time() - start_time
-            self.logger.info(f"Offline response generated in {latency:.2f}s")
+            latency_ms = (time.time() - start_time) * 1000
+
+            # Check latency target: 300-900ms
+            if latency_ms > 900:
+                self.logger.warning(f"Offline response latency {latency_ms:.0f}ms exceeds target (900ms)")
+            elif latency_ms < 300:
+                self.logger.info(f"Offline response latency {latency_ms:.0f}ms within target (300-900ms)")
+            else:
+                self.logger.info(f"Offline response generated in {latency_ms:.0f}ms")
 
             return response
 
@@ -135,7 +148,7 @@ class InferenceWorker:
             return "I'm sorry, I encountered an error processing your request."
 
     def _generate_online_response(self, text):
-        """Generate response using online HF API"""
+        """Generate response using online HF API with latency targets"""
         if not self.nlp_online:
             self.logger.warning("Online mode requested but not available")
             return self._generate_offline_response(text)
@@ -145,8 +158,15 @@ class InferenceWorker:
         try:
             response = self.nlp_online.generate_response(text, max_length=200)
 
-            latency = time.time() - start_time
-            self.logger.info(f"Online response generated in {latency:.2f}s")
+            latency_ms = (time.time() - start_time) * 1000
+
+            # Check latency target: 400-2000ms
+            if latency_ms > 2000:
+                self.logger.warning(f"Online response latency {latency_ms:.0f}ms exceeds target (2000ms)")
+            elif latency_ms < 400:
+                self.logger.info(f"Online response latency {latency_ms:.0f}ms within target (400-2000ms)")
+            else:
+                self.logger.info(f"Online response generated in {latency_ms:.0f}ms")
 
             return response
 
@@ -170,10 +190,29 @@ class InferenceWorker:
         return False
 
     def _get_conversation_context(self):
-        """Get recent conversation context"""
-        # This would integrate with memory module
-        # For now, return empty context
-        return ""
+        """Get recent conversation context (last 3 turns)"""
+        if not self.conversation_context:
+            return ""
+
+        # Format context as alternating user/assistant turns
+        context_parts = []
+        for turn in self.conversation_context[-3:]:  # Last 3 turns
+            context_parts.append(f"User: {turn['user']}")
+            context_parts.append(f"Assistant: {turn['ai']}")
+
+        return " ".join(context_parts)
+
+    def _update_conversation_context(self, user_input, ai_response):
+        """Update conversation context with new turn"""
+        self.conversation_context.append({
+            'user': user_input,
+            'ai': ai_response,
+            'timestamp': time.time()
+        })
+
+        # Keep only last 3 turns
+        if len(self.conversation_context) > 3:
+            self.conversation_context = self.conversation_context[-3:]
 
     def _switch_mode(self, new_mode):
         """Switch between offline and online modes"""
