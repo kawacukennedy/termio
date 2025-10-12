@@ -1,5 +1,6 @@
 import time
 import random
+import torch
 
 TRANSFORMERS_AVAILABLE = False
 try:
@@ -29,11 +30,25 @@ class NLPModuleOffline:
         }
 
     def _load_model(self):
-        """Lazy load the model"""
+        """Lazy load TinyGPT model"""
         if self.generator is None:
             if TRANSFORMERS_AVAILABLE:
-                print("Loading NLP model...")
-                self.generator = pipeline('text-generation', model='distilgpt2')
+                print("Loading TinyGPT model...")
+                # Try to load quantized TinyGPT first
+                model_path = "./models/tinygpt_quantized"
+                if os.path.exists(model_path):
+                    try:
+                        from transformers import GPT2LMHeadModel, GPT2Tokenizer
+                        self.tokenizer = GPT2Tokenizer.from_pretrained(model_path)
+                        self.model = GPT2LMHeadModel.from_pretrained(model_path)
+                        self.model.eval()
+                        print("TinyGPT quantized model loaded")
+                    except Exception as e:
+                        print(f"Failed to load TinyGPT: {e}")
+                        self.generator = pipeline('text-generation', model='distilgpt2')
+                else:
+                    print("TinyGPT not found, using distilgpt2 fallback")
+                    self.generator = pipeline('text-generation', model='distilgpt2')
             else:
                 print("Using simple NLP fallback...")
                 self.generator = None  # Will use fallback in generate_response
@@ -47,8 +62,38 @@ class NLPModuleOffline:
         if context:
             full_prompt = f"{context}\nUser: {prompt}\nAI:"
 
-        if self.generator is not None:
-            # Use transformers
+        if hasattr(self, 'model') and self.model is not None:
+            # Use TinyGPT
+            inputs = self.tokenizer(full_prompt, return_tensors='pt', truncation=True, max_length=512)
+            if torch.cuda.is_available():
+                inputs = {k: v.cuda() for k, v in inputs.items()}
+
+            # Adjust generation parameters for creativity
+            if creative:
+                temperature = 0.8
+                do_sample = True
+            else:
+                temperature = 0.7
+                do_sample = True
+
+            with torch.no_grad():
+                outputs = self.model.generate(
+                    **inputs,
+                    max_length=min(len(inputs['input_ids'][0]) + max_length, 1024),
+                    temperature=temperature,
+                    do_sample=do_sample,
+                    pad_token_id=self.tokenizer.eos_token_id,
+                    eos_token_id=self.tokenizer.eos_token_id
+                )
+
+            response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+            # Clean up response
+            if full_prompt in response:
+                response = response[len(full_prompt):].strip()
+
+        elif self.generator is not None:
+            # Use transformers pipeline fallback
             # Adjust generation parameters for creativity
             if creative:
                 temperature = 0.8
@@ -305,16 +350,32 @@ class NLPModuleOffline:
 
         suggestions = []
         for prompt in creative_prompts[:1]:  # Just use first for now
-            result = self.generator(
-                prompt,
-                max_length=len(prompt.split()) + 50,
-                num_return_sequences=1,
-                truncation=True,
-                temperature=0.9,
-                do_sample=True,
-                pad_token_id=50256
-            )
-            suggestion = result[0]['generated_text'].replace(prompt, '').strip()
+            if hasattr(self, 'model') and self.model is not None:
+                inputs = self.tokenizer(prompt, return_tensors='pt', truncation=True, max_length=256)
+                if torch.cuda.is_available():
+                    inputs = {k: v.cuda() for k, v in inputs.items()}
+
+                with torch.no_grad():
+                    outputs = self.model.generate(
+                        **inputs,
+                        max_length=len(inputs['input_ids'][0]) + 50,
+                        temperature=0.9,
+                        do_sample=True,
+                        pad_token_id=self.tokenizer.eos_token_id
+                    )
+
+                suggestion = self.tokenizer.decode(outputs[0], skip_special_tokens=True).replace(prompt, '').strip()
+            else:
+                result = self.generator(
+                    prompt,
+                    max_length=len(prompt.split()) + 50,
+                    num_return_sequences=1,
+                    truncation=True,
+                    temperature=0.9,
+                    do_sample=True,
+                    pad_token_id=50256
+                )
+                suggestion = result[0]['generated_text'].replace(prompt, '').strip()
             suggestions.append(suggestion)
 
         return suggestions[0] if suggestions else "I have some creative ideas!"
