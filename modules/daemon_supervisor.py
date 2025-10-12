@@ -10,11 +10,12 @@ import time
 import signal
 import threading
 import multiprocessing as mp
-from multiprocessing import Queue, Process
+from multiprocessing import Process
 import socket
 import json
 import psutil
 import logging
+from queue_manager import QueueManager
 
 class AuralisDaemon:
     def __init__(self, config):
@@ -24,12 +25,9 @@ class AuralisDaemon:
         self.running = False
         self.logger = logging.getLogger('daemon')
 
-        # Create interprocess queues as per spec
-        self.queues = {
-            'audio->stt': Queue(maxsize=8),
-            'stt->nlp': Queue(maxsize=4),
-            'nlp->tts': Queue(maxsize=2)
-        }
+        # Create interprocess queues with spec-compliant policies
+        self.queue_manager = QueueManager()
+        self.queues = self.queue_manager.queues
 
         # Setup signal handlers
         signal.signal(signal.SIGTERM, self.shutdown)
@@ -212,14 +210,15 @@ class AuralisDaemon:
             return {
                 'status': 'running',
                 'workers': {name: p.is_alive() for name, p in self.workers.items()},
-                'performance': self._get_performance_stats()
+                'performance': self._get_performance_stats(),
+                'queues': self.queue_manager.get_queue_stats()
             }
         elif action == 'shutdown':
             self.running = False
             return {'status': 'shutting_down'}
         elif action == 'input':
             # Send input to inference worker
-            self.queues['stt->nlp'].put({
+            self.queue_manager.put_message('stt->nlp', {
                 'type': 'text_input',
                 'text': request.get('text', ''),
                 'source': 'api'
@@ -253,12 +252,7 @@ class AuralisDaemon:
                 process.kill()
 
         # Clear queues
-        for queue in self.queues.values():
-            while not queue.empty():
-                try:
-                    queue.get_nowait()
-                except:
-                    break
+        self.queue_manager.clear_queues()
 
         self.logger.info("Auralis daemon shutdown complete")
         sys.exit(0)
