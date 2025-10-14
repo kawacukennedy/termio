@@ -1,4 +1,34 @@
-{
+ {
+  "title": "Auralis — GOD JSON Blueprint (Terminal J.A.R.V.I.S.-style Assistant)",
+  "version": "1.0.0",
+  "generated_at": "2025-10-12T10:00:00+02:00",
+  "purpose": "Complete, implementation-ready specification to build a Tony-Stark/J.A.R.V.I.S.-style terminal assistant (Auralis) that is local-first, highly CPU-efficient, small-footprint (<100MB install), supports offline tiny models for casual conversation and command execution, and optionally augments behavior via HuggingFace-hosted models/APIs for heavy tasks.",
+  "high_level_constraints": {
+    "install_size_total_target": "<100MB (all required runtime components & offline models)",
+    "budget": "$0 (use open-source tools & HuggingFace APIs for optional cloud augmentation)",
+    "primary_language": "Python 3.11+",
+    "launch_command": "auralis",
+    "platforms": ["Linux (primary) - Debian/Ubuntu", "macOS", "Windows (with WSL limitations)"],
+    "user_privacy_default": "local_only",
+    "api_provider_restriction": "HuggingFace APIs only for online augmentation"
+  },
+  "summary_of_components_and_sizes": {
+    "goal": "Sum of all offline model/artifact sizes + binaries must remain <100MB",
+    "budget": {
+      "offline_model_budget_breakdown_mb": {
+        "TinyGPT_conversation_model_quantized": 45,
+        "Vosk_tiny_STT_or_equivalent": 12,
+        "espeak-ng_TTS": 3,
+        "Tesseract_minimal_OCR_data": 10,
+        "porcupine_or_quiet_wakeword_assets": 1,
+        "pyautogui_and_runtime_libs_estimate": 5,
+        "app_code_and_assets": 4,
+        "logs_and_db_reserve": 5,
+        "TOTAL": 85
+      },
+      "notes": "Allow 10–12MB headroom for platform differences; optional HF online models are streamed and not stored locally so they don't count toward install size."
+    }
+  },
   "app_identity": {
     "name": "Auralis",
     "version": "1.0.0",
@@ -23,26 +53,75 @@
     }
   },
   "runtime_modes": {
-    "offline": {
-      "description": "Core functions without network",
-      "features": [
-        "push-to-talk voice interaction",
-        "wakeword detection",
-        "screen reading/ocr",
-        "screen control",
-        "natural conversation with TinyGPT",
-        "basic automation"
-      ]
+    "offline_mode": {
+      "purpose": "Casual multi-turn conversation, basic reasoning, local command execution, screen read + control",
+      "components_used": [
+        "TinyGPT_conversation_model_quantized (local tiny LLM)",
+        "Vosk_tiny (STT) or very small whisper-quantized local fallback",
+        "espeak-ng (TTS)",
+        "Tesseract minimal (OCR)",
+        "Porcupine-style wakeword"
+      ],
+      "capabilities": [
+        "multi-turn casual dialogue (context window limited to last 3 turns)",
+        "read selected screen region via OCR and summarize",
+        "perform screen control (mouse/keyboard) after confirmation",
+        "execute safe shell snippets in sandboxed mode",
+        "respond with TTS and terminal HUD output"
+      ],
+      "hard_limits": {
+        "context_turns": 3,
+        "max_offline_response_tokens_equivalent": 150,
+        "max_concurrent_threads": 3,
+        "memory_resident_models_allowed": ["only TinyGPT"]
+      }
     },
-    "online": {
-      "description": "Optional HuggingFace API augmentation",
-      "features": [
-        "Whisper-based ASR",
-        "GPT-based LLM for advanced dialogue",
-        "HiFi-GAN or WaveNet TTS",
-        "context-aware multi-turn conversations",
-        "creative task generation"
-      ]
+    "online_mode (HuggingFace augmentation)": {
+      "purpose": "Heavy reasoning, long-context summarization, translation, high-quality TTS, transcription, or developer-level code understanding",
+      "usage_pattern": "Optional: user opt-in per request; streaming requests; fallbacks to offline if network unavailable",
+      "HuggingFace_endpoints_examples": {
+        "STT": "whisper variants on HF Inference API (streaming chunks)",
+        "NLP": "instruction-following small-medium HF conversational models (e.g., hosted quantized 125M–1B variants)",
+        "TTS": "HiFi-GAN / lightweight vocoders via HF Inference"
+      },
+      "security": "All HF calls occur with user-provided HF token; user must explicitly enable 'cloud_mode' in settings; all payloads optionally redacted/filtered before upload."
+    }
+  },
+  "microarchitecture": {
+    "processes_and_services": {
+      "auralis_daemon (supervisor)": {
+        "run_as": "user_service",
+        "responsibilities": [
+          "start/stop modules",
+          "manage secrets (OS keychain)",
+          "expose local unix domain socket or https-loopback for CLI",
+          "health checks and graceful restarts"
+        ],
+        "resource_limits": {"max_rss_mb": 512, "max_cpu_percent": 40}
+      },
+      "audio_io_worker": {
+        "responsibilities": ["audio capture", "wakeword detection", "push-to-talk capture", "chunking for STT"],
+        "threading": {"priority": "high", "real_time_hint": true},
+        "latency_target_ms": 120
+      },
+      "inference_worker": {
+        "responsibilities": ["TinyGPT local inferencing", "on-demand HF request orchestration"],
+        "scheduling": {"max_concurrent_infers": 1, "preempt_by_policy": "voice_over_ui"}
+      },
+      "action_executor_worker": {
+        "responsibilities": ["screen control via accessibility APIs", "pyautogui actions", "sandboxed shell execution"],
+        "permission_checks": "explicit user confirmation required for destructive actions"
+      },
+      "ui_worker": {
+        "responsibilities": ["terminal HUD rendering", "waveform animation", "status bar"],
+        "render_rate_fps": 12,
+        "cpu_budget_percent": 1
+      }
+    },
+    "interprocess_queues": {
+      "audio->stt_queue": {"max_size": 8, "drop_policy": "drop_oldest_on_overflow"},
+      "stt->nlp_queue": {"max_size": 4, "prioritization": "wakeword_input"},
+      "nlp->tts_queue": {"max_size": 2}
     }
   },
   "architecture": {
