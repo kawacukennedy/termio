@@ -251,5 +251,50 @@ os.system('rm -rf /')
         # In a real test, check that no system commands were executed
         self.assertIsInstance(result, str)  # Should return safely
 
+    @patch('web_dashboard.Flask')
+    def test_web_dashboard_telemetry(self, mock_flask):
+        """Test web dashboard telemetry endpoints"""
+        from web_dashboard import WebDashboard
+
+        dashboard = WebDashboard(self.mock_config, None, None, None)
+
+        # Test telemetry data recording
+        dashboard.record_llm_latency(0.5)
+        dashboard.record_stt_latency(0.3)
+
+        self.assertEqual(len(dashboard.telemetry_data['llm_latencies']), 1)
+        self.assertEqual(len(dashboard.telemetry_data['stt_latencies']), 1)
+
+        # Test PII scrubbing
+        test_data = {'email': 'user@example.com', 'ip': '192.168.1.1', 'message': 'test'}
+        scrubbed = dashboard._scrub_pii(test_data)
+        self.assertNotIn('user@example.com', scrubbed)
+        self.assertIn('[EMAIL]', scrubbed)
+
+    def test_queue_manager_multiprocessing(self):
+        """Test queue manager with multiprocessing compatibility"""
+        from queue_manager import QueueManager
+
+        qm = QueueManager()
+
+        # Test putting messages
+        qm.put_message('audio->stt', {'type': 'test'})
+        qm.put_message('stt->nlp', {'type': 'test'})
+        qm.put_message('nlp->tts', {'type': 'test'})
+
+        # Test stats
+        stats = qm.get_queue_stats()
+        self.assertIn('audio->stt', stats)
+        self.assertIn('stt->nlp', stats)
+        self.assertIn('nlp->tts', stats)
+
+        # Test drop oldest for audio->stt
+        for i in range(10):
+            qm.put_message('audio->stt', {'type': f'test{i}'})
+
+        # Should not exceed maxsize
+        stats = qm.get_queue_stats()
+        self.assertLessEqual(stats['audio->stt']['size'], 8)
+
 if __name__ == '__main__':
     unittest.main()

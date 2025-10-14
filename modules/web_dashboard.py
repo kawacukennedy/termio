@@ -18,9 +18,27 @@ class WebDashboard:
         self.app = Flask(__name__,
                         template_folder='../templates',
                         static_folder='../static')
+
+        # Generate auth token
+        import secrets
+        self.auth_token = secrets.token_hex(32)
+        print(f"🔐 Dashboard auth token: {self.auth_token}")
+
+        # Telemetry data
+        self.telemetry_data = {
+            'llm_latencies': [],
+            'stt_latencies': [],
+            'crash_reports': []
+        }
+
         self.setup_routes()
         self.server_thread = None
         self.is_running = False
+
+    def check_auth(self):
+        """Check authentication token"""
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        return token == self.auth_token
 
     def setup_routes(self):
         @self.app.route('/')
@@ -31,6 +49,9 @@ class WebDashboard:
 
         @self.app.route('/api/status')
         def get_status():
+            if not self.check_auth():
+                return jsonify({'error': 'Unauthorized'}), 401
+
             try:
                 perf_status = self.performance.get_status()
                 memory_stats = {
@@ -220,12 +241,54 @@ class WebDashboard:
 
         @self.app.route('/api/plugins/<plugin_name>', methods=['POST'])
         def run_plugin(plugin_name):
+            if not self.check_auth():
+                return jsonify({'error': 'Unauthorized'}), 401
+
             if not self.plugins:
                 return jsonify({'error': 'Plugins module not available'}), 503
 
             try:
                 result = self.plugins.execute_plugin(plugin_name, {})
                 return jsonify({'result': result})
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/telemetry')
+        def get_telemetry():
+            if not self.check_auth():
+                return jsonify({'error': 'Unauthorized'}), 401
+
+            try:
+                # Calculate averages
+                llm_avg = sum(self.telemetry_data['llm_latencies'][-100:]) / len(self.telemetry_data['llm_latencies'][-100:]) if self.telemetry_data['llm_latencies'] else 0
+                stt_avg = sum(self.telemetry_data['stt_latencies'][-100:]) / len(self.telemetry_data['stt_latencies'][-100:]) if self.telemetry_data['stt_latencies'] else 0
+
+                return jsonify({
+                    'cpu_usage': psutil.cpu_percent(),
+                    'mem_usage': psutil.virtual_memory().percent,
+                    'llm_latency_ms': round(llm_avg * 1000, 2),
+                    'stt_latency_ms': round(stt_avg * 1000, 2),
+                    'crash_reports_count': len(self.telemetry_data['crash_reports']),
+                    'timestamp': time.time()
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/crash_report', methods=['POST'])
+        def submit_crash_report():
+            try:
+                data = request.get_json()
+                # Scrub PII
+                scrubbed_data = self._scrub_pii(data)
+                scrubbed_data['submitted_at'] = time.time()
+
+                self.telemetry_data['crash_reports'].append(scrubbed_data)
+
+                # Keep only last 50 reports
+                if len(self.telemetry_data['crash_reports']) > 50:
+                    self.telemetry_data['crash_reports'].pop(0)
+
+                return jsonify({'message': 'Crash report submitted successfully'})
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
 
@@ -260,3 +323,29 @@ class WebDashboard:
     def is_active(self):
         """Check if dashboard is running"""
         return self.is_running
+
+    def record_llm_latency(self, latency_seconds):
+        """Record LLM inference latency"""
+        self.telemetry_data['llm_latencies'].append(latency_seconds)
+        # Keep last 1000 measurements
+        if len(self.telemetry_data['llm_latencies']) > 1000:
+            self.telemetry_data['llm_latencies'].pop(0)
+
+    def record_stt_latency(self, latency_seconds):
+        """Record STT processing latency"""
+        self.telemetry_data['stt_latencies'].append(latency_seconds)
+        # Keep last 1000 measurements
+        if len(self.telemetry_data['stt_latencies']) > 1000:
+            self.telemetry_data['stt_latencies'].pop(0)
+
+    def _scrub_pii(self, data):
+        """Scrub PII from crash reports"""
+        import re
+        scrubbed = str(data)
+
+        # Remove emails, IPs, etc.
+        scrubbed = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[EMAIL]', scrubbed)
+        scrubbed = re.sub(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', '[IP]', scrubbed)
+        scrubbed = re.sub(r'\b\d{4} \d{4} \d{4} \d{4}\b', '[CARD]', scrubbed)
+
+        return scrubbed

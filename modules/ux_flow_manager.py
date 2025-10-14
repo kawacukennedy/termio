@@ -420,3 +420,109 @@ class UXFlowManager:
         self.show_thinking_animation()
         self.add_to_scrollback(f"Auralis: {ai_response}")
         self.stop_thinking_animation()
+
+    def debug_code_flow(self, screen_reader, nlp_module):
+        """Implement debug code flow as per spec"""
+        # Trigger: "Auralis, explain this function"
+        # Step 1: Capture active editor selection
+        code_text = screen_reader.read_screen(mode='active_window')
+
+        # Step 2: Extract code and context
+        # Simple extraction - look for function definitions
+        import re
+        functions = re.findall(r'def\s+(\w+)\s*\([^)]*\):', code_text)
+        if not functions:
+            return "No function found in the selected code."
+
+        # Step 3: Run static analyzer (basic)
+        analysis = self._analyze_code(code_text)
+
+        # Step 4: Generate explanation
+        prompt = f"Explain this Python code:\n{code_text}\n\nAnalysis: {analysis}"
+        explanation = nlp_module.generate_response(prompt, max_length=200)
+
+        # Step 5: Offer fix if issues found
+        if analysis.get('issues'):
+            explanation += "\n\nSuggested fixes:\n" + "\n".join(f"- {fix}" for fix in analysis['issues'])
+
+        return explanation
+
+    def summarize_tabs_flow(self, screen_reader, nlp_module, memory_module):
+        """Implement summarize tabs flow as per spec"""
+        # Trigger: "Summarize my research tabs"
+        # Step 1: Browser extension supplies page text (placeholder - would need extension)
+        # For now, read current screen
+        page_text = screen_reader.read_screen()
+
+        # Step 2: Collect pages (placeholder - would collect multiple tabs)
+        pages = [page_text]  # Single page for demo
+
+        # Step 3: Embed and RAG summarize
+        if memory_module and memory_module.rag_enabled:
+            # Use RAG for summarization
+            query = "Summarize the key points from these pages"
+            relevant_content = memory_module.get_relevant_turns(query, 5)
+            # Combine with current page
+            all_content = page_text + "\n".join([turn['user'] + " " + turn['ai'] for turn in relevant_content])
+        else:
+            all_content = page_text
+
+        # Step 4: Generate summary with bullets
+        prompt = f"Summarize this content in bullet points:\n{all_content[:2000]}"  # Limit length
+        summary = nlp_module.generate_response(prompt, max_length=300)
+
+        # Step 5: Group by topic (basic)
+        bullets = summary.split('\n')
+        grouped = self._group_bullets_by_topic(bullets)
+
+        return grouped
+
+    def _analyze_code(self, code):
+        """Basic static code analysis"""
+        issues = []
+        analysis = {'functions': [], 'issues': issues}
+
+        # Check for common issues
+        if 'print(' in code and 'import logging' not in code:
+            issues.append("Consider using logging instead of print for production code")
+
+        if 'except:' in code and 'Exception' not in code:
+            issues.append("Use specific exception types instead of bare except")
+
+        if len(code.split('\n')) > 50:
+            issues.append("Function is quite long - consider breaking it into smaller functions")
+
+        # Extract functions
+        import re
+        functions = re.findall(r'def\s+(\w+)\s*\([^)]*\):', code)
+        analysis['functions'] = functions
+
+        return analysis
+
+    def _group_bullets_by_topic(self, bullets):
+        """Basic topic grouping for bullets"""
+        # Simple grouping by keywords
+        topics = {
+            'Technical': [],
+            'Business': [],
+            'General': []
+        }
+
+        for bullet in bullets:
+            bullet_lower = bullet.lower()
+            if any(word in bullet_lower for word in ['code', 'api', 'software', 'tech']):
+                topics['Technical'].append(bullet)
+            elif any(word in bullet_lower for word in ['market', 'business', 'company']):
+                topics['Business'].append(bullet)
+            else:
+                topics['General'].append(bullet)
+
+        # Format output
+        output = []
+        for topic, items in topics.items():
+            if items:
+                output.append(f"**{topic}:**")
+                output.extend(items)
+                output.append("")
+
+        return "\n".join(output)
