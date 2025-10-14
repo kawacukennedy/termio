@@ -214,8 +214,11 @@ class TestAuralisModules(unittest.TestCase):
         # Process the message
         worker._process_stt_result(message)
 
-        # Check that TTS was called
-        self.assertTrue(mock_tts_instance.speak.called)
+        # Check that a message was sent to the TTS queue
+        self.assertTrue(queues['nlp->tts'].qsize() > 0)
+        tts_message = queues['nlp->tts'].get()
+        self.assertEqual(tts_message['type'], 'response')
+        self.assertIn('Hello! How can I help you?', tts_message['text'])
 
     def test_focus_session_flow(self):
         """E2E test for focus session flow"""
