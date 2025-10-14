@@ -18,7 +18,7 @@ class CommandParser:
         # Rule-based patterns for common intents
         self.intent_patterns = {
             'screen_read': [
-                r'read\s+(?:this|screen|page)',
+                r'read\s+(?:the\s+)?(?:this|screen|page)',
                 r'show\s+me\s+(?:the\s+)?screen',
                 r'what\s+(?:do\s+you\s+)?see',
                 r'summarize\s+(?:this|screen|page)'
@@ -141,7 +141,7 @@ class CommandParser:
     def _llm_intent_classification(self, user_input: str) -> Tuple[str, float]:
         """LLM-based intent classification using TinyGPT"""
         if not self.nlp:
-            return "unknown", 0.0
+            return "general_conversation", 0.0
 
         try:
             # Use TinyGPT for intent classification

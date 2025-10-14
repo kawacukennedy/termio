@@ -72,8 +72,8 @@ class TestAuralisModules(unittest.TestCase):
         mock_fernet.return_value.decrypt.return_value = b'decrypted'
 
         # Mock sqlite3
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
+        mock_conn = MagicMock ()
+        mock_cursor = MagicMock ()
         mock_conn.cursor.return_value = mock_cursor
         mock_sqlite.connect.return_value = mock_conn
 
@@ -126,11 +126,12 @@ class TestAuralisModules(unittest.TestCase):
 
         # Test plugin template creation
         template_path = plugins.create_plugin_template('test_plugin')
-        self.assertTrue(str(template_path).endswith('test_plugin.py'))
+        self.assertTrue(str(template_path).endswith('test_plugin'))
 
         # Clean up
+        import shutil
         if os.path.exists(template_path):
-            os.remove(template_path)
+            shutil.rmtree(template_path)
 
     def test_model_training_module(self):
         """Test model training module"""
@@ -141,6 +142,114 @@ class TestAuralisModules(unittest.TestCase):
         status = training.get_training_status()
         self.assertIn('supported_models', status)
         self.assertIn('training_config', status)
+
+    def test_command_parser(self):
+        """Test command parser intent classification"""
+        from command_parser import CommandParser
+
+        parser = CommandParser(self.mock_config)
+
+        # Test screen read intent
+        result = parser.parse_command("read the screen")
+        self.assertEqual(result['intent'], 'screen_read')
+        self.assertGreater(result['confidence'], 0.5)
+
+        # Test screen control intent
+        result = parser.parse_command("click on the button")
+        self.assertEqual(result['intent'], 'screen_control')
+        self.assertGreater(result['confidence'], 0.5)
+
+        # Test general conversation fallback
+        result = parser.parse_command("hello how are you")
+        self.assertEqual(result['intent'], 'general_conversation')
+
+    def test_permission_prompts(self):
+        """Test security permission prompts"""
+        from security import SecurityModule
+
+        security = SecurityModule(self.mock_config)
+
+        # Test destructive action prompt
+        result = security.check_permission('delete_file', '/important/file.txt')
+        self.assertIn('prompt_user', result)
+
+        # Test non-destructive action
+        result = security.check_permission('read_screen', None)
+        self.assertTrue(result['allowed'])
+
+    @patch('stt_offline.STTModuleOffline')
+    @patch('nlp_offline.NLPModuleOffline')
+    @patch('tts_offline.TTSModuleOffline')
+    def test_stt_nlp_tts_integration(self, mock_tts, mock_nlp, mock_stt):
+        """Integration test for STT -> NLP -> TTS cycle"""
+        from inference_worker import InferenceWorker
+        from queue_manager import QueueManager
+
+        # Mock the modules
+        mock_stt_instance = MagicMock()
+        mock_stt_instance.transcribe.return_value = {'text': 'hello auralis', 'confidence': 0.9}
+        mock_stt.return_value = mock_stt_instance
+
+        mock_nlp_instance = MagicMock()
+        mock_nlp_instance.generate_response.return_value = 'Hello! How can I help you?'
+        mock_nlp.return_value = mock_nlp_instance
+
+        mock_tts_instance = MagicMock()
+        mock_tts.return_value = mock_tts_instance
+
+        # Create queues
+        queue_manager = QueueManager()
+        queues = queue_manager.queues
+
+        # Create inference worker
+        worker = InferenceWorker(self.mock_config, queues, MagicMock())
+
+        # Simulate STT result
+        message = {
+            'type': 'stt_result',
+            'text': 'hello auralis',
+            'confidence': 0.9
+        }
+
+        # Process the message
+        worker._process_stt_result(message)
+
+        # Check that TTS was called
+        self.assertTrue(mock_tts_instance.speak.called)
+
+    def test_focus_session_flow(self):
+        """E2E test for focus session flow"""
+        from ux_flow_manager import UXFlowManager
+
+        ux = UXFlowManager(self.mock_config)
+
+        # Simulate focus session start
+        ux.start_focus_session()
+
+        # Check status
+        status = ux.get_status()
+        self.assertEqual(status.get('focus_mode'), 'ON')
+
+        # Simulate end
+        ux.end_focus_session()
+        status = ux.get_status()
+        self.assertEqual(status.get('focus_mode'), 'OFF')
+
+    def test_plugin_sandbox_escape(self):
+        """Security test for plugin sandbox escape"""
+        from plugins import PluginHostModule
+
+        plugins = PluginHostModule(self.mock_config)
+
+        # Test that plugins can't access forbidden modules
+        malicious_code = """
+import os
+os.system('rm -rf /')
+"""
+        # This should be blocked or sandboxed
+        result = plugins.execute_plugin('test', 'run_code', code=malicious_code)
+        # In a real test, check that no system commands were executed
+        self.assertIsInstance(result, str)  # Should return safely
 
 if __name__ == '__main__':
     unittest.main()

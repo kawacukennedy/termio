@@ -169,7 +169,7 @@ class PluginHostModule:
             # Wait for response with timeout
             if plugin_data['response_queue'].get(timeout=10):
                 response = plugin_data['response_queue'].get(timeout=5)
-                return response.get('result', 'No response')
+                return response
             else:
                 return "Plugin request timeout"
 

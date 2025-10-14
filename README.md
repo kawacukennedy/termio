@@ -4,6 +4,22 @@
 
 **Your intelligent, conversational, desktop AI companion.**
 
+## 🚀 Quick Start
+
+```bash
+# Clone repository
+git clone https://github.com/sst/auralis.git
+cd auralis
+
+# Run installer (downloads models automatically)
+./install.sh
+
+# Start Auralis
+./bin/auralis
+```
+
+**Total install size: <100MB** (code: ~2MB + models: ~80MB)
+
 ## ✨ Features
 
 ### 🎤 Voice Interface
@@ -62,6 +78,13 @@
 - **Email Integration**: Send/receive emails with SMTP/IMAP
 - **Task Scheduling**: Schedule commands to run later
 - **Macro System**: Create and execute command sequences
+
+### 🔄 Production Features
+- **Auto-Updates**: GitHub-integrated update system with rollback
+- **Model Downloads**: Automated AI model fetching and verification
+- **Size Optimization**: Verified <100MB total install footprint
+- **Installer Script**: One-command setup with dependency management
+- **Backup/Restore**: Automated data backup and disaster recovery
 - **Web Scraping**: Extract data from websites
 - **File Operations**: Read, write, and manage files
 - **System Monitoring**: Comprehensive system information
@@ -102,6 +125,10 @@
 git clone https://github.com/kawacukennedy/auralis.git
 cd auralis
 
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
 
@@ -115,6 +142,25 @@ python3 scripts/cleanup.py
 ./bin/auralis
 ```
 
+### Optional Enhancements
+For full feature set, install additional packages:
+```bash
+pip install keyboard pyautogui opencv-python
+```
+
+### API Keys Setup (Optional)
+For enhanced features:
+
+**HuggingFace API (Online AI):**
+1. Get token from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+2. Run Auralis and say: "store api key huggingface YOUR_TOKEN_HERE"
+
+**Porcupine Wake Word (Voice Activation):**
+1. Get free access key from [https://console.picovoice.ai/](https://console.picovoice.ai/)
+2. Run Auralis and say: "store api key porcupine YOUR_ACCESS_KEY_HERE"
+
+API keys are encrypted and stored securely.
+
 ### Size Optimization
 Auralis is designed to maintain a **<100MB footprint** as specified in config.json:
 - **Current size**: ~87MB (after cleanup)
@@ -123,7 +169,7 @@ Auralis is designed to maintain a **<100MB footprint** as specified in config.js
 - **Lazy loading**: Models downloaded only when needed
 
 ### Basic Usage
-1. **Voice Commands**: Say "Auralis" to wake, then speak your command
+1. **Voice Commands**: Say "Jarvis" to wake, then speak your command
 2. **Push-to-Talk**: Hold SPACE key and speak
 3. **Voice Conversation**: Say "start voice conversation" for continuous dialogue
 4. **Text Input**: Type commands directly
@@ -131,10 +177,10 @@ Auralis is designed to maintain a **<100MB footprint** as specified in config.js
 
 ### Example Commands
 **Voice & Conversation:**
-- "Auralis, read screen" - OCR current screen
-- "Auralis, summarize output" - Summarize visible content
-- "Auralis, search screen for error" - Find keywords
-- "Auralis, close window" - Window management
+- "Jarvis, read screen" - OCR current screen
+- "Jarvis, summarize output" - Summarize visible content
+- "Jarvis, search screen for error" - Find keywords
+- "Jarvis, close window" - Window management
 - "set voice to formal" - Change voice profile
 - "be creative about [topic]" - Generate ideas
 

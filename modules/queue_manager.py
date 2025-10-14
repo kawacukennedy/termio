@@ -49,11 +49,11 @@ class PriorityQueue:
         with self._lock:
             return len(self._queue)
 
-class DropOldestQueue(Queue):
+class DropOldestQueue:
     """Queue that drops oldest items on overflow"""
 
     def __init__(self, maxsize=0):
-        super().__init__(maxsize)
+        self.maxsize = maxsize
         self._buffer = deque(maxlen=maxsize) if maxsize > 0 else deque()
 
     def put(self, item, block=True, timeout=None):

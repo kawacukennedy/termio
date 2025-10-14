@@ -91,6 +91,35 @@ class WebDashboard:
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
 
+        @self.app.route('/api/export', methods=['POST'])
+        def export_data():
+            """GDPR export all user data"""
+            try:
+                conversations = self.memory.get_all_conversations()
+                # In real app, save to file and provide download link
+                # For now, return JSON
+                return jsonify({
+                    'data': conversations,
+                    'exported_at': time.time(),
+                    'message': 'Data exported successfully'
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/delete', methods=['POST'])
+        def delete_data():
+            """GDPR delete all user data"""
+            try:
+                # Clear short term
+                self.memory.short_term_memory.clear()
+                # Clear long term if enabled
+                if self.memory.conn:
+                    self.memory.conn.execute("DELETE FROM turns")
+                    self.memory.conn.commit()
+                return jsonify({'message': 'All user data deleted successfully'})
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
         @self.app.route('/api/external/<service>')
         def get_external_data(service):
             if not self.external_api:

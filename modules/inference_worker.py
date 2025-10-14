@@ -12,9 +12,10 @@ from command_parser import CommandParser
 from action_planner import ActionPlanner
 
 class InferenceWorker:
-    def __init__(self, config, queues):
+    def __init__(self, config, queues, memory):
         self.config = config
         self.queues = queues
+        self.memory = memory
         self.logger = logging.getLogger('inference_worker')
 
         # Models
@@ -31,9 +32,6 @@ class InferenceWorker:
         # Performance limits
         self.max_concurrent_infers = 1
         self.active_infers = 0
-
-        # Conversation context (short-term: 3 turns)
-        self.conversation_context = []
 
     def run(self):
         """Main inference worker loop"""
@@ -162,7 +160,7 @@ class InferenceWorker:
 
         try:
             # Get context from memory if available
-            context = self._get_conversation_context()
+            context = self._get_conversation_context(text)
 
             response = self.nlp_offline.generate_response(text, context, max_length=150)
 
@@ -228,14 +226,19 @@ class InferenceWorker:
 
         return False
 
-    def _get_conversation_context(self):
-        """Get recent conversation context (last 3 turns)"""
-        if not self.conversation_context:
+    def _get_conversation_context(self, current_query=None):
+        """Get conversation context (recent or RAG-retrieved turns)"""
+        if self.memory.rag_enabled and current_query:
+            relevant_turns = self.memory.get_relevant_turns(current_query, 3)
+        else:
+            relevant_turns = self.memory.get_recent_turns(3)
+
+        if not relevant_turns:
             return ""
 
         # Format context as alternating user/assistant turns
         context_parts = []
-        for turn in self.conversation_context[-3:]:  # Last 3 turns
+        for turn in relevant_turns:
             context_parts.append(f"User: {turn['user']}")
             context_parts.append(f"Assistant: {turn['ai']}")
 
@@ -243,15 +246,7 @@ class InferenceWorker:
 
     def _update_conversation_context(self, user_input, ai_response):
         """Update conversation context with new turn"""
-        self.conversation_context.append({
-            'user': user_input,
-            'ai': ai_response,
-            'timestamp': time.time()
-        })
-
-        # Keep only last 3 turns
-        if len(self.conversation_context) > 3:
-            self.conversation_context = self.conversation_context[-3:]
+        self.memory.add_turn(user_input, ai_response)
 
     def _switch_mode(self, new_mode):
         """Switch between offline and online modes"""

@@ -42,8 +42,15 @@ class SecurityModule:
             f.write(key)
         return key
 
-    def check_permission(self, perm):
-        return perm in self.permissions
+    def check_permission(self, action, resource=None):
+        """Check if action is permitted, prompt if needed"""
+        if action in ['read_screen', 'get_system_info']:
+            return {'allowed': True}
+        elif action in ['delete_file', 'modify_system']:
+            # Destructive actions require confirmation
+            return {'allowed': False, 'prompt_user': True, 'message': f'Action "{action}" requires confirmation'}
+        else:
+            return {'allowed': action in self.permissions}
 
     def request_microphone_permission(self):
         # In a real implementation, check system permissions

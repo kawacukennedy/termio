@@ -10,6 +10,7 @@ keyboard>=0.13.5      # ~0.5MB
 # Optional offline models (downloaded separately to control size)
 # vosk>=0.3.45         # ~12MB (model downloaded separately)
 # pvporcupine>=3.0.0   # ~1MB (model downloaded separately)
+# sentence-transformers>=2.2.0  # ~22MB - optional for RAG embeddings
 
 # Development dependencies (not included in install size)
 # opencv-python>=4.8.0  # ~50MB - optional for advanced OCR

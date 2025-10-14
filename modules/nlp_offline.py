@@ -1,6 +1,12 @@
 import time
 import random
-import torch
+
+TORCH_AVAILABLE = False
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    print("Warning: torch not available. Some NLP features may be limited.")
 
 TRANSFORMERS_AVAILABLE = False
 try:
@@ -65,7 +71,7 @@ class NLPModuleOffline:
         if hasattr(self, 'model') and self.model is not None:
             # Use TinyGPT
             inputs = self.tokenizer(full_prompt, return_tensors='pt', truncation=True, max_length=512)
-            if torch.cuda.is_available():
+            if TORCH_AVAILABLE and torch.cuda.is_available():
                 inputs = {k: v.cuda() for k, v in inputs.items()}
 
             # Adjust generation parameters for creativity
@@ -352,7 +358,7 @@ class NLPModuleOffline:
         for prompt in creative_prompts[:1]:  # Just use first for now
             if hasattr(self, 'model') and self.model is not None:
                 inputs = self.tokenizer(prompt, return_tensors='pt', truncation=True, max_length=256)
-                if torch.cuda.is_available():
+                if TORCH_AVAILABLE and torch.cuda.is_available():
                     inputs = {k: v.cuda() for k, v in inputs.items()}
 
                 with torch.no_grad():

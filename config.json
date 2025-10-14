@@ -97,7 +97,7 @@
     "optimization": {"lazy_load": true, "delete_temp_files": true, "prune_memory": true}
   },
   "voice_interface": {
-    "wakeword": {"phrase": "Auralis", "engine": "Porcupine ultra-light", "sensitivity": "medium", "latency_ms": 100},
+    "wakeword": {"phrase": "Jarvis", "engine": "Porcupine ultra-light", "sensitivity": "medium", "latency_ms": 100},
     "push_to_talk": {"key": "SPACE", "feedback": ["mic ON icon","ASCII waveform","status 'LISTENING...'"]},
     "voice_response": {
       "interruptible": true,
@@ -153,7 +153,7 @@
   },
   "memory_management": {
     "short_term": {"location": "RAM", "max_turns": 3},
-    "long_term": {"encrypted_sqlite": true, "purpose": ["history","notes","preferences"], "prune_policy": "LRU semantic decay"}
+    "long_term": {"enabled_by_default": false, "rag_enabled": false, "encrypted_sqlite": true, "purpose": ["history","notes","preferences"], "prune_policy": "LRU semantic decay"}
   },
   "security_privacy": {
     "permissions": ["microphone","keyboard/mouse optional"],
@@ -191,11 +191,20 @@
     "conversation_sequence": "User speaks -> STT -> NLP -> Memory -> Response -> TTS -> Terminal waveform",
     "screen_interaction_sequence": "User command -> OCR scan -> optional TTS summary -> optional control execution -> feedback"
   },
-  "developer_notes": {
-    "code_from_scratch": true,
-    "trainable_models": ["offline_nlp","offline_stt","offline_tts","screen_ocr embeddings"],
-    "hf_online_only": true,
-    "modular_design": true,
-    "logging_minimal": true
-  }
+  "api_keys": {
+    "hf_token": "your_huggingface_token_here",
+    "porcupine_access_key": "your_porcupine_access_key_here"
+  },
+   "developer_notes": {
+     "code_from_scratch": true,
+     "trainable_models": ["offline_nlp","offline_stt","offline_tts","screen_ocr embeddings"],
+     "hf_online_only": true,
+     "modular_design": true,
+     "logging_minimal": true
+   },
+   "updates": {
+     "auto_check": true,
+     "update_url": "https://api.github.com/repos/sst/auralis/releases/latest",
+     "current_version": "1.0.0"
+   }
 }

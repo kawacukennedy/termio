@@ -16,6 +16,63 @@ import json
 import psutil
 import logging
 from queue_manager import QueueManager
+from memory import ConversationMemoryModule
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import urllib.parse
+
+class APIHandler(BaseHTTPRequestHandler):
+    def __init__(self, daemon, *args, **kwargs):
+        self.daemon = daemon
+        super().__init__(*args, **kwargs)
+
+    def do_POST(self):
+        if self.path == '/input/text':
+            self.handle_text_input()
+        elif self.path == '/action/execute':
+            self.handle_action_execute()
+        else:
+            self.send_error(404)
+
+    def handle_text_input(self):
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        data = json.loads(post_data.decode('utf-8'))
+        text = data.get('text', '')
+
+        # Send to NLP queue
+        self.daemon.queues['stt->nlp'].put({
+            'type': 'text_input',
+            'text': text,
+            'source': 'api'
+        })
+
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps({'status': 'accepted'}).encode())
+
+    def handle_action_execute(self):
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        data = json.loads(post_data.decode('utf-8'))
+        action = data.get('action', '')
+        params = data.get('params', {})
+
+        # Send to action queue
+        self.daemon.queues['nlp->action'].put({
+            'type': 'api_action',
+            'action': action,
+            'params': params
+        })
+
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps({'status': 'executing'}).encode())
+
+    def log_message(self, format, *args):
+        # Suppress default logging
+        pass
 
 class AuralisDaemon:
     def __init__(self, config):
@@ -24,6 +81,9 @@ class AuralisDaemon:
         self.queues = {}
         self.running = False
         self.logger = logging.getLogger('daemon')
+
+        # Initialize memory module
+        self.memory = ConversationMemoryModule(config)
 
         # Create interprocess queues with spec-compliant policies
         self.queue_manager = QueueManager()
@@ -86,7 +146,7 @@ class AuralisDaemon:
 
         # Inference worker
         self.workers['inference'] = Process(
-            target=InferenceWorker(self.config, self.queues).run,
+            target=InferenceWorker(self.config, self.queues, self.memory).run,
             name='inference_worker'
         )
         self.workers['inference'].start()
@@ -140,7 +200,7 @@ class AuralisDaemon:
             elif worker_name == 'inference':
                 from inference_worker import InferenceWorker
                 self.workers[worker_name] = Process(
-                    target=InferenceWorker(self.config, self.queues).run,
+                    target=InferenceWorker(self.config, self.queues, self.memory).run,
                     name='inference_worker'
                 )
             elif worker_name == 'action':
@@ -159,73 +219,17 @@ class AuralisDaemon:
             self.workers[worker_name].start()
 
     def _start_api_server(self):
-        """Start local API server for CLI communication"""
+        """Start local HTTP API server"""
         def server():
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            socket_path = '/tmp/auralis.sock'
+            handler = lambda *args: APIHandler(self, *args)
+            httpd = HTTPServer(('localhost', 8080), handler)
+            httpd.serve_forever()
 
-            # Remove existing socket
-            try:
-                os.unlink(socket_path)
-            except OSError:
-                pass
+        self.api_thread = threading.Thread(target=server, daemon=True)
+        self.api_thread.start()
+        self.logger.info("Local API server started on http://localhost:8080")
 
-            sock.bind(socket_path)
-            sock.listen(1)
 
-            while self.running:
-                try:
-                    conn, addr = sock.accept()
-                    self._handle_api_request(conn)
-                except:
-                    break
-
-            sock.close()
-            try:
-                os.unlink(socket_path)
-            except OSError:
-                pass
-
-        thread = threading.Thread(target=server, daemon=True)
-        thread.start()
-
-    def _handle_api_request(self, conn):
-        """Handle API request from CLI"""
-        try:
-            data = conn.recv(4096)
-            if data:
-                request = json.loads(data.decode())
-                response = self._process_api_request(request)
-                conn.sendall(json.dumps(response).encode())
-        except Exception as e:
-            self.logger.error(f"API request error: {e}")
-        finally:
-            conn.close()
-
-    def _process_api_request(self, request):
-        """Process API request"""
-        action = request.get('action')
-
-        if action == 'status':
-            return {
-                'status': 'running',
-                'workers': {name: p.is_alive() for name, p in self.workers.items()},
-                'performance': self._get_performance_stats(),
-                'queues': self.queue_manager.get_queue_stats()
-            }
-        elif action == 'shutdown':
-            self.running = False
-            return {'status': 'shutting_down'}
-        elif action == 'input':
-            # Send input to inference worker
-            self.queue_manager.put_message('stt->nlp', {
-                'type': 'text_input',
-                'text': request.get('text', ''),
-                'source': 'api'
-            })
-            return {'status': 'input_queued'}
-
-        return {'error': 'unknown_action'}
 
     def _get_performance_stats(self):
         """Get performance statistics"""

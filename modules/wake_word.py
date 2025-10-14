@@ -12,7 +12,7 @@ class WakeWordDetectionModule:
     def initialize(self):
         # Initialize Porcupine with 'Auralis' keyword
         try:
-            access_key = self.config.get('voice_interface', {}).get('wakeword', {}).get('access_key', '')
+            access_key = self.config.get('api_keys', {}).get('porcupine_access_key', '')
             if not access_key:
                 print("Warning: Porcupine access key not configured. Wake word detection disabled.")
                 self.is_listening = False
@@ -20,7 +20,7 @@ class WakeWordDetectionModule:
 
             self.porcupine = pvporcupine.create(
                 access_key=access_key,
-                keywords=['auralis'],
+                keywords=['jarvis'],
                 sensitivities=[0.5]  # medium sensitivity
             )
             self.audio_stream = pyaudio.PyAudio().open(

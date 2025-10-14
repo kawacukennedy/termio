@@ -24,6 +24,24 @@ class UXFlowManager:
         self.waveform_active = False
         self.terminal_width = shutil.get_terminal_size().columns
         self.terminal_height = shutil.get_terminal_size().lines
+        self.focus_mode = False
+
+    def start_focus_session(self):
+        """Start focus session mode"""
+        self.focus_mode = True
+        self.update_status('focus_mode', 'ON')
+        # Disable notifications, etc.
+        print("Focus session started - minimizing distractions")
+
+    def end_focus_session(self):
+        """End focus session mode"""
+        self.focus_mode = False
+        self.update_status('focus_mode', 'OFF')
+        print("Focus session ended")
+
+    def get_status(self):
+        """Get current status"""
+        return self.status_bar
 
     def update_status(self, key, value):
         """Update status bar element"""

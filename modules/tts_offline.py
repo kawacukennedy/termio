@@ -20,6 +20,17 @@ class TTSModuleOffline:
             'energetic': {'voice': 'en+f2', 'speed': 1.1, 'pitch': 2, 'volume': 95}
         }
 
+    def initialize(self):
+        """Initialize TTS module"""
+        # Check if espeak-ng is available
+        import subprocess
+        try:
+            subprocess.run(['espeak-ng', '--version'], capture_output=True, check=True)
+            return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print("Warning: espeak-ng not found. TTS may not work.")
+            return False
+
 
 
     def set_voice_profile(self, profile_name):
