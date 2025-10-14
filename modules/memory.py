@@ -1,6 +1,11 @@
 import sqlite3
 import json
-from cryptography.fernet import Fernet
+try:
+    from cryptography.fernet import Fernet
+    CRYPTOGRAPHY_AVAILABLE = True
+except ImportError:
+    CRYPTOGRAPHY_AVAILABLE = False
+    print("Warning: cryptography not available. Memory encryption disabled.")
 import os
 import time
 from collections import deque
@@ -23,8 +28,12 @@ class ConversationMemoryModule:
         self.rag_enabled = self.long_term_config.get('rag_enabled', False)
         self.embedding_model = None
 
-        self.key = self._load_or_generate_key()
-        self.cipher = Fernet(self.key)
+        if CRYPTOGRAPHY_AVAILABLE:
+            self.key = self._load_or_generate_key()
+            self.cipher = Fernet(self.key)
+        else:
+            self.key = None
+            self.cipher = None
         self.conn = None
 
         if self.long_term_enabled:
@@ -42,6 +51,9 @@ class ConversationMemoryModule:
                 self.rag_enabled = False
 
     def _load_or_generate_key(self):
+        if not CRYPTOGRAPHY_AVAILABLE:
+            return None
+
         key_file = 'memory_key.key'
         if os.path.exists(key_file) and os.path.getsize(key_file) > 0:
             with open(key_file, 'rb') as f:
@@ -93,10 +105,16 @@ class ConversationMemoryModule:
         if self.conn:
             user_hash = hashlib.sha256(user.encode()).hexdigest()
             ai_hash = hashlib.sha256(ai.encode()).hexdigest()
-            encrypted_user = self.cipher.encrypt(user.encode())
-            encrypted_ai = self.cipher.encrypt(ai.encode())
+            if self.cipher:
+                encrypted_user = self.cipher.encrypt(user.encode())
+                encrypted_ai = self.cipher.encrypt(ai.encode())
+            else:
+                # Fallback: base64 encoding
+                import base64
+                encrypted_user = base64.b64encode(user.encode())
+                encrypted_ai = base64.b64encode(ai.encode())
             self.conn.execute("INSERT INTO turns (user_hash, ai_hash, user_encrypted, ai_encrypted, timestamp, embedding) VALUES (?, ?, ?, ?, ?, ?)",
-                              (user_hash, ai_hash, encrypted_user, encrypted_ai, timestamp, embedding))
+                               (user_hash, ai_hash, encrypted_user, encrypted_ai, timestamp, embedding))
             self.conn.commit()
 
     def get_recent_turns(self, n=3):
@@ -105,8 +123,14 @@ class ConversationMemoryModule:
         cursor = self.conn.execute("SELECT user_encrypted, ai_encrypted, timestamp FROM turns ORDER BY id DESC LIMIT ?", (n,))
         turns = []
         for row in cursor:
-            user = self.cipher.decrypt(row[0]).decode()
-            ai = self.cipher.decrypt(row[1]).decode()
+            if self.cipher:
+                user = self.cipher.decrypt(row[0]).decode()
+                ai = self.cipher.decrypt(row[1]).decode()
+            else:
+                # Fallback: base64 decoding
+                import base64
+                user = base64.b64decode(row[0]).decode()
+                ai = base64.b64decode(row[1]).decode()
             timestamp = row[2]
             turns.append({'user': user, 'ai': ai, 'timestamp': timestamp})
         return turns[::-1]  # Reverse to chronological order
@@ -118,8 +142,14 @@ class ConversationMemoryModule:
         cursor = self.conn.execute("SELECT user_encrypted, ai_encrypted, timestamp FROM turns ORDER BY id")
         conversations = []
         for row in cursor:
-            user = self.cipher.decrypt(row[0]).decode()
-            ai = self.cipher.decrypt(row[1]).decode()
+            if self.cipher:
+                user = self.cipher.decrypt(row[0]).decode()
+                ai = self.cipher.decrypt(row[1]).decode()
+            else:
+                # Fallback: base64 decoding
+                import base64
+                user = base64.b64decode(row[0]).decode()
+                ai = base64.b64decode(row[1]).decode()
             timestamp = row[2]
             conversations.append((user, ai, timestamp))
         return conversations
@@ -138,10 +168,18 @@ class ConversationMemoryModule:
         for row in cursor:
             emb = json.loads(row[4])
             similarity = self._cosine_similarity(query_emb, emb)
+            if self.cipher:
+                user = self.cipher.decrypt(row[1]).decode()
+                ai = self.cipher.decrypt(row[2]).decode()
+            else:
+                # Fallback: base64 decoding
+                import base64
+                user = base64.b64decode(row[1]).decode()
+                ai = base64.b64decode(row[2]).decode()
             turns.append({
                 'id': row[0],
-                'user': self.cipher.decrypt(row[1]).decode(),
-                'ai': self.cipher.decrypt(row[2]).decode(),
+                'user': user,
+                'ai': ai,
                 'timestamp': row[3],
                 'similarity': similarity
             })

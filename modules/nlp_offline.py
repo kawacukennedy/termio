@@ -35,6 +35,17 @@ class NLPModuleOffline:
             'goodbye': ['bye', 'goodbye', 'see you', 'farewell']
         }
 
+    def initialize(self):
+        """Initialize the NLP module"""
+        try:
+            # Pre-load model if configured
+            if self.config.get('nlp', {}).get('preload_model', False):
+                self._load_model()
+            return True
+        except Exception as e:
+            print(f"Failed to initialize NLP module: {e}")
+            return False
+
     def _load_model(self):
         """Lazy load TinyGPT model"""
         if self.generator is None:

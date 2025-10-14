@@ -28,7 +28,15 @@ class WebDashboard:
         self.telemetry_data = {
             'llm_latencies': [],
             'stt_latencies': [],
-            'crash_reports': []
+            'crash_reports': [],
+            'worker_failures': {
+                'audio': [],
+                'inference': [],
+                'action': [],
+                'ui': [],
+                'daemon': []
+            },
+            'system_events': []
         }
 
         self.setup_routes()
@@ -263,14 +271,45 @@ class WebDashboard:
                 llm_avg = sum(self.telemetry_data['llm_latencies'][-100:]) / len(self.telemetry_data['llm_latencies'][-100:]) if self.telemetry_data['llm_latencies'] else 0
                 stt_avg = sum(self.telemetry_data['stt_latencies'][-100:]) / len(self.telemetry_data['stt_latencies'][-100:]) if self.telemetry_data['stt_latencies'] else 0
 
+                # Worker failure summary
+                worker_failures = {}
+                for worker, failures in self.telemetry_data['worker_failures'].items():
+                    worker_failures[worker] = {
+                        'count': len(failures),
+                        'last_failure': failures[-1] if failures else None
+                    }
+
                 return jsonify({
                     'cpu_usage': psutil.cpu_percent(),
                     'mem_usage': psutil.virtual_memory().percent,
                     'llm_latency_ms': round(llm_avg * 1000, 2),
                     'stt_latency_ms': round(stt_avg * 1000, 2),
                     'crash_reports_count': len(self.telemetry_data['crash_reports']),
+                    'worker_failures': worker_failures,
+                    'system_events_count': len(self.telemetry_data['system_events']),
                     'timestamp': time.time()
                 })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/telemetry/worker_failures')
+        def get_worker_failures():
+            if not self.check_auth():
+                return jsonify({'error': 'Unauthorized'}), 401
+
+            try:
+                return jsonify(self.telemetry_data['worker_failures'])
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/api/telemetry/system_events')
+        def get_system_events():
+            if not self.check_auth():
+                return jsonify({'error': 'Unauthorized'}), 401
+
+            try:
+                # Return last 50 events
+                return jsonify(self.telemetry_data['system_events'][-50:])
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
 
@@ -337,6 +376,35 @@ class WebDashboard:
         # Keep last 1000 measurements
         if len(self.telemetry_data['stt_latencies']) > 1000:
             self.telemetry_data['stt_latencies'].pop(0)
+
+    def record_worker_failure(self, worker_name, failure_type, details=None):
+        """Record worker failure for telemetry"""
+        failure_record = {
+            'timestamp': time.time(),
+            'worker': worker_name,
+            'type': failure_type,
+            'details': details or {}
+        }
+
+        if worker_name in self.telemetry_data['worker_failures']:
+            self.telemetry_data['worker_failures'][worker_name].append(failure_record)
+            # Keep last 100 failures per worker
+            if len(self.telemetry_data['worker_failures'][worker_name]) > 100:
+                self.telemetry_data['worker_failures'][worker_name].pop(0)
+
+    def record_system_event(self, event_type, message, severity='info'):
+        """Record system-wide events"""
+        event_record = {
+            'timestamp': time.time(),
+            'type': event_type,
+            'message': message,
+            'severity': severity
+        }
+
+        self.telemetry_data['system_events'].append(event_record)
+        # Keep last 500 system events
+        if len(self.telemetry_data['system_events']) > 500:
+            self.telemetry_data['system_events'].pop(0)
 
     def _scrub_pii(self, data):
         """Scrub PII from crash reports"""

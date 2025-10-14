@@ -1,7 +1,13 @@
 import os
 import time
 import logging
-from cryptography.fernet import Fernet
+
+try:
+    from cryptography.fernet import Fernet
+    CRYPTOGRAPHY_AVAILABLE = True
+except ImportError:
+    CRYPTOGRAPHY_AVAILABLE = False
+    print("Warning: cryptography not available. Security features limited.")
 
 class SecurityModule:
     def __init__(self, config, settings_module=None):
@@ -9,11 +15,14 @@ class SecurityModule:
         self.permissions = config.get('security_privacy', {}).get('permissions', [])
         self.user_controls = config.get('security_privacy', {}).get('user_controls', {})
         self.settings = settings_module
-        self.logger = logging.getLogger('security')
 
-        # Initialize encryption
-        self.key = self._load_or_generate_key()
-        self.cipher = Fernet(self.key)
+        # Generate or load encryption key
+        if CRYPTOGRAPHY_AVAILABLE:
+            self.key = self._load_or_generate_key()
+            self.cipher = Fernet(self.key)
+        else:
+            self.key = None
+            self.cipher = None
 
         # Forbidden operations
         self.forbidden_ops = [
@@ -65,48 +74,56 @@ class SecurityModule:
         return text.strip()
 
     def encrypt_api_key(self, api_key):
-        """Encrypt API key for storage"""
-        if not api_key:
-            return ""
-        return self.cipher.encrypt(api_key.encode()).decode('latin-1')
+        """Encrypt an API key for storage"""
+        if self.cipher:
+            return self.cipher.encrypt(api_key.encode()).decode('latin-1')
+        else:
+            # Fallback: base64 encoding (not secure, but better than plain text)
+            import base64
+            return base64.b64encode(api_key.encode()).decode('latin-1')
 
     def decrypt_api_key(self, encrypted_key):
-        """Decrypt API key for use"""
-        if not encrypted_key:
-            return ""
-        try:
-            return self.cipher.decrypt(encrypted_key.encode('latin-1')).decode()
-        except:
-            return ""
-
-    def store_api_key(self, service, api_key):
-        """Securely store API key"""
-        encrypted = self.encrypt_api_key(api_key)
-        # Store in settings or secure location
-        if hasattr(self, 'settings') and self.settings:
-            self.settings.set_setting(f"api_keys.{service}", encrypted)
-        return f"API key for {service} stored securely"
-
-    def get_api_key(self, service):
-        """Retrieve and decrypt API key"""
-        if hasattr(self, 'settings') and self.settings:
-            encrypted = self.settings.get_setting(f"api_keys.{service}")
-            if encrypted:
-                return self.decrypt_api_key(encrypted)
-        return None
+        """Decrypt an API key"""
+        if self.cipher:
+            try:
+                return self.cipher.decrypt(encrypted_key.encode('latin-1')).decode()
+            except Exception:
+                return None
+        else:
+            # Fallback: base64 decoding
+            import base64
+            try:
+                return base64.b64decode(encrypted_key.encode('latin-1')).decode()
+            except Exception:
+                return None
 
     def encrypt_data(self, data):
         """Encrypt arbitrary data"""
-        if isinstance(data, str):
-            data = data.encode()
-        return self.cipher.encrypt(data).decode('latin-1')
+        if self.cipher:
+            if isinstance(data, str):
+                data = data.encode()
+            return self.cipher.encrypt(data).decode('latin-1')
+        else:
+            # Fallback: base64 encoding
+            import base64
+            if isinstance(data, str):
+                data = data.encode()
+            return base64.b64encode(data).decode('latin-1')
 
     def decrypt_data(self, data):
         """Decrypt arbitrary data"""
-        try:
-            return self.cipher.decrypt(data.encode('latin-1')).decode()
-        except:
-            return data
+        if self.cipher:
+            try:
+                return self.cipher.decrypt(data.encode('latin-1')).decode()
+            except:
+                return data
+        else:
+            # Fallback: base64 decoding
+            import base64
+            try:
+                return base64.b64decode(data.encode('latin-1')).decode()
+            except:
+                return data
 
     def clear_logs(self):
         # Clear conversation logs

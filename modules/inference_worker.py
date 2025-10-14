@@ -7,9 +7,16 @@ Handles TinyGPT local inferencing and on-demand HF request orchestration.
 import time
 import logging
 from nlp_offline import NLPModuleOffline
-from nlp_hf import NLPModuleHFAPI
 from command_parser import CommandParser
 from action_planner import ActionPlanner
+
+# Import HF modules conditionally
+try:
+    from nlp_hf import NLPModuleHFAPI
+    HF_AVAILABLE = True
+except ImportError:
+    HF_AVAILABLE = False
+    print("Warning: HuggingFace modules not available. Online features disabled.")
 
 class InferenceWorker:
     def __init__(self, config, queues, memory):
@@ -29,6 +36,37 @@ class InferenceWorker:
         # Current mode
         self.current_mode = 'offline'
 
+        # Failure mode flags
+        self.model_load_failed = False
+        self.network_unavailable = False
+
+    def check_network_availability(self):
+        """Check if network is available for online features"""
+        try:
+            import requests
+            requests.get('https://huggingface.co', timeout=5)
+            self.network_unavailable = False
+            return True
+        except ImportError:
+            self.logger.warning("requests module not available, network checks disabled")
+            self.network_unavailable = True
+            return False
+        except:
+            self.network_unavailable = True
+            return False
+
+    def switch_to_offline_mode(self):
+        """Gracefully switch to offline mode when network fails"""
+        if self.current_mode != 'offline':
+            self.current_mode = 'offline'
+            self.logger.info("Switched to offline mode due to network unavailability")
+            # Notify UI
+            self.queues['nlp->tts'].put({
+                'type': 'status_update',
+                'message': 'Network unavailable - switched to offline mode',
+                'mode': 'offline'
+            })
+
         # Performance limits
         self.max_concurrent_infers = 1
         self.active_infers = 0
@@ -37,11 +75,33 @@ class InferenceWorker:
         """Main inference worker loop"""
         self.logger.info("Inference worker starting...")
 
-        # Initialize models
-        self.nlp_offline.initialize()
+        # Initialize models with graceful degradation
+        try:
+            self.nlp_offline.initialize()
+        except Exception as e:
+            self.logger.error(f"Failed to initialize offline model: {e}")
+            self.model_load_failed = True
+            # Continue running - will use fallback responses
 
+        # Try to initialize online if network available and HF available
+        if HF_AVAILABLE and self.check_network_availability():
+            try:
+                self.nlp_online = NLPModuleHFAPI(self.config, None)  # security module would be passed
+                self.nlp_online.initialize()
+                self.current_mode = 'online'  # Default to online if available
+            except Exception as e:
+                self.logger.error(f"Failed to initialize online NLP: {e}")
+                self.nlp_online = None
+
+        last_network_check = 0
         while True:
             try:
+                # Periodic network check (every 60 seconds)
+                current_time = time.time()
+                if current_time - last_network_check > 60:
+                    self.check_network_availability()
+                    last_network_check = current_time
+
                 # Get input from STT queue
                 if not self.queues['stt->nlp'].empty():
                     message = self.queues['stt->nlp'].get(timeout=1)
@@ -156,6 +216,9 @@ class InferenceWorker:
 
     def _generate_offline_response(self, text):
         """Generate response using offline TinyGPT with latency targets"""
+        if self.model_load_failed:
+            return "I'm currently running in limited mode due to model loading issues. Please check the model installation."
+
         start_time = time.time()
 
         try:
@@ -209,11 +272,15 @@ class InferenceWorker:
 
         except Exception as e:
             self.logger.error(f"Online generation error: {e}")
-            # Fallback to offline
+            self.switch_to_offline_mode()
             return self._generate_offline_response(text)
 
     def _should_use_online(self, text):
         """Determine if we should use online mode"""
+        # Check if offline mode is forced or network unavailable
+        if self.current_mode == 'offline' or self.network_unavailable:
+            return False
+
         # Check for heavy reasoning keywords
         heavy_keywords = ['explain', 'analyze', 'summarize', 'translate', 'code']
 

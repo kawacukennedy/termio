@@ -4,6 +4,13 @@ import gc
 import threading
 import os
 
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    print("Warning: psutil not available. Performance monitoring limited.")
+
 class PerformanceOptimizerModule:
     def __init__(self, config):
         self.config = config
@@ -16,10 +23,14 @@ class PerformanceOptimizerModule:
         self.start_time = time.time()
 
     def monitor_cpu(self):
-        return psutil.cpu_percent(interval=1)
+        if PSUTIL_AVAILABLE:
+            return psutil.cpu_percent(interval=1)
+        return 0.0
 
     def monitor_memory(self):
-        return psutil.virtual_memory().percent
+        if PSUTIL_AVAILABLE:
+            return psutil.virtual_memory().percent
+        return 0.0
 
     def lazy_load_module(self, module_name):
         """Lazy load a module when first accessed"""
@@ -105,6 +116,20 @@ class PerformanceOptimizerModule:
     def get_status(self):
         """Get current performance status"""
         try:
+            if not PSUTIL_AVAILABLE:
+                return {
+                    'cpu_percent': 0,
+                    'memory_percent': 0,
+                    'memory_used_mb': 0,
+                    'disk_percent': 0,
+                    'network_sent_mb': 0,
+                    'network_recv_mb': 0,
+                    'network_connections': 0,
+                    'active_models': len(self.active_models),
+                    'total_memory_mb': sum(model.get('memory_mb', 0) for model in self.active_models.values()),
+                    'uptime_seconds': time.time() - self.start_time
+                }
+
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
             disk = psutil.disk_usage('/')

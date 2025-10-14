@@ -6,9 +6,21 @@ Handles audio capture, wakeword detection, push-to-talk capture, chunking for ST
 
 import time
 import threading
-import pyaudio
-import numpy as np
 import logging
+
+try:
+    import pyaudio
+    PYAUDIO_AVAILABLE = True
+except ImportError:
+    PYAUDIO_AVAILABLE = False
+    print("Warning: pyaudio not available. Audio features disabled.")
+
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    print("Warning: numpy not available. Audio processing limited.")
 
 class AudioWorker:
     def __init__(self, config, queues):
@@ -35,9 +47,21 @@ class AudioWorker:
         self.audio = None
         self.stream = None
 
+        # Failure mode flags
+        self.microphone_failed = False
+        self.audio_processing_failed = False
+        self.wakeword_failed = False
+        self.ptt_failed = False
+
     def run(self):
         """Main worker loop"""
         self.logger.info("Audio worker starting...")
+
+        if not PYAUDIO_AVAILABLE:
+            self.logger.warning("PyAudio not available, running in text-only mode")
+            self.microphone_failed = True
+            self._text_input_fallback_loop()
+            return
 
         try:
             self.audio = pyaudio.PyAudio()
@@ -61,6 +85,9 @@ class AudioWorker:
 
         except Exception as e:
             self.logger.error(f"Audio worker error: {e}")
+            self.microphone_failed = True
+            # Switch to text-only mode
+            self._text_input_fallback_loop()
         finally:
             self._cleanup()
 
@@ -72,12 +99,15 @@ class AudioWorker:
         samples_overlap = int(self.sample_rate * overlap_ms / 1000)
 
         buffer = np.array([], dtype=np.int16)
+        consecutive_failures = 0
+        max_consecutive_failures = 10
 
         while True:
             try:
                 # Read audio data
                 data = self.stream.read(self.chunk_size, exception_on_overflow=False)
                 audio_chunk = np.frombuffer(data, dtype=np.int16)
+                consecutive_failures = 0  # Reset on success
 
                 # Accumulate in buffer
                 buffer = np.concatenate([buffer, audio_chunk])
@@ -88,7 +118,7 @@ class AudioWorker:
                     chunk = buffer[:samples_per_chunk]
 
                     # Send to STT queue if PTT active or wakeword detected
-                    if self.ptt_active or hasattr(self, 'wakeword_active') and self.wakeword_active:
+                    if self.ptt_active or (hasattr(self, 'wakeword_active') and self.wakeword_active):
                         source = 'ptt' if self.ptt_active else 'wakeword'
                         self.queues['audio->stt'].put({
                             'type': 'audio_chunk',
@@ -103,6 +133,18 @@ class AudioWorker:
 
             except Exception as e:
                 self.logger.error(f"Audio capture error: {e}")
+                consecutive_failures += 1
+
+                if consecutive_failures >= max_consecutive_failures:
+                    self.logger.error("Audio capture failed repeatedly, switching to text mode")
+                    self.audio_processing_failed = True
+                    self.queues['audio->stt'].put({
+                        'type': 'status_update',
+                        'message': 'Audio processing failed - switched to text input mode',
+                        'mode': 'text_only'
+                    })
+                    break
+
                 time.sleep(0.1)
 
     def _wakeword_loop(self):
@@ -111,6 +153,9 @@ class AudioWorker:
             return
 
         self.logger.info("Wakeword detection enabled (passive listen)")
+
+        consecutive_failures = 0
+        max_consecutive_failures = 5
 
         while True:
             try:
@@ -121,6 +166,7 @@ class AudioWorker:
                 # Check for wakeword
                 if self._detect_wakeword(audio_chunk):
                     self.logger.info("Wakeword detected!")
+                    consecutive_failures = 0  # Reset failure count
 
                     # Immediate UI feedback: short_tick_sound + status 'LISTENING (wakeword)'
                     print('\a', end='', flush=True)  # Short tick sound
@@ -134,6 +180,13 @@ class AudioWorker:
 
             except Exception as e:
                 self.logger.error(f"Wakeword detection error: {e}")
+                consecutive_failures += 1
+
+                if consecutive_failures >= max_consecutive_failures:
+                    self.logger.error("Wakeword detection failed repeatedly, disabling")
+                    self.wakeword_failed = True
+                    break
+
                 time.sleep(0.1)
 
     def _detect_wakeword(self, audio_chunk):
@@ -249,6 +302,30 @@ class AudioWorker:
 
         except ImportError:
             self.logger.warning("keyboard module not available, PTT disabled")
+            self.ptt_failed = True
+        except OSError as e:
+            if "administrator" in str(e).lower():
+                self.logger.warning("PTT monitoring requires accessibility permissions on macOS. PTT disabled.")
+                self.ptt_failed = True
+            else:
+                self.logger.error(f"PTT monitoring error: {e}")
+                self.ptt_failed = True
+        except Exception as e:
+            self.logger.error(f"PTT monitoring error: {e}")
+            self.ptt_failed = True
+
+    def _text_input_fallback_loop(self):
+        """Fallback loop when audio is not available - accept text input"""
+        self.logger.info("Running in text input fallback mode")
+
+        while True:
+            try:
+                # In a real implementation, this would monitor for text input
+                # For now, just sleep and wait for external text input via queues
+                time.sleep(1)
+            except Exception as e:
+                self.logger.error(f"Text input fallback error: {e}")
+                time.sleep(0.1)
 
     def _cleanup(self):
         """Clean up audio resources"""

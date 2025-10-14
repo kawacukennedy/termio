@@ -1,9 +1,13 @@
 import time
 import threading
-import sys
 import os
-import shutil
-import psutil
+
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    print("Warning: psutil not available. System monitoring limited.")
 
 class UXFlowManager:
     def __init__(self, config):
@@ -188,8 +192,12 @@ class UXFlowManager:
         """Monitor and update performance stats"""
         while True:
             try:
-                cpu_percent = f"{psutil.cpu_percent()}%"
-                mem_mb = f"{int(psutil.virtual_memory().used / 1024 / 1024)}MB"
+                if PSUTIL_AVAILABLE:
+                    cpu_percent = f"{psutil.cpu_percent()}%"
+                    mem_mb = f"{int(psutil.virtual_memory().used / 1024 / 1024)}MB"
+                else:
+                    cpu_percent = "N/A"
+                    mem_mb = "N/A"
                 self.update_status('cpu_percent', cpu_percent)
                 self.update_status('mem_mb', mem_mb)
             except:

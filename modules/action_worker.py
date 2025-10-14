@@ -24,6 +24,12 @@ class ActionWorker:
         except ImportError:
             self.logger.warning("pyautogui not available, screen control disabled")
 
+        # Failure mode flags
+        self.screen_control_failed = False
+        self.shell_execution_failed = False
+        self.permission_denied_count = 0
+        self.action_timeout_count = 0
+
     def run(self):
         """Main action worker loop"""
         self.logger.info("Action worker starting...")
@@ -39,48 +45,62 @@ class ActionWorker:
                 time.sleep(0.1)
 
     def execute_screen_action(self, action, params=None):
-        """Execute screen control action with permission checks"""
+        """Execute screen control action with permission checks and failure handling"""
         if not self.screen_control_available:
+            self.screen_control_failed = True
             return "Screen control not available"
 
         # Check permissions
         if self.security:
             allowed, reason = self.security.check_action_permission('screen_control', {'action': action, 'params': params})
             if not allowed:
+                self.permission_denied_count += 1
+                self.logger.warning(f"Screen action permission denied: {reason}")
                 return f"Permission denied: {reason}"
 
-        try:
-            import pyautogui
-            pyautogui.FAILSAFE = True
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                import pyautogui
+                pyautogui.FAILSAFE = True
 
-            if action == 'click':
-                x, y = params.get('x', 0), params.get('y', 0)
-                pyautogui.click(x, y)
-                return "Click executed"
+                if action == 'click':
+                    x, y = params.get('x', 0), params.get('y', 0)
+                    pyautogui.click(x, y)
+                    return "Click executed"
 
-            elif action == 'type':
-                text = params.get('text', '')
-                pyautogui.typewrite(text)
-                return "Text typed"
+                elif action == 'type':
+                    text = params.get('text', '')
+                    pyautogui.typewrite(text)
+                    return "Text typed"
 
-            elif action == 'scroll':
-                x, y, clicks = params.get('x', 0), params.get('y', 0), params.get('clicks', 1)
-                pyautogui.scroll(clicks, x, y)
-                return "Scroll executed"
+                elif action == 'scroll':
+                    x, y, clicks = params.get('x', 0), params.get('y', 0), params.get('clicks', 1)
+                    pyautogui.scroll(clicks, x, y)
+                    return "Scroll executed"
 
-            else:
-                return f"Unknown screen action: {action}"
+                else:
+                    return f"Unknown screen action: {action}"
 
-        except Exception as e:
-            self.logger.error(f"Screen action error: {e}")
-            return f"Screen action failed: {e}"
+            except pyautogui.FailSafeException:
+                self.logger.warning("PyAutoGUI failsafe triggered")
+                return "Action cancelled by user (failsafe)"
+
+            except Exception as e:
+                self.logger.error(f"Screen action error (attempt {attempt+1}/{max_retries}): {e}")
+                if attempt == max_retries - 1:
+                    self.screen_control_failed = True
+                    return f"Screen action failed after {max_retries} attempts: {e}"
+                time.sleep(0.5)  # Brief delay before retry
 
     def execute_shell_command(self, command, sandboxed=True):
-        """Execute shell command in sandboxed mode with permission checks"""
+        """Execute shell command in sandboxed mode with permission checks and failure handling"""
         # Check permissions for shell execution
         if self.security:
             allowed, reason = self.security.check_action_permission('run_command', {'command': command, 'sandboxed': sandboxed})
             if not allowed:
+                self.permission_denied_count += 1
+                self.logger.warning(f"Shell command permission denied: {reason}")
                 return f"Permission denied: {reason}"
 
         if sandboxed:
@@ -95,25 +115,37 @@ class ActionWorker:
             except:
                 return "Invalid command format"
 
-        try:
-            # Execute with timeout
-            result = subprocess.run(
-                command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                # Execute with timeout
+                result = subprocess.run(
+                    command,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
 
-            if result.returncode == 0:
-                return result.stdout.strip()
-            else:
-                return f"Command failed: {result.stderr.strip()}"
+                if result.returncode == 0:
+                    return result.stdout.strip()
+                else:
+                    error_msg = f"Command failed: {result.stderr.strip()}"
+                    if attempt == max_retries - 1:
+                        self.shell_execution_failed = True
+                    return error_msg
 
-        except subprocess.TimeoutExpired:
-            return "Command timed out"
-        except Exception as e:
-            return f"Command execution error: {e}"
+            except subprocess.TimeoutExpired:
+                self.action_timeout_count += 1
+                if attempt == max_retries - 1:
+                    self.shell_execution_failed = True
+                return "Command timed out"
+            except Exception as e:
+                self.logger.error(f"Command execution error (attempt {attempt+1}/{max_retries}): {e}")
+                if attempt == max_retries - 1:
+                    self.shell_execution_failed = True
+                    return f"Command execution error: {e}"
+                time.sleep(0.5)  # Brief delay before retry
 
     def confirm_destructive_action(self, action_description):
         """Get user confirmation for destructive actions"""
@@ -121,3 +153,18 @@ class ActionWorker:
         # For now, always deny for safety
         self.logger.warning(f"Destructive action blocked: {action_description}")
         return False
+
+    def get_health_status(self):
+        """Get current health status of action worker"""
+        status = {
+            'screen_control': not self.screen_control_failed,
+            'shell_execution': not self.shell_execution_failed,
+            'permissions_issues': self.permission_denied_count,
+            'timeouts': self.action_timeout_count
+        }
+        return status
+
+    def reset_failure_flags(self):
+        """Reset failure flags (called after successful operations)"""
+        self.screen_control_failed = False
+        self.shell_execution_failed = False

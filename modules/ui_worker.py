@@ -17,22 +17,41 @@ class UIWorker:
         self.ux = UXFlowManager(config)
         self.running = True
 
+        # Failure mode flags
+        self.display_failed = False
+        self.keyboard_monitor_failed = False
+        self.tts_failed = False
+        self.ui_interaction_failed = False
+
     def run(self):
         """Main UI worker loop"""
         self.logger.info("UI worker starting...")
 
-        # Show boot sequence
-        self.ux.show_boot_sequence()
+        try:
+            # Show boot sequence
+            self.ux.show_boot_sequence()
 
-        # Show idle screen
-        self.ux.show_idle_screen()
+            # Show idle screen
+            self.ux.show_idle_screen()
+        except Exception as e:
+            self.logger.error(f"UI initialization failed: {e}")
+            self.display_failed = True
+            # Continue running in headless mode
+            self.logger.info("Running in headless mode due to display failure")
 
         # TTS state
         self.tts_active = False
         self.tts_interrupt = False
 
         # Start interrupt monitoring
-        self._start_interrupt_monitor()
+        try:
+            self._start_interrupt_monitor()
+        except Exception as e:
+            self.logger.error(f"Interrupt monitoring failed: {e}")
+            self.keyboard_monitor_failed = True
+
+        consecutive_failures = 0
+        max_consecutive_failures = 5
 
         while self.running:
             try:
@@ -48,6 +67,8 @@ class UIWorker:
                         self._handle_wakeword_detected()
                     elif message['type'] == 'interrupt_tts':
                         self._interrupt_tts()
+                    elif message['type'] == 'status_update':
+                        self._handle_status_update(message)
 
                 # Check for TTS responses to display
                 if not self.queues['nlp->tts'].empty():
@@ -57,12 +78,23 @@ class UIWorker:
                         self._display_response(message)
                     elif message['type'] == 'error':
                         self._handle_error(message)
+                    elif message['type'] == 'status_update':
+                        self._handle_status_update(message)
 
+                consecutive_failures = 0  # Reset on successful iteration
                 time.sleep(0.01)
 
             except Exception as e:
                 self.logger.error(f"UI worker error: {e}")
-                time.sleep(0.1)
+                consecutive_failures += 1
+
+                if consecutive_failures >= max_consecutive_failures:
+                    self.logger.error("UI worker failed repeatedly, entering degraded mode")
+                    self.ui_interaction_failed = True
+                    # Continue running but with minimal functionality
+                    time.sleep(1)  # Slow down error loop
+                else:
+                    time.sleep(0.1)
 
     def _handle_ptt_start(self):
         """Handle PTT start with spec-compliant UI feedback"""
@@ -119,10 +151,17 @@ class UIWorker:
 
     def _play_tts_response(self, text):
         """Play TTS response with preview and interrupt handling"""
-        # Before play: display preview text (first 2 lines)
-        lines = text.split('\n')[:2]
-        preview = '\n'.join(lines)
-        self.ux.add_to_scrollback(f"[Speaking] {preview}...")
+        if self.display_failed:
+            # Skip UI updates in headless mode
+            pass
+        else:
+            # Before play: display preview text (first 2 lines)
+            lines = text.split('\n')[:2]
+            preview = '\n'.join(lines)
+            try:
+                self.ux.add_to_scrollback(f"[Speaking] {preview}...")
+            except Exception as e:
+                self.logger.error(f"UI update failed: {e}")
 
         # Start TTS playback
         self.tts_active = True
@@ -134,31 +173,37 @@ class UIWorker:
             import threading
 
             def tts_playback():
-                self.logger.info(f"TTS: {text}")
+                try:
+                    self.logger.info(f"TTS: {text}")
 
-                # Simulate TTS timing (rough estimate: 150 words per minute)
-                words = len(text.split())
-                duration_sec = max(1, words / 2.5)  # ~150 wpm
+                    # Simulate TTS timing (rough estimate: 150 words per minute)
+                    words = len(text.split())
+                    duration_sec = max(1, words / 2.5)  # ~150 wpm
 
-                start_time = time.time()
-                while time.time() - start_time < duration_sec and not self.tts_interrupt:
-                    # Could implement text highlighting here
-                    time.sleep(0.1)
+                    start_time = time.time()
+                    while time.time() - start_time < duration_sec and not self.tts_interrupt:
+                        # Could implement text highlighting here
+                        time.sleep(0.1)
 
-                if self.tts_interrupt:
-                    self.logger.info("TTS interrupted")
-                else:
-                    self.logger.info("TTS completed")
+                    if self.tts_interrupt:
+                        self.logger.info("TTS interrupted")
+                    else:
+                        self.logger.info("TTS completed")
 
-                self.tts_active = False
+                except Exception as e:
+                    self.logger.error(f"TTS playback error: {e}")
+                    self.tts_failed = True
+                finally:
+                    self.tts_active = False
 
             # Start TTS in background
             tts_thread = threading.Thread(target=tts_playback, daemon=True)
             tts_thread.start()
 
         except Exception as e:
-            self.logger.error(f"TTS error: {e}")
+            self.logger.error(f"TTS initialization error: {e}")
             self.tts_active = False
+            self.tts_failed = True
 
     def _interrupt_tts(self):
         """Interrupt TTS playback with fadeout"""
@@ -194,6 +239,16 @@ class UIWorker:
 
             except ImportError:
                 self.logger.warning("keyboard module not available, TTS interrupt disabled")
+            except OSError as e:
+                if "administrator" in str(e).lower():
+                    self.logger.warning("Keyboard monitoring requires accessibility permissions on macOS. TTS interrupt disabled.")
+                    self.keyboard_monitor_failed = True
+                else:
+                    self.logger.error(f"Keyboard monitoring error: {e}")
+                    self.keyboard_monitor_failed = True
+            except Exception as e:
+                self.logger.error(f"Interrupt monitoring failed: {e}")
+                self.keyboard_monitor_failed = True
 
         thread = threading.Thread(target=monitor_interrupts, daemon=True)
         thread.start()
@@ -225,6 +280,34 @@ class UIWorker:
 
     def _handle_wakeword_detected(self):
         """Handle wakeword detection UI feedback"""
-        # Status 'LISTENING (wakeword)' - already set by audio worker
-        self.ux.update_status('last_action_summary', 'LISTENING (wakeword)')
-        self.ux.start_waveform()
+        if self.display_failed:
+            return
+
+        try:
+            # Status 'LISTENING (wakeword)' - already set by audio worker
+            self.ux.update_status('last_action_summary', 'LISTENING (wakeword)')
+            self.ux.start_waveform()
+        except Exception as e:
+            self.logger.error(f"Wakeword UI update failed: {e}")
+            self.ui_interaction_failed = True
+
+    def _handle_status_update(self, message):
+        """Handle status update messages from other workers"""
+        if self.display_failed:
+            return
+
+        try:
+            status_type = message.get('message', '')
+            mode = message.get('mode', '')
+
+            if 'offline' in status_type.lower():
+                self.ux.update_status('network_status', 'OFFLINE')
+            elif 'network unavailable' in status_type.lower():
+                self.ux.update_status('network_status', 'OFFLINE')
+            elif 'text input mode' in status_type.lower():
+                self.ux.update_status('mic_status', 'TEXT_ONLY')
+
+            self.ux.update_status('last_action_summary', status_type)
+        except Exception as e:
+            self.logger.error(f"Status update failed: {e}")
+            self.ui_interaction_failed = True
