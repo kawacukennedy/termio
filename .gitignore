@@ -33,7 +33,7 @@ ENV/
 *.bin
 *.gguf
 *.ggml
-models/
+# models/ (removed to allow src/models)
 
 # Database files
 *.db
