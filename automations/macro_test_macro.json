@@ -1,8 +1,0 @@
-{
-  "name": "test_macro",
-  "commands": [
-    "echo hello",
-    "echo world"
-  ],
-  "created": "2025-10-11T13:21:49.282925"
-}
