@@ -1,0 +1,36 @@
+[package]
+name = "hedtronix-tui"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Terminal UI for HEDTRONIX - cross-platform terminal interface"
+
+[[bin]]
+name = "hedtronix"
+path = "src/main.rs"
+
+[dependencies]
+# Core library
+hedtronix-core = { path = "../hedtronix-core" }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# Utilities
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Terminal UI
+ratatui = { workspace = true }
+crossterm = { workspace = true }
+
+# Additional dependencies for TUI
+unicode-width = "0.1"
