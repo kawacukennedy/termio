@@ -1,0 +1,30 @@
+# HEDTRONIX Default Configuration
+
+[app]
+name = "HEDTRONIX"
+version = "1.0.0"
+log_level = "info"
+
+[ai]
+# Path to GGUF model file (set via environment or override)
+# model_path = "/path/to/model.gguf"
+max_context_tokens = 128000
+inference_timeout_ms = 30000
+service_url = "http://localhost:8000"
+local_inference = true
+
+[memory]
+ring_buffer_size = 100
+database_path = "hedtronix.db"
+query_timeout_ms = 50
+enable_embeddings = false
+
+[server]
+host = "127.0.0.1"
+port = 8080
+enable_cors = true
+
+[ui]
+theme = "dark"
+animations = true
+shortcut_prefix = "Ctrl"
