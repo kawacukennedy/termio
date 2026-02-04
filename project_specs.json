@@ -1,0 +1,2037 @@
+{
+    "project": {
+        "name": "HEDTRONIX",
+        "version": "1.0.0",
+        "description": "A next-generation AI assistant that is terminal-native, offline-first, privacy-focused, and cross-platform",
+        "vision": "Ubiquitous private AI companion across all devices with deterministic execution and enterprise-grade security"
+    },
+    "product_requirements": {
+        "functional": {
+            "core_assistant": {
+                "id": "FA-001",
+                "description": "Terminal-native AI assistant with text and voice interface",
+                "acceptance_criteria": [
+                    "Responds to queries within <100ms for local inference",
+                    "Processes both text and voice input simultaneously",
+                    "Maintains conversation context across sessions",
+                    "Works completely offline with core functionality"
+                ],
+                "priority": "P0"
+            },
+            "multi_modal_input": {
+                "id": "FA-002",
+                "description": "Support for keyboard, voice, and screen interaction inputs",
+                "acceptance_criteria": [
+                    "Push-to-talk voice recognition with Vosk offline STT",
+                    "Keyboard shortcuts for all major functions",
+                    "Screen interaction via pyautogui for UI automation",
+                    "Simultaneous input mode handling without conflicts"
+                ],
+                "priority": "P0"
+            },
+            "hybrid_ai_inference": {
+                "id": "FA-003",
+                "description": "Local-first AI with optional cloud augmentation",
+                "acceptance_criteria": [
+                    "Local inference with LLaMA 2 7B quantized model (<4GB RAM)",
+                    "Cloud fallback for complex queries with user consent",
+                    "Deterministic reasoning chain execution",
+                    "Model caching and quantization on-device"
+                ],
+                "priority": "P0"
+            },
+            "memory_system": {
+                "id": "FA-004",
+                "description": "Three-tier memory architecture",
+                "acceptance_criteria": [
+                    "Ring buffer stores last 100 interactions in memory",
+                    "Vector database for semantic search across all history",
+                    "Encrypted persistent storage for session continuity",
+                    "Memory query response <50ms for recent context"
+                ],
+                "priority": "P0"
+            },
+            "plugin_ecosystem": {
+                "id": "FA-005",
+                "description": "Extensible plugin system with capability security",
+                "acceptance_criteria": [
+                    "WASM sandbox for plugin execution",
+                    "Capability-based permission system",
+                    "Hot-reload plugins without restart",
+                    "Plugin marketplace with signed packages"
+                ],
+                "priority": "P1"
+            },
+            "cross_device_sync": {
+                "id": "FA-006",
+                "description": "Encrypted peer-to-peer synchronization",
+                "acceptance_criteria": [
+                    "End-to-end encrypted sync via libp2p",
+                    "Conflict resolution with vector timestamping",
+                    "Delta synchronization for bandwidth efficiency",
+                    "QR code pairing for device setup"
+                ],
+                "priority": "P1"
+            }
+        },
+        "non_functional": {
+            "performance": {
+                "startup_time": "<2 seconds",
+                "memory_footprint": "<100MB core, <1GB with full model",
+                "response_time": "<100ms for local queries, <2s for cloud-augmented",
+                "battery_impact": "<5% per hour of active use"
+            },
+            "security": {
+                "data_encryption": "AES-256-GCM for storage, TLS 1.3 for transport",
+                "privacy": "Zero data sent to cloud without explicit consent",
+                "integrity": "Code signing with Ed25519 signatures",
+                "access_control": "Capability tokens for all external access"
+            },
+            "reliability": {
+                "uptime": "99.9% for core functionality",
+                "offline_operation": "100% functionality without network",
+                "error_recovery": "Automatic state restoration after crash",
+                "data_durability": "99.999% for encrypted persistent storage"
+            },
+            "usability": {
+                "accessibility": "WCAG 2.1 AA compliance",
+                "learnability": "New user proficiency within 10 minutes",
+                "efficiency": "Common tasks completable with ≤3 interactions"
+            }
+        },
+        "platform_support": {
+            "desktop": [
+                "macOS 11+",
+                "Windows 10+",
+                "Linux (glibc 2.28+)"
+            ],
+            "mobile": [
+                "iOS 15+",
+                "Android 8+"
+            ],
+            "architecture": [
+                "x86_64",
+                "arm64",
+                "aarch64"
+            ],
+            "installation_methods": [
+                "standalone binary",
+                "package manager",
+                "app stores"
+            ]
+        }
+    },
+    "user_stories": [
+        {
+            "id": "US-001",
+            "persona": "Privacy-conscious Developer",
+            "scenario": "As a developer working with sensitive code",
+            "need": "I want to ask AI questions about my proprietary codebase",
+            "so_that": "I can get assistance without exposing intellectual property",
+            "acceptance_tests": [
+                "AI processes local files without network calls",
+                "Memory is encrypted at rest",
+                "No telemetry or analytics data leaves device"
+            ]
+        },
+        {
+            "id": "US-002",
+            "persona": "Field Researcher",
+            "scenario": "As a researcher in remote areas without internet",
+            "need": "I need AI assistance for data analysis and note-taking",
+            "so_that": "I can work productively without connectivity",
+            "acceptance_tests": [
+                "All AI functions work offline",
+                "Data syncs when back online",
+                "Battery lasts full workday"
+            ]
+        },
+        {
+            "id": "US-003",
+            "persona": "Enterprise Security Officer",
+            "scenario": "As a security officer in regulated industry",
+            "need": "I need audit trails and access controls for AI usage",
+            "so_that": "We remain compliant with data protection regulations",
+            "acceptance_tests": [
+                "All interactions logged with tamper-evident storage",
+                "Role-based access control enforced",
+                "Data retention policies configurable"
+            ]
+        },
+        {
+            "id": "US-004",
+            "persona": "Multi-device Professional",
+            "scenario": "As a professional using laptop, phone, and tablet",
+            "need": "I want seamless context sharing across all my devices",
+            "so_that": "My AI assistant knows what I was doing on any device",
+            "acceptance_tests": [
+                "Context syncs within 30 seconds of device coming online",
+                "Conflict resolution preserves user intent",
+                "Sync works over local WiFi without cloud"
+            ]
+        },
+        {
+            "id": "US-005",
+            "persona": "Accessibility User",
+            "scenario": "As a user with visual impairment",
+            "need": "I need complete voice interaction and screen reader support",
+            "so_that": "I can use the AI assistant independently",
+            "acceptance_tests": [
+                "All functions accessible via voice commands",
+                "Screen reader announces AI responses",
+                "High contrast mode available"
+            ]
+        }
+    ],
+    "edge_cases": {
+        "offline_scenarios": {
+            "prolonged_offline": {
+                "description": "Device offline for 30+ days with heavy usage",
+                "handling": "LRU eviction from vector DB, ring buffer maintained, encrypted storage expands as needed",
+                "recovery": "Incremental sync prioritizes recent changes when back online"
+            },
+            "low_storage": {
+                "description": "Device storage nearly full (<100MB free)",
+                "handling": "Auto-cleanup of oldest vector embeddings, compress ring buffer, warn user",
+                "thresholds": {
+                    "warning": "1GB free space",
+                    "critical": "500MB free space",
+                    "emergency": "100MB free space"
+                }
+            }
+        },
+        "sync_conflicts": {
+            "simultaneous_edits": {
+                "description": "Same memory entry modified on two devices while offline",
+                "resolution": "Vector clock with last-write-wins, conflict tombstone stored for manual review",
+                "algorithm": "CRDT-based conflict-free replicated data types for memory entries"
+            },
+            "clock_skew": {
+                "description": "Devices with significant time difference",
+                "handling": "Lamport timestamps for logical ordering, NTP sync on connection",
+                "tolerance": "±5 minutes corrected automatically, beyond requires manual sync"
+            }
+        },
+        "ai_failures": {
+            "model_corruption": {
+                "description": "Local AI model file becomes corrupted",
+                "handling": "SHA-256 verification on load, auto-redownload from trusted source, fallback to tiny model",
+                "recovery_time": "<60 seconds to restore basic functionality"
+            },
+            "inference_timeout": {
+                "description": "AI takes >30 seconds to respond",
+                "handling": "Timeout with progressive fallback: smaller model → cached response → error message",
+                "timeouts": {
+                    "initial": "10s",
+                    "fallback": "5s",
+                    "absolute": "30s"
+                }
+            }
+        },
+        "security_incidents": {
+            "plugin_malware": {
+                "description": "Plugin attempts privilege escalation or data exfiltration",
+                "handling": "WASM memory isolation, capability revocation, automatic quarantine, alert user",
+                "containment": "Network isolation, filesystem sandbox, syscall filtering"
+            },
+            "physical_compromise": {
+                "description": "Device lost or stolen",
+                "handling": "Remote wipe capability, encryption keys protected by hardware security module when available",
+                "protection": "Rate-limited decryption attempts, secure element storage for keys on supported devices"
+            }
+        }
+    },
+    "data_models": {
+        "conversation": {
+            "schema": {
+                "id": "UUID v7",
+                "user_id": "UUID v4",
+                "device_id": "UUID v4",
+                "session_id": "UUID v4",
+                "messages": [
+                    {
+                        "role": "enum(user, assistant, system)",
+                        "content": "string",
+                        "timestamp": "RFC3339 with nanoseconds",
+                        "metadata": {
+                            "input_mode": "enum(text, voice, screen)",
+                            "confidence": "float 0-1",
+                            "model_used": "string",
+                            "processing_time_ms": "integer"
+                        }
+                    }
+                ],
+                "context_window": {
+                    "token_count": "integer",
+                    "embeddings_generated": "boolean",
+                    "summary": "string"
+                },
+                "created_at": "RFC3339",
+                "updated_at": "RFC3339",
+                "vector_timestamp": "Array[integer] for CRDT"
+            },
+            "indexes": [
+                {
+                    "fields": [
+                        "user_id",
+                        "created_at"
+                    ],
+                    "type": "compound"
+                },
+                {
+                    "fields": [
+                        "session_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "fields": [
+                        "updated_at"
+                    ],
+                    "type": "ttl",
+                    "expire_after_seconds": 2592000
+                }
+            ],
+            "constraints": {
+                "message_limit": 1000,
+                "token_limit": 128000,
+                "storage_quota": "1GB per user"
+            }
+        },
+        "memory_entry": {
+            "schema": {
+                "id": "ULID",
+                "user_id": "UUID v4",
+                "content": "string",
+                "embedding": "Array[float32] (768 dimensions)",
+                "metadata": {
+                    "source": "enum(conversation, document, plugin, manual)",
+                    "importance_score": "float 0-1",
+                    "access_frequency": "integer",
+                    "last_accessed": "RFC3339",
+                    "tags": "Array[string]"
+                },
+                "access_control": {
+                    "capabilities_required": "Array[string]",
+                    "encryption_key_id": "string",
+                    "sharing_policy": "enum(private, shared_devices, shared_users)"
+                },
+                "created_at": "RFC3339",
+                "updated_at": "RFC3339",
+                "version": "integer"
+            },
+            "indexes": [
+                {
+                    "fields": [
+                        "embedding"
+                    ],
+                    "type": "vector",
+                    "algorithm": "HNSW",
+                    "dimensions": 768
+                },
+                {
+                    "fields": [
+                        "user_id",
+                        "created_at"
+                    ],
+                    "type": "compound"
+                },
+                {
+                    "fields": [
+                        "metadata.tags"
+                    ],
+                    "type": "multi_key"
+                }
+            ]
+        },
+        "plugin_manifest": {
+            "schema": {
+                "id": "UUID v5 from namespace",
+                "name": "string",
+                "version": "semver",
+                "description": "string",
+                "author": {
+                    "name": "string",
+                    "email": "string",
+                    "public_key": "base64"
+                },
+                "capabilities": {
+                    "required": "Array[string]",
+                    "optional": "Array[string]"
+                },
+                "entry_points": {
+                    "wasm_module": "string",
+                    "initialize": "string",
+                    "cleanup": "string"
+                },
+                "permissions": {
+                    "filesystem": {
+                        "read": "Array[string]",
+                        "write": "Array[string]"
+                    },
+                    "network": {
+                        "domains": "Array[string]",
+                        "protocols": "Array[string]"
+                    },
+                    "ai": {
+                        "model_access": "boolean",
+                        "memory_access": "boolean",
+                        "context_injection": "boolean"
+                    }
+                },
+                "signature": {
+                    "algorithm": "ed25519",
+                    "value": "base64",
+                    "timestamp": "RFC3339"
+                },
+                "compatibility": {
+                    "min_core_version": "semver",
+                    "max_core_version": "semver",
+                    "platforms": "Array[string]"
+                }
+            }
+        },
+        "device_sync_state": {
+            "schema": {
+                "device_id": "UUID v4",
+                "user_id": "UUID v4",
+                "last_sync": {
+                    "timestamp": "RFC3339",
+                    "vector_clock": "Map<device_id, integer>",
+                    "hash": "sha256"
+                },
+                "pending_changes": {
+                    "count": "integer",
+                    "size_bytes": "integer",
+                    "oldest": "RFC3339"
+                },
+                "connection_info": {
+                    "last_ip": "string",
+                    "last_connection": "RFC3339",
+                    "protocol_version": "integer",
+                    "supported_features": "Array[string]"
+                },
+                "sync_config": {
+                    "auto_sync": "boolean",
+                    "wifi_only": "boolean",
+                    "battery_threshold": "integer 0-100",
+                    "data_cap_mb": "integer"
+                }
+            }
+        }
+    },
+    "api_specifications": {
+        "internal_apis": {
+            "event_bus": {
+                "protocol": "NATS over WebSocket",
+                "endpoints": {
+                    "publish": {
+                        "method": "POST",
+                        "path": "/events/:topic",
+                        "payload": {
+                            "event_id": "UUID v4",
+                            "type": "string",
+                            "payload": "any",
+                            "timestamp": "RFC3339",
+                            "source": "string"
+                        }
+                    },
+                    "subscribe": {
+                        "method": "GET",
+                        "path": "/events/:topic",
+                        "query_params": {
+                            "since": "RFC3339",
+                            "batch_size": "integer"
+                        }
+                    }
+                },
+                "qos": "At-least-once delivery with deduplication"
+            },
+            "memory_api": {
+                "protocol": "gRPC with protobuf",
+                "services": {
+                    "MemoryService": {
+                        "Store": {
+                            "input": "MemoryEntry",
+                            "output": "StoreResponse",
+                            "deadline": "100ms"
+                        },
+                        "Query": {
+                            "input": "QueryRequest",
+                            "output": "QueryResponse",
+                            "deadline": "50ms"
+                        },
+                        "SemanticSearch": {
+                            "input": "SearchRequest",
+                            "output": "SearchResponse",
+                            "deadline": "200ms"
+                        }
+                    }
+                },
+                "retry_policy": {
+                    "max_attempts": 3,
+                    "initial_backoff": "100ms",
+                    "max_backoff": "1s"
+                }
+            },
+            "plugin_host": {
+                "protocol": "WASI preview2",
+                "imports": {
+                    "wasi:io/streams": "0.2.0",
+                    "wasi:filesystem/types": "0.2.0",
+                    "hedtronix:capabilities/types": "1.0.0"
+                },
+                "exports": {
+                    "initialize": "func() -> result<_, error>",
+                    "handle_event": "func(event: Event) -> result<Response, error>",
+                    "cleanup": "func() -> result<_, error>"
+                },
+                "memory_config": {
+                    "initial": 65536,
+                    "maximum": 67108864,
+                    "shared": false
+                }
+            }
+        },
+        "external_apis": {
+            "cloud_augmentation": {
+                "protocol": "HTTPS with mutual TLS",
+                "base_url": "https://api.hedtronix.cloud/v1",
+                "endpoints": {
+                    "augment": {
+                        "method": "POST",
+                        "path": "/augment",
+                        "headers": {
+                            "X-Device-ID": "UUID v4",
+                            "X-Session-ID": "UUID v4",
+                            "X-Request-ID": "UUID v4"
+                        },
+                        "body": {
+                            "query": "string",
+                            "context": "Array[Message]",
+                            "local_model": "string",
+                            "confidence_threshold": "float"
+                        },
+                        "response": {
+                            "augmented_response": "string",
+                            "model_used": "string",
+                            "processing_time_ms": "integer",
+                            "tokens_used": "integer"
+                        }
+                    },
+                    "model_update": {
+                        "method": "GET",
+                        "path": "/models/:model/update",
+                        "query": {
+                            "current_version": "semver",
+                            "platform": "string"
+                        }
+                    }
+                },
+                "rate_limits": {
+                    "free_tier": "100 requests/day",
+                    "pro_tier": "1000 requests/day",
+                    "enterprise": "Unlimited"
+                }
+            },
+            "plugin_registry": {
+                "protocol": "HTTPS with package signing",
+                "base_url": "https://registry.hedtronix.com/v1",
+                "endpoints": {
+                    "discover": {
+                        "method": "GET",
+                        "path": "/plugins",
+                        "query": {
+                            "category": "string",
+                            "capability": "string",
+                            "platform": "string",
+                            "version": "semver"
+                        }
+                    },
+                    "download": {
+                        "method": "GET",
+                        "path": "/plugins/:id/download",
+                        "headers": {
+                            "If-None-Match": "etag"
+                        }
+                    },
+                    "verify": {
+                        "method": "POST",
+                        "path": "/plugins/verify",
+                        "body": {
+                            "manifest": "PluginManifest",
+                            "signature": "string"
+                        }
+                    }
+                },
+                "caching": {
+                    "ttl": 3600,
+                    "stale_while_revalidate": 86400
+                }
+            }
+        }
+    },
+    "background_jobs": {
+        "vector_index_maintenance": {
+            "schedule": "0 */6 * * *",
+            "description": "Rebuild vector index for semantic search",
+            "actions": [
+                "Remove stale embeddings (>30 days old)",
+                "Optimize HNSW graph structure",
+                "Recluster embeddings for better recall",
+                "Update statistics and metrics"
+            ],
+            "resource_limits": {
+                "max_memory": "512MB",
+                "max_duration": "300s",
+                "cpu_quota": "50%"
+            },
+            "error_handling": {
+                "retry_count": 3,
+                "retry_delay": "exponential 5s, 25s, 125s",
+                "fallback": "Continue with existing index if rebuild fails"
+            }
+        },
+        "encrypted_backup": {
+            "schedule": "0 2 * * *",
+            "description": "Create encrypted backups of persistent storage",
+            "actions": [
+                "Take snapshot of encrypted storage",
+                "Compress with zstd level 3",
+                "Encrypt with user's public key",
+                "Upload to configured cloud storage",
+                "Rotate old backups (keep last 7 daily, 4 weekly)"
+            ],
+            "conditions": {
+                "on_battery": "skip if <30%",
+                "on_network": "wifi only if configured",
+                "on_storage": "skip if <1GB free"
+            }
+        },
+        "model_optimization": {
+            "trigger": "on_device_idle",
+            "description": "Optimize AI models for current device",
+            "actions": [
+                "Quantize model to appropriate precision (FP16/INT8/INT4)",
+                "Cache optimized model to disk",
+                "Update model registry with new version",
+                "Clean up old model versions"
+            ],
+            "device_profiles": {
+                "high_end": {
+                    "precision": "FP16",
+                    "cache_size": "4GB"
+                },
+                "mid_range": {
+                    "precision": "INT8",
+                    "cache_size": "2GB"
+                },
+                "low_end": {
+                    "precision": "INT4",
+                    "cache_size": "1GB"
+                }
+            }
+        },
+        "sync_reconciliation": {
+            "schedule": "*/5 * * * *",
+            "description": "Reconcile sync state across devices",
+            "actions": [
+                "Check for pending changes",
+                "Attempt P2P connection to known devices",
+                "Apply conflict resolution rules",
+                "Update vector clocks",
+                "Clean up resolved conflicts"
+            ],
+            "network_conditions": {
+                "preferred": "local network",
+                "fallback": "relay server",
+                "avoid": "cellular if data cap configured"
+            }
+        }
+    },
+    "state_management": {
+        "client_state": {
+            "ui_state": {
+                "store": "Zustand with immer",
+                "structure": {
+                    "navigation": {
+                        "current_screen": "string",
+                        "history": "Array<string>",
+                        "modal_stack": "Array<ModalConfig>"
+                    },
+                    "conversation": {
+                        "messages": "Array<Message>",
+                        "input_text": "string",
+                        "is_recording": "boolean",
+                        "is_processing": "boolean"
+                    },
+                    "settings": {
+                        "theme": "enum(light, dark, system)",
+                        "voice_enabled": "boolean",
+                        "offline_mode": "boolean",
+                        "sync_preferences": "SyncConfig"
+                    }
+                },
+                "persistence": {
+                    "strategy": "auto-save on change",
+                    "debounce": "500ms",
+                    "encryption": "AES-256-GCM per-session key"
+                }
+            },
+            "ai_state": {
+                "store": "Redux Toolkit with RTK Query",
+                "slices": {
+                    "model": {
+                        "loaded_model": "string",
+                        "loading_status": "enum(idle, loading, loaded, error)",
+                        "quantization_level": "string"
+                    },
+                    "inference": {
+                        "current_request_id": "UUID v4",
+                        "pending_requests": "Map<string, Request>",
+                        "cache": "LRU with 100 entry limit"
+                    },
+                    "context": {
+                        "current_context_window": "Array<Message>",
+                        "token_count": "integer",
+                        "embeddings": "Map<string, Vector>"
+                    }
+                },
+                "middleware": [
+                    "thunk",
+                    "logger (dev only)",
+                    "crash reporting"
+                ]
+            }
+        },
+        "server_state": {
+            "distributed_state": {
+                "technology": "Redis Cluster with RedisJSON",
+                "schema": {
+                    "user_sessions": {
+                        "key_pattern": "session:{user_id}:{device_id}",
+                        "ttl": 86400,
+                        "data": "SessionState"
+                    },
+                    "device_presence": {
+                        "key_pattern": "presence:{user_id}",
+                        "ttl": 60,
+                        "data": "Set<device_id>"
+                    },
+                    "sync_queues": {
+                        "key_pattern": "sync:{user_id}:{device_id}",
+                        "data": "Stream of changes"
+                    }
+                },
+                "replication": {
+                    "factor": 3,
+                    "consistency": "eventual with read-your-writes"
+                }
+            },
+            "persistent_state": {
+                "primary": "PostgreSQL 15 with TimescaleDB",
+                "replicas": 2,
+                "sharding": {
+                    "strategy": "user_id hash",
+                    "shards": 64
+                },
+                "backup": {
+                    "frequency": "hourly",
+                    "retention": "30 days",
+                    "encryption": "AWS KMS"
+                }
+            }
+        },
+        "offline_state": {
+            "sync_engine": {
+                "technology": "ElectricSQL with CRDTs",
+                "schema": "Defined in data_models section",
+                "conflict_resolution": {
+                    "default": "last_write_wins with vector clock",
+                    "custom": "Plugin-defined resolvers"
+                }
+            },
+            "queue_management": {
+                "outbox": "SQLite with priority levels",
+                "retry_logic": "exponential backoff with jitter",
+                "compensation": "Saga pattern for multi-step operations"
+            }
+        }
+    },
+    "error_handling": {
+        "error_categories": {
+            "user_errors": {
+                "codes": [
+                    "4000-4099"
+                ],
+                "examples": [
+                    "invalid_input",
+                    "insufficient_permissions",
+                    "quota_exceeded"
+                ],
+                "handling": "Show user-friendly message, suggest correction"
+            },
+            "system_errors": {
+                "codes": [
+                    "5000-5099"
+                ],
+                "examples": [
+                    "database_unavailable",
+                    "memory_allocation_failed",
+                    "corrupt_state"
+                ],
+                "handling": "Log with stack trace, attempt recovery, degrade gracefully"
+            },
+            "ai_errors": {
+                "codes": [
+                    "6000-6099"
+                ],
+                "examples": [
+                    "model_load_failed",
+                    "inference_timeout",
+                    "context_overflow"
+                ],
+                "handling": "Fallback to simpler model, use cached responses, prompt user"
+            },
+            "network_errors": {
+                "codes": [
+                    "7000-7099"
+                ],
+                "examples": [
+                    "offline",
+                    "timeout",
+                    "rate_limited",
+                    "certificate_invalid"
+                ],
+                "handling": "Queue for retry, switch to offline mode, validate certificates"
+            }
+        },
+        "error_recovery": {
+            "automatic": {
+                "retry_with_backoff": {
+                    "max_attempts": 3,
+                    "initial_delay": "1s",
+                    "multiplier": 2
+                },
+                "circuit_breaker": {
+                    "failure_threshold": 5,
+                    "reset_timeout": "60s",
+                    "half_open_max_requests": 3
+                },
+                "fallback_strategies": {
+                    "ai": "tiny_model → cached_response → static_response",
+                    "memory": "ring_buffer_only → no_context → error_state",
+                    "sync": "local_only → conflict_tombstones → manual_resolution"
+                }
+            },
+            "manual": {
+                "diagnostic_tools": {
+                    "health_check": "comprehensive system status",
+                    "log_viewer": "structured logs with filtering",
+                    "state_inspector": "view and modify application state"
+                },
+                "recovery_actions": {
+                    "clear_cache": "with confirmation",
+                    "reset_state": "preserve user data",
+                    "factory_reset": "complete wipe with backup option"
+                }
+            }
+        },
+        "error_reporting": {
+            "client_side": {
+                "library": "Sentry with offline caching",
+                "sampling": "10% in production, 100% in development",
+                "breadcrumbs": "Last 100 user actions before error",
+                "privacy": {
+                    "scrub_pii": true,
+                    "local_processing": true,
+                    "user_consent_required": true
+                }
+            },
+            "server_side": {
+                "aggregation": "Datadog with error tracking",
+                "alerting": {
+                    "critical": "PagerDuty immediate",
+                    "high": "Slack within 15 minutes",
+                    "medium": "Daily digest",
+                    "low": "Weekly report"
+                },
+                "trend_analysis": "Anomaly detection on error rates"
+            }
+        }
+    },
+    "permissions": {
+        "capability_system": {
+            "capability_types": {
+                "ai": [
+                    "inference:basic",
+                    "inference:advanced",
+                    "model:fine_tune",
+                    "context:unlimited"
+                ],
+                "memory": [
+                    "memory:read",
+                    "memory:write",
+                    "memory:delete",
+                    "memory:share"
+                ],
+                "device": [
+                    "device:filesystem",
+                    "device:camera",
+                    "device:microphone",
+                    "device:location"
+                ],
+                "network": [
+                    "network:local",
+                    "network:internet",
+                    "network:sync",
+                    "network:cloud"
+                ],
+                "plugin": [
+                    "plugin:install",
+                    "plugin:develop",
+                    "plugin:marketplace",
+                    "plugin:verify"
+                ]
+            },
+            "grant_mechanisms": {
+                "user_grant": "Explicit user approval via UI",
+                "inheritance": "Parent capability grants child capabilities",
+                "delegation": "Temporary delegation with expiration",
+                "revocation": "Immediate with cleanup hooks"
+            }
+        },
+        "runtime_enforcement": {
+            "wasm_sandbox": {
+                "syscall_filtering": "Allow-list based on capabilities",
+                "memory_isolation": "Separate address space per plugin",
+                "resource_limits": {
+                    "cpu_time": "100ms per invocation",
+                    "memory": "64MB per plugin",
+                    "storage": "100MB per plugin"
+                }
+            },
+            "native_code": {
+                "seccomp": "Linux system call filtering",
+                "apparmor": "Profile-based restriction (Linux)",
+                "sandbox_exec": "macOS sandboxing",
+                "windows_job_objects": "Windows process isolation"
+            }
+        },
+        "user_consent": {
+            "levels": {
+                "required": "Blocking consent for core functionality",
+                "optional": "Can decline with reduced functionality",
+                "marketing": "Separate opt-in for communications"
+            },
+            "management": {
+                "granular": "Per-feature consent",
+                "temporary": "One-time consent for single use",
+                "review": "Quarterly consent review prompts"
+            }
+        }
+    },
+    "analytics": {
+        "privacy_preserving": {
+            "differential_privacy": {
+                "epsilon": 0.1,
+                "delta": 1e-5,
+                "mechanism": "Laplace noise addition"
+            },
+            "on_device_aggregation": {
+                "window": "24 hours",
+                "compression": "Histograms with bounded error",
+                "upload_frequency": "Daily"
+            },
+            "federated_learning": {
+                "participant_selection": "Random 1% of active users",
+                "model_updates": "Encrypted gradient aggregation",
+                "contribution_tracking": "Differential privacy budget"
+            }
+        },
+        "metrics_collection": {
+            "performance": {
+                "app_startup_time": "histogram",
+                "ai_response_time": "histogram by model size",
+                "memory_usage": "gauge with percentiles",
+                "battery_impact": "milliwatt-hours per hour"
+            },
+            "usage": {
+                "active_users_dau": "count distinct",
+                "interactions_per_session": "histogram",
+                "feature_adoption": "count by feature",
+                "retention": "cohort analysis"
+            },
+            "quality": {
+                "error_rate": "errors per 1000 interactions",
+                "user_satisfaction": "implicit via interaction patterns",
+                "ai_accuracy": "human evaluation sample"
+            }
+        },
+        "reporting": {
+            "real_time": {
+                "dashboard": "Grafana with 15s refresh",
+                "alerts": "Slack for SLO violations",
+                "anomaly_detection": "Machine learning on metrics"
+            },
+            "batch": {
+                "daily_reports": "PDF emailed to stakeholders",
+                "weekly_insights": "Trend analysis and recommendations",
+                "monthly_business": "ROI and growth metrics"
+            }
+        }
+    },
+    "security": {
+        "cryptography": {
+            "storage_encryption": {
+                "algorithm": "AES-256-GCM",
+                "key_derivation": "Argon2id with 64MB memory",
+                "key_storage": {
+                    "ios": "Secure Enclave",
+                    "android": "Hardware-backed Keystore",
+                    "desktop": "TPM or file with 600 permissions"
+                }
+            },
+            "transport_encryption": {
+                "tls_version": "1.3 only",
+                "ciphers": "TLS_AES_256_GCM_SHA384",
+                "certificate_pinning": "HPKP with backup pins"
+            },
+            "end_to_end_encryption": {
+                "protocol": "Double Ratchet with X3DH",
+                "identity_keys": "Curve25519",
+                "forward_secrecy": "Per-message ephemeral keys",
+                "future_secrecy": "Post-compromise security"
+            }
+        },
+        "authentication": {
+            "device_authentication": {
+                "primary": "Ed25519 device key pair",
+                "backup": "Recovery phrase (BIP-39 24 words)",
+                "rotation": "90 days or on security event"
+            },
+            "user_authentication": {
+                "methods": [
+                    "biometric",
+                    "password",
+                    "hardware_key"
+                ],
+                "mfa": {
+                    "required": true,
+                    "methods": [
+                        "totp",
+                        "webauthn",
+                        "recovery_codes"
+                    ]
+                },
+                "session_management": {
+                    "duration": "30 days",
+                    "renewal": "automatic on use",
+                    "revocation": "immediate across all devices"
+                }
+            }
+        },
+        "vulnerability_management": {
+            "scanning": {
+                "dependencies": "daily with Dependabot",
+                "code": "semgrep and CodeQL weekly",
+                "containers": "Trivy on each build"
+            },
+            "response": {
+                "slas": {
+                    "critical": "24 hours patch",
+                    "high": "7 days patch",
+                    "medium": "30 days patch"
+                },
+                "disclosure": "Coordinated through security@hedtronix.com"
+            }
+        },
+        "compliance": {
+            "frameworks": {
+                "gdpr": {
+                    "data_processing_registry": "automated",
+                    "dsar_portal": "self-service",
+                    "data_retention": "configurable per data type"
+                },
+                "hipaa": {
+                    "baa": "signed with cloud providers",
+                    "access_logs": "immutable audit trail",
+                    "encryption_at_rest": "AES-256 certified"
+                },
+                "soc2": {
+                    "controls": "automated where possible",
+                    "evidence_collection": "continuous",
+                    "auditing": "real-time compliance dashboard"
+                }
+            }
+        }
+    },
+    "performance_considerations": {
+        "startup_optimization": {
+            "lazy_loading": {
+                "ai_models": "Load on first use",
+                "plugins": "Load when capability needed",
+                "ui_components": "Code splitting by route"
+            },
+            "caching": {
+                "warm_cache": "Last session state preloaded",
+                "predictive_prefetch": "Based on user patterns",
+                "memory_mapping": "mmap for large model files"
+            }
+        },
+        "runtime_optimization": {
+            "ai_inference": {
+                "quantization": "Dynamic based on device capability",
+                "batching": "Parallel inference where possible",
+                "speculative_decoding": "For longer responses"
+            },
+            "memory_management": {
+                "object_pooling": "Reuse frequent allocations",
+                "generational_gc": "For managed memory",
+                "memory_compression": "Transparent compression of idle data"
+            },
+            "ui_rendering": {
+                "virtualization": "For long conversation lists",
+                "offscreen_canvas": "For terminal animations",
+                "will_change_hints": "For smooth transitions"
+            }
+        },
+        "resource_management": {
+            "cpu": {
+                "thread_pool": "Size based on CPU cores",
+                "priority_inversion_prevention": "Priority inheritance",
+                "thermal_throttling": "Reduce workload when hot"
+            },
+            "memory": {
+                "pressure_handling": "Aggressive cleanup on warning",
+                "swap_avoidance": "Keep working set in RAM",
+                "memory_hierarchy": "Hot data in faster storage"
+            },
+            "battery": {
+                "work_scheduling": "Batch network requests",
+                "screen_optimization": "Reduce brightness in dark mode",
+                "sensor_usage": "Throttle when not needed"
+            }
+        }
+    },
+    "scalability_strategies": {
+        "horizontal_scaling": {
+            "stateless_services": {
+                "ai_inference": "Kubernetes HPA with custom metrics",
+                "api_gateway": "Envoy with weighted load balancing",
+                "event_processing": "Kafka consumers auto-scaling"
+            },
+            "stateful_services": {
+                "vector_database": "Milvus cluster with shared storage",
+                "user_sessions": "Redis Cluster with hash slot migration",
+                "file_storage": "Ceph with erasure coding"
+            }
+        },
+        "sharding_strategies": {
+            "user_sharding": {
+                "strategy": "consistent hashing with 1024 virtual nodes",
+                "rebalancing": "automatic with <10% data movement",
+                "failure_domains": "spread across availability zones"
+            },
+            "geographic_sharding": {
+                "regions": [
+                    "us-east",
+                    "eu-west",
+                    "ap-southeast"
+                ],
+                "latency_requirements": "<100ms for 95% of users",
+                "data_sovereignty": "GDPR compliance per region"
+            }
+        },
+        "caching_strategies": {
+            "edge_caching": {
+                "cdn": "Cloudflare with Argo Smart Routing",
+                "cache_rules": "TTL based on content type",
+                "invalidation": "Instant purge on update"
+            },
+            "application_caching": {
+                "redis": {
+                    "levels": [
+                        "L1: in-process",
+                        "L2: redis cluster"
+                    ],
+                    "write_through": "for critical data",
+                    "write_behind": "for less critical data"
+                }
+            }
+        },
+        "database_optimization": {
+            "read_replicas": {
+                "count": "2 per region",
+                "lag_monitoring": "<1 second alert threshold",
+                "use_cases": [
+                    "analytics",
+                    "backup reads"
+                ]
+            },
+            "connection_pooling": {
+                "size": "dynamic based on load",
+                "health_checks": "every 30 seconds",
+                "failover": "automatic to healthy pool"
+            }
+        }
+    },
+    "testing_plans": {
+        "unit_tests": {
+            "coverage_requirements": {
+                "overall": "90%",
+                "critical_path": "100%",
+                "edge_cases": "explicitly tested"
+            },
+            "frameworks": {
+                "rust": "cargo test with proptest",
+                "python": "pytest with hypothesis",
+                "typescript": "vitest with testing-library"
+            },
+            "mocking": {
+                "ai_models": "mock with deterministic responses",
+                "filesystem": "mock with in-memory filesystem",
+                "network": "mock with pre-recorded responses"
+            }
+        },
+        "integration_tests": {
+            "test_pyramid": {
+                "api_tests": "50% of integration suite",
+                "component_tests": "30% of integration suite",
+                "end_to_end": "20% of integration suite"
+            },
+            "environments": {
+                "ci": "full test suite on every PR",
+                "staging": "smoke tests before deployment",
+                "production": "canary testing with 1% traffic"
+            }
+        },
+        "performance_tests": {
+            "load_testing": {
+                "concurrent_users": "10,000 simulated users",
+                "ramp_up": "over 5 minutes",
+                "duration": "30 minutes sustained"
+            },
+            "stress_testing": {
+                "memory_pressure": "90% memory usage",
+                "cpu_pressure": "90% cpu usage",
+                "network_degradation": "500ms latency, 10% packet loss"
+            },
+            "endurance_testing": {
+                "duration": "72 hours continuous",
+                "memory_leaks": "<1MB per hour",
+                "throughput_degradation": "<5% over test"
+            }
+        },
+        "security_tests": {
+            "static_analysis": {
+                "tools": [
+                    "semgrep",
+                    "bandit",
+                    "cargo-audit"
+                ],
+                "frequency": "on every commit",
+                "severity_threshold": "high and critical only"
+            },
+            "dynamic_analysis": {
+                "fuzzing": "24/7 for network protocols",
+                "penetration_testing": "quarterly by third party",
+                "dependency_scanning": "daily with automated patches"
+            }
+        }
+    },
+    "ci_cd": {
+        "pipeline_stages": {
+            "validate": {
+                "steps": [
+                    "code linting (clippy, black, eslint)",
+                    "dependency audit",
+                    "secret detection",
+                    "commit message validation"
+                ],
+                "timeout": "5 minutes",
+                "requirements": [
+                    "all must pass"
+                ]
+            },
+            "test": {
+                "steps": [
+                    "unit tests with coverage reporting",
+                    "integration tests with service mocks",
+                    "performance baseline comparison",
+                    "security scans"
+                ],
+                "parallelization": "4 parallel jobs",
+                "timeout": "30 minutes"
+            },
+            "build": {
+                "steps": [
+                    "multi-architecture docker images",
+                    "platform-specific binaries (deb, rpm, dmg, exe)",
+                    "app store packages (ipa, apk)",
+                    "signing with hardware tokens"
+                ],
+                "caching": "layer caching for docker, ccache for native",
+                "artifacts": "stored for 90 days"
+            },
+            "deploy": {
+                "staging": {
+                    "strategy": "blue-green",
+                    "verification": "automated smoke tests",
+                    "rollback": "automatic on test failure"
+                },
+                "production": {
+                    "strategy": "canary with 1%, 5%, 10%, 100%",
+                    "verification": "real user monitoring metrics",
+                    "rollback": "manual with one-click"
+                }
+            }
+        },
+        "environments": {
+            "development": {
+                "purpose": "feature development",
+                "refresh_frequency": "daily",
+                "data": "synthetic with no PII"
+            },
+            "staging": {
+                "purpose": "pre-production testing",
+                "refresh_frequency": "on demand",
+                "data": "anonymized production data"
+            },
+            "production": {
+                "purpose": "live user traffic",
+                "change_control": "approval required",
+                "monitoring": "24/7 with pager rotation"
+            }
+        },
+        "release_management": {
+            "versioning": "semver with build metadata",
+            "channels": {
+                "nightly": "automatic from main branch",
+                "beta": "weekly with manual approval",
+                "stable": "monthly with full regression"
+            },
+            "rollout": {
+                "mobile": "phased over 7 days",
+                "desktop": "immediate with auto-update",
+                "enterprise": "scheduled maintenance windows"
+            }
+        }
+    },
+    "deployment": {
+        "infrastructure": {
+            "kubernetes": {
+                "version": "1.28+",
+                "distribution": "EKS with managed node groups",
+                "autoscaling": {
+                    "cluster": "10-100 nodes",
+                    "pods": "based on CPU/memory metrics"
+                },
+                "networking": {
+                    "cni": "Cilium with eBPF",
+                    "ingress": "NGINX with WAF",
+                    "service_mesh": "Istio for east-west traffic"
+                }
+            },
+            "database": {
+                "postgresql": {
+                    "version": "15 with TimescaleDB",
+                    "high_availability": "Patroni with etcd",
+                    "backup": "WAL-E with S3",
+                    "monitoring": "pgMonitor with Prometheus"
+                },
+                "redis": {
+                    "version": "7.2",
+                    "cluster_size": "6 nodes minimum",
+                    "persistence": "AOF every second",
+                    "monitoring": "RedisInsight"
+                }
+            },
+            "storage": {
+                "object_storage": {
+                    "primary": "S3 with intelligent tiering",
+                    "backup": "Backblaze B2",
+                    "encryption": "SSE-S3 with KMS"
+                },
+                "block_storage": {
+                    "performance": "io2 with 1000 iops/GB",
+                    "replication": "across availability zones",
+                    "snapshots": "hourly with 30 day retention"
+                }
+            }
+        },
+        "monitoring": {
+            "metrics": {
+                "collection": "Prometheus with Thanos",
+                "storage": "2 years retention",
+                "visualization": "Grafana with custom dashboards",
+                "alerting": "Alertmanager with grouping and inhibition"
+            },
+            "logging": {
+                "collection": "Vector with resource-based routing",
+                "storage": "Elasticsearch with hot-warm-cold",
+                "search": "Kibana with saved searches",
+                "retention": "30 days hot, 1 year cold"
+            },
+            "tracing": {
+                "collection": "Jaeger with sampling",
+                "propagation": "W3C Trace Context",
+                "analysis": "service dependency graphs"
+            }
+        },
+        "disaster_recovery": {
+            "recovery_point_objective": "5 minutes",
+            "recovery_time_objective": "15 minutes",
+            "backup_strategy": {
+                "frequency": "every 5 minutes",
+                "retention": "35 days",
+                "verification": "automated restore test weekly"
+            },
+            "failover": {
+                "automatic": "for availability zone failure",
+                "manual": "for region failure",
+                "testing": "quarterly drills"
+            }
+        }
+    },
+    "environment_configuration": {
+        "config_management": {
+            "hierarchical": {
+                "defaults": "in code",
+                "environment": "env-specific overrides",
+                "secrets": "vault with dynamic credentials",
+                "user": "per-user customization"
+            },
+            "dynamic": {
+                "feature_flags": "LaunchDarkly with percentage rollouts",
+                "runtime_config": "Consul with watchers",
+                "a_b_testing": "statsig with experiment framework"
+            }
+        },
+        "secrets_management": {
+            "vault": {
+                "authentication": "kubernetes service accounts",
+                "dynamic_secrets": "for database credentials",
+                "encryption": "transit engine with auto-unseal",
+                "audit": "detailed logs with integrity protection"
+            },
+            "key_rotation": {
+                "automatic": "90 days for encryption keys",
+                "manual": "on security incident",
+                "grace_period": "old keys valid for 7 days"
+            }
+        },
+        "feature_toggles": {
+            "types": {
+                "release": "short-lived for deployment",
+                "experiment": "for A/B testing",
+                "operational": "for circuit breakers",
+                "permission": "for entitlement checks"
+            },
+            "evaluation": {
+                "client_side": "for user-specific features",
+                "server_side": "for infrastructure features",
+                "hybrid": "for consistency requirements"
+            }
+        }
+    },
+    "documentation_structure": {
+        "user_documentation": {
+            "getting_started": {
+                "quick_start": "5 minute setup guide",
+                "installation": "platform-specific instructions",
+                "first_use": "interactive tutorial"
+            },
+            "user_guide": {
+                "core_features": "detailed feature explanations",
+                "best_practices": "tips for effective use",
+                "troubleshooting": "common problems and solutions"
+            },
+            "accessibility": {
+                "screen_reader": "complete guide for visually impaired",
+                "keyboard_shortcuts": "reference card",
+                "voice_commands": "complete command list"
+            }
+        },
+        "developer_documentation": {
+            "api_reference": {
+                "rest_api": "OpenAPI 3.0 specification",
+                "grpc": "protobuf definitions with examples",
+                "webhooks": "event payload specifications"
+            },
+            "plugin_development": {
+                "getting_started": "hello world plugin",
+                "capabilities": "detailed capability reference",
+                "best_practices": "performance and security guidelines",
+                "publishing": "marketplace submission guide"
+            },
+            "contributing": {
+                "development_setup": "local environment setup",
+                "code_style": "linter configurations",
+                "pull_request_process": "review and merge workflow"
+            }
+        },
+        "operations_documentation": {
+            "runbooks": {
+                "deployment": "step-by-step deployment guide",
+                "monitoring": "dashboard interpretations",
+                "incident_response": "playbooks for common incidents"
+            },
+            "architecture": {
+                "system_overview": "high-level architecture diagrams",
+                "data_flow": "sequence diagrams for key flows",
+                "scaling_guide": "capacity planning and scaling"
+            },
+            "security": {
+                "compliance": "evidence collection procedures",
+                "incident_response": "security incident playbook",
+                "auditing": "audit trail access procedures"
+            }
+        }
+    },
+    "technology_stack": {
+        "frontend": {
+            "terminal_ui": {
+                "primary": "Rust with tui-rs and ratatui",
+                "justification": "Native performance, minimal footprint, cross-platform terminal rendering",
+                "dependencies": [
+                    "crossterm",
+                    "tokio",
+                    "serde",
+                    "anyhow"
+                ]
+            },
+            "mobile_app": {
+                "primary": "React Native with Reanimated 3",
+                "justification": "Cross-platform with native performance, iOS 26 design system compliance",
+                "dependencies": [
+                    "react-native-vector-icons",
+                    "react-native-gesture-handler",
+                    "react-native-screens"
+                ]
+            },
+            "state_management": {
+                "primary": "Zustand with Immer",
+                "justification": "Simpler than Redux, built-in immutable updates, excellent TypeScript support",
+                "dependencies": [
+                    "immer",
+                    "zustand/middleware"
+                ]
+            }
+        },
+        "backend": {
+            "core_orchestrator": {
+                "primary": "Rust with Tokio runtime",
+                "justification": "Memory safety, performance, async/await for concurrent AI operations",
+                "dependencies": [
+                    "tokio",
+                    "axum",
+                    "sqlx",
+                    "anyhow",
+                    "thiserror"
+                ]
+            },
+            "ai_orchestration": {
+                "primary": "Python 3.11 with FastAPI",
+                "justification": "Rich AI/ML ecosystem, async support, easy integration with ML libraries",
+                "dependencies": [
+                    "fastapi",
+                    "pydantic",
+                    "llama-cpp-python",
+                    "sentence-transformers"
+                ]
+            },
+            "event_system": {
+                "primary": "NATS JetStream",
+                "justification": "High-performance messaging, persistence, exactly-once delivery guarantees",
+                "dependencies": [
+                    "nats-py",
+                    "async-nats"
+                ]
+            }
+        },
+        "database": {
+            "primary": {
+                "relational": "PostgreSQL 15 with TimescaleDB",
+                "justification": "Reliability, JSON support, time-series capabilities for metrics",
+                "extensions": [
+                    "pgvector",
+                    "pg_trgm",
+                    "pgcrypto"
+                ]
+            },
+            "vector": {
+                "primary": "Milvus 2.3",
+                "justification": "Production-ready vector database, GPU acceleration, distributed architecture"
+            },
+            "cache": {
+                "primary": "Redis 7.2",
+                "justification": "In-memory performance, data structures for queues and pub/sub",
+                "modules": [
+                    "RedisJSON",
+                    "RedisSearch"
+                ]
+            },
+            "embedded": {
+                "primary": "SQLite with WAL mode",
+                "justification": "Zero-configuration, serverless, perfect for offline-first mobile"
+            }
+        },
+        "infrastructure": {
+            "container_orchestration": {
+                "primary": "Amazon EKS",
+                "justification": "Managed Kubernetes, integration with AWS ecosystem, enterprise support"
+            },
+            "service_mesh": {
+                "primary": "Istio",
+                "justification": "Traffic management, security, observability for microservices"
+            },
+            "monitoring": {
+                "primary": "Prometheus + Grafana + Jaeger",
+                "justification": "CNCF standards, rich ecosystem, correlation between metrics/logs/traces"
+            },
+            "ci_cd": {
+                "primary": "GitHub Actions with self-hosted runners",
+                "justification": "Tight GitHub integration, reusable workflows, matrix builds"
+            }
+        },
+        "tooling": {
+            "development": {
+                "ide": "VS Code with Dev Containers",
+                "justification": "Consistent environments, remote development, extensive extensions"
+            },
+            "testing": {
+                "framework": "Playwright for E2E, Jest for unit",
+                "justification": "Cross-browser testing, reliable selectors, parallel execution"
+            },
+            "package_management": {
+                "rust": "Cargo with workspaces",
+                "python": "Poetry with dependency groups",
+                "javascript": "pnpm with workspace support"
+            }
+        }
+    },
+    "ios_26_design_system": {
+        "layout_systems": {
+            "adaptive_layout": {
+                "breakpoints": {
+                    "compact": "width < 576",
+                    "regular": "576 ≤ width < 992",
+                    "expanded": "width ≥ 992"
+                },
+                "container_queries": "used for component-level adaptation",
+                "intrinsic_sizing": "content-based dimensions preferred"
+            },
+            "grid_system": {
+                "columns": 12,
+                "gutter": 16,
+                "margin": 20,
+                "nesting": "unlimited with proportional gutters"
+            },
+            "spacing_scale": {
+                "base_unit": 4,
+                "scale": [
+                    0,
+                    4,
+                    8,
+                    12,
+                    16,
+                    20,
+                    24,
+                    32,
+                    40,
+                    48,
+                    64,
+                    80,
+                    96,
+                    128
+                ],
+                "usage": "consistent spacing tokens throughout"
+            }
+        },
+        "typography": {
+            "font_families": {
+                "primary": "SF Pro Display with optical sizing",
+                "monospace": "SF Mono for terminal",
+                "secondary": "SF Pro Rounded for UI elements"
+            },
+            "type_scale": {
+                "display": {
+                    "large": {
+                        "size": 57,
+                        "weight": "Regular",
+                        "tracking": -0.25
+                    },
+                    "medium": {
+                        "size": 45,
+                        "weight": "Regular",
+                        "tracking": 0
+                    },
+                    "small": {
+                        "size": 36,
+                        "weight": "Regular",
+                        "tracking": 0
+                    }
+                },
+                "headline": {
+                    "large": {
+                        "size": 32,
+                        "weight": "Regular",
+                        "tracking": 0
+                    },
+                    "medium": {
+                        "size": 28,
+                        "weight": "Regular",
+                        "tracking": 0
+                    },
+                    "small": {
+                        "size": 24,
+                        "weight": "Regular",
+                        "tracking": 0
+                    }
+                },
+                "title": {
+                    "large": {
+                        "size": 22,
+                        "weight": "Medium",
+                        "tracking": 0
+                    },
+                    "medium": {
+                        "size": 16,
+                        "weight": "Medium",
+                        "tracking": 0.15
+                    },
+                    "small": {
+                        "size": 14,
+                        "weight": "Medium",
+                        "tracking": 0.1
+                    }
+                },
+                "body": {
+                    "large": {
+                        "size": 16,
+                        "weight": "Regular",
+                        "tracking": 0.5,
+                        "line_height": 24
+                    },
+                    "medium": {
+                        "size": 14,
+                        "weight": "Regular",
+                        "tracking": 0.25,
+                        "line_height": 20
+                    },
+                    "small": {
+                        "size": 12,
+                        "weight": "Regular",
+                        "tracking": 0.4,
+                        "line_height": 16
+                    }
+                },
+                "label": {
+                    "large": {
+                        "size": 14,
+                        "weight": "Medium",
+                        "tracking": 0.1
+                    },
+                    "medium": {
+                        "size": 12,
+                        "weight": "Medium",
+                        "tracking": 0.5
+                    },
+                    "small": {
+                        "size": 11,
+                        "weight": "Medium",
+                        "tracking": 0.5
+                    }
+                }
+            },
+            "dynamic_type": {
+                "categories": [
+                    "accessibilityExtraLarge",
+                    "accessibilityLarge",
+                    "accessibilityMedium",
+                    "large",
+                    "medium",
+                    "small"
+                ],
+                "scaling": "UIFontMetrics for automatic adjustment"
+            }
+        },
+        "motion": {
+            "timing_functions": {
+                "standard": {
+                    "cubic_bezier": [
+                        0.2,
+                        0.0,
+                        0,
+                        1.0
+                    ],
+                    "duration": 300
+                },
+                "decelerate": {
+                    "cubic_bezier": [
+                        0.0,
+                        0.0,
+                        0.2,
+                        1
+                    ],
+                    "duration": 400
+                },
+                "accelerate": {
+                    "cubic_bezier": [
+                        0.3,
+                        0.0,
+                        1,
+                        1
+                    ],
+                    "duration": 200
+                },
+                "spring": {
+                    "mass": 1,
+                    "stiffness": 500,
+                    "damping": 30
+                }
+            },
+            "transitions": {
+                "fade": {
+                    "opacity": [
+                        0,
+                        1
+                    ],
+                    "scale": [
+                        0.95,
+                        1
+                    ]
+                },
+                "slide": {
+                    "translation": [
+                        "20%",
+                        0
+                    ]
+                },
+                "reveal": {
+                    "clip_path": "inset(0% 100% 0% 0% to inset(0% 0% 0% 0%)"
+                }
+            },
+            "gesture_feedback": {
+                "magnetic": "spring-based attraction to targets",
+                "resistance": "rubber-band effect at boundaries",
+                "inertia": "momentum-based scrolling"
+            }
+        },
+        "accessibility": {
+            "dynamic_type": {
+                "minimum_scale": 0.5,
+                "maximum_scale": 3.0,
+                "step": 0.1
+            },
+            "color_contrast": {
+                "minimum_ratio": {
+                    "normal_text": 4.5,
+                    "large_text": 3.0,
+                    "graphical_objects": 3.0
+                },
+                "testing": "automated with axe-core"
+            },
+            "screen_reader": {
+                "announcement_priority": {
+                    "immediate": "errors, success messages",
+                    "polite": "content updates",
+                    "assertive": "critical alerts"
+                },
+                "focus_management": {
+                    "programmatic_focus": "after navigation",
+                    "focus_trapping": "in modals",
+                    "focus_order": "logical DOM order"
+                }
+            },
+            "reduced_motion": {
+                "alternative_animations": "fade instead of slide",
+                "disable_parallax": true,
+                "simplified_transitions": true
+            }
+        },
+        "color_system": {
+            "color_palette": {
+                "primary": {
+                    "50": "#F0F9FF",
+                    "100": "#E0F2FE",
+                    "200": "#BAE6FD",
+                    "300": "#7DD3FC",
+                    "400": "#38BDF8",
+                    "500": "#0EA5E9",
+                    "600": "#0284C7",
+                    "700": "#0369A1",
+                    "800": "#075985",
+                    "900": "#0C4A6E"
+                },
+                "neutral": {
+                    "50": "#FAFAFA",
+                    "100": "#F5F5F5",
+                    "200": "#E5E5E5",
+                    "300": "#D4D4D4",
+                    "400": "#A3A3A3",
+                    "500": "#737373",
+                    "600": "#525252",
+                    "700": "#404040",
+                    "800": "#262626",
+                    "900": "#171717"
+                },
+                "functional": {
+                    "success": "#10B981",
+                    "warning": "#F59E0B",
+                    "error": "#EF4444",
+                    "info": "#3B82F6"
+                }
+            },
+            "themes": {
+                "light": {
+                    "background": {
+                        "primary": "#FFFFFF",
+                        "secondary": "#F5F5F5",
+                        "tertiary": "#E5E5E5"
+                    },
+                    "surface": {
+                        "primary": "#FFFFFF",
+                        "secondary": "#FAFAFA",
+                        "tertiary": "#F5F5F5"
+                    },
+                    "text": {
+                        "primary": "#171717",
+                        "secondary": "#525252",
+                        "tertiary": "#A3A3A3",
+                        "disabled": "#D4D4D4"
+                    }
+                },
+                "dark": {
+                    "background": {
+                        "primary": "#0C0C0C",
+                        "secondary": "#171717",
+                        "tertiary": "#262626"
+                    },
+                    "surface": {
+                        "primary": "#171717",
+                        "secondary": "#262626",
+                        "tertiary": "#404040"
+                    },
+                    "text": {
+                        "primary": "#FAFAFA",
+                        "secondary": "#D4D4D4",
+                        "tertiary": "#A3A3A3",
+                        "disabled": "#525252"
+                    }
+                }
+            },
+            "semantic_colors": {
+                "accentColor": "primary.500",
+                "backgroundColor": "background.primary",
+                "foregroundColor": "text.primary",
+                "separatorColor": "neutral.200 (light) / neutral.800 (dark)"
+            }
+        },
+        "haptics": {
+            "impact": {
+                "light": "UIImpactFeedbackStyle.light",
+                "medium": "UIImpactFeedbackStyle.medium",
+                "heavy": "UIImpactFeedbackStyle.heavy",
+                "rigid": "UIImpactFeedbackStyle.rigid",
+                "soft": "UIImpactFeedbackStyle.soft"
+            },
+            "notification": {
+                "success": "UINotificationFeedbackType.success",
+                "warning": "UINotificationFeedbackType.warning",
+                "error": "UINotificationFeedbackType.error"
+            },
+            "selection": {
+                "changed": "UISelectionFeedbackGenerator.selectionChanged"
+            },
+            "usage_patterns": {
+                "button_press": "medium impact",
+                "toggle_change": "light impact",
+                "success_action": "success notification",
+                "error_action": "error notification",
+                "scroll_to_boundary": "rigid impact"
+            }
+        },
+        "navigation_patterns": {
+            "hierarchical": {
+                "push_pop": "UINavigationController style",
+                "back_button": "chevron with optional label",
+                "swipe_back": "edge swipe gesture enabled"
+            },
+            "modal": {
+                "sheet": {
+                    "detents": [
+                        ".medium()",
+                        ".large()"
+                    ],
+                    "preferred_corner_radius": 12,
+                    "drag_indicator": true
+                },
+                "full_screen": {
+                    "presentation_style": ".fullScreen",
+                    "transition_style": ".coverVertical"
+                }
+            },
+            "tab_based": {
+                "max_tabs": 5,
+                "badge_style": {
+                    "color": "error.500",
+                    "max_value": 99
+                },
+                "icon_animation": "scale and fade"
+            }
+        },
+        "platform_conventions": {
+            "gestures": {
+                "swipe_actions": {
+                    "trailing": "delete, archive, more",
+                    "leading": "pin, favorite, reply"
+                },
+                "context_menu": {
+                    "trigger": "long press or force touch",
+                    "preview": "peek and pop where applicable"
+                },
+                "pull_to_refresh": {
+                    "indicator": "UIRefreshControl",
+                    "threshold": 64
+                }
+            },
+            "text_input": {
+                "keyboard_types": {
+                    "default": "UIKeyboardType.default",
+                    "email": "UIKeyboardType.emailAddress",
+                    "terminal": "custom with command history"
+                },
+                "return_key": {
+                    "types": [
+                        "default",
+                        "go",
+                        "done",
+                        "search"
+                    ],
+                    "behavior": "UIReturnKeyType"
+                }
+            },
+            "system_integration": {
+                "widgets": {
+                    "small": "2x2 grid",
+                    "medium": "4x2 grid",
+                    "large": "4x4 grid",
+                    "refresh": "TimelineProvider with 15 min intervals"
+                },
+                "shortcuts": {
+                    "app_shortcuts": "static quick actions",
+                    "siri_intents": "custom intents for voice control"
+                },
+                "handoff": {
+                    "activity_types": [
+                        "com.hedtronix.conversation",
+                        "com.hedtronix.plugin"
+                    ],
+                    "continuity": "seamless device switching"
+                }
+            }
+        }
+    }
+}
