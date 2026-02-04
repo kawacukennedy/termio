@@ -1,0 +1,70 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/hedtronix-core",
+    "crates/hedtronix-tui",
+    "crates/hedtronix-server",
+]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
+authors = ["HEDTRONIX Team"]
+license = "MIT"
+repository = "https://github.com/hedtronix/hedtronix"
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Utilities
+uuid = { version = "1.7", features = ["v4", "v7", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
+
+# Terminal UI
+ratatui = "0.26"
+crossterm = "0.27"
+
+# HTTP framework
+axum = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+
+# Configuration
+config = "0.14"
+toml = "0.8"
+
+# Audio (voice input)
+cpal = "0.15"
+
+# Cryptography
+aes-gcm = "0.10"
+argon2 = "0.5"
+ed25519-dalek = { version = "2.1", features = ["serde"] }
+rand = "0.8"
+
+# WASM runtime (plugins)
+wasmtime = "17"
+
+# P2P networking (sync)
+libp2p = { version = "0.53", features = ["tcp", "noise", "yamux", "mdns", "tokio"] }
+
+# JWT tokens
+jsonwebtoken = "9"
+
+# Base64
+base64 = "0.21"
+
