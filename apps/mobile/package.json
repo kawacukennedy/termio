@@ -1,0 +1,45 @@
+{
+  "name": "termio-mobile",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "lint": "eslint .",
+    "start": "react-native start",
+    "test": "jest",
+    "build:android": "cd android && ./gradlew assembleRelease"
+  },
+  "dependencies": {
+    "@react-navigation/bottom-tabs": "^6.5.0",
+    "@react-navigation/native": "^6.1.0",
+    "@react-navigation/native-stack": "^6.9.0",
+    "react": "18.2.0",
+    "react-native": "0.74.0",
+    "react-native-gesture-handler": "^2.14.0",
+    "react-native-reanimated": "^3.6.0",
+    "react-native-safe-area-context": "^4.8.0",
+    "react-native-screens": "^3.29.0",
+    "react-native-vector-icons": "^10.0.0",
+    "zustand": "^4.5.0",
+    "@react-native-async-storage/async-storage": "^1.21.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@babel/preset-env": "^7.20.0",
+    "@babel/runtime": "^7.20.0",
+    "@react-native/babel-preset": "0.74.0",
+    "@react-native/eslint-config": "0.74.0",
+    "@react-native/metro-config": "0.74.0",
+    "@react-native/typescript-config": "0.74.0",
+    "@types/react": "^18.2.0",
+    "@types/react-native-vector-icons": "^6.4.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "prettier": "2.8.0",
+    "typescript": "5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
