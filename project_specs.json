@@ -1,91 +1,164 @@
 {
     "project": {
-        "name": "HEDTRONIX",
-        "version": "1.0.0",
-        "description": "A next-generation AI assistant that is terminal-native, offline-first, privacy-focused, and cross-platform",
-        "vision": "Ubiquitous private AI companion across all devices with deterministic execution and enterprise-grade security"
+        "name": "TERMIO",
+        "version": "2.0.0",
+        "description": "A next-generation agentic AI assistant that is terminal-native, offline-first, privacy-focused, and cross-platform, inspired by JARVIS-class capabilities.",
+        "vision": "Ubiquitous private AI companion across all devices with deterministic execution, enterprise-grade security, and human-level conversational intelligence."
     },
     "product_requirements": {
         "functional": {
             "core_assistant": {
                 "id": "FA-001",
-                "description": "Terminal-native AI assistant with text and voice interface",
+                "description": "Full-duplex conversational AI with ultra-low latency and emotional intelligence",
                 "acceptance_criteria": [
-                    "Responds to queries within <100ms for local inference",
-                    "Processes both text and voice input simultaneously",
-                    "Maintains conversation context across sessions",
+                    "End-to-end speech-to-speech latency <200ms",
+                    "Interruptible: user can interrupt AI mid-sentence and AI adapts",
+                    "Backchanneling: AI provides verbal/non-verbal cues while user speaks",
+                    "Emotional prosody: AI modulates tone based on detected user emotion",
                     "Works completely offline with core functionality"
                 ],
                 "priority": "P0"
             },
-            "multi_modal_input": {
+            "agentic_os": {
                 "id": "FA-002",
-                "description": "Support for keyboard, voice, and screen interaction inputs",
+                "description": "Autonomous multi-step task execution across applications",
+                "acceptance_criteria": [
+                    "Decomposes high-level user commands into actionable plans",
+                    "Executes actions via App Intents (iOS/macOS), Android shortcuts, or computer-use vision",
+                    "Handles cross-app workflows (e.g., 'Order dinner for team' resolves contacts, dietary restrictions, orders, presents summary)",
+                    "Verifies critical actions with biometric approval",
+                    "Maintains state across device handoff"
+                ],
+                "priority": "P0"
+            },
+            "contextual_memory": {
+                "id": "FA-003",
+                "description": "Long-term personal knowledge graph with semantic indexing",
+                "acceptance_criteria": [
+                    "On-device graph database storing relationships between people, places, events, files",
+                    "Answers second-order queries (e.g., 'Send files I worked on yesterday to the person I met this morning')",
+                    "Automatically extracts entities from conversations and documents",
+                    "Encrypted and private, never leaves device without consent"
+                ],
+                "priority": "P0"
+            },
+            "visual_intelligence": {
+                "id": "FA-004",
+                "description": "Real-time object recognition and AR overlay",
+                "acceptance_criteria": [
+                    "Identifies objects, text, and scenes from camera feed",
+                    "Provides step-by-step visual guides (e.g., repair instructions)",
+                    "Semantic environmental analysis for accessibility (e.g., 'Where is the entrance?')",
+                    "Works offline with on-device vision models"
+                ],
+                "priority": "P1"
+            },
+            "proactive_thinker": {
+                "id": "FA-005",
+                "description": "Background reasoning to anticipate user needs",
+                "acceptance_criteria": [
+                    "Runs chain-of-thought models periodically to identify opportunities",
+                    "Suggests actions proactively (e.g., 'Your passport expires soon, shall I remind you to renew?')",
+                    "Respects user-configurable proactivity level",
+                    "All suggestions are explainable and can be disabled"
+                ],
+                "priority": "P1"
+            },
+            "environmental_orchestration": {
+                "id": "FA-006",
+                "description": "Smart home control via Matter/Thread with behavioral learning",
+                "acceptance_criteria": [
+                    "Discovers and controls Matter-compatible devices",
+                    "Learns household routines and suggests automations",
+                    "Executes scenes based on context (time, occupancy, weather)",
+                    "Local control without cloud dependency"
+                ],
+                "priority": "P1"
+            },
+            "sentinel_health": {
+                "id": "FA-007",
+                "description": "Personal health and safety monitoring",
+                "acceptance_criteria": [
+                    "Ingests data from wearables (HRV, SpO2, temperature)",
+                    "Detects anomalies and predicts illness onset",
+                    "Fall/crash detection with autonomous emergency response",
+                    "Mental health insights (stress patterns, sleep quality)"
+                ],
+                "priority": "P2"
+            },
+            "multi_modal_input": {
+                "id": "FA-008",
+                "description": "Support for keyboard, voice, touch, and screen interaction",
                 "acceptance_criteria": [
                     "Push-to-talk voice recognition with Vosk offline STT",
                     "Keyboard shortcuts for all major functions",
                     "Screen interaction via pyautogui for UI automation",
-                    "Simultaneous input mode handling without conflicts"
+                    "Simultaneous input mode handling without conflicts",
+                    "Eye tracking integration (optional)"
                 ],
                 "priority": "P0"
             },
             "hybrid_ai_inference": {
-                "id": "FA-003",
+                "id": "FA-009",
                 "description": "Local-first AI with optional cloud augmentation",
                 "acceptance_criteria": [
-                    "Local inference with LLaMA 2 7B quantized model (<4GB RAM)",
+                    "Local inference with LLaMA 3 8B quantized model (<4GB RAM)",
                     "Cloud fallback for complex queries with user consent",
                     "Deterministic reasoning chain execution",
-                    "Model caching and quantization on-device"
+                    "Model caching and quantization on-device",
+                    "Supports on-device fine-tuning for personalization"
                 ],
                 "priority": "P0"
             },
             "memory_system": {
-                "id": "FA-004",
-                "description": "Three-tier memory architecture",
+                "id": "FA-010",
+                "description": "Three-tier memory architecture with graph grounding",
                 "acceptance_criteria": [
                     "Ring buffer stores last 100 interactions in memory",
                     "Vector database for semantic search across all history",
+                    "Graph database for relational knowledge",
                     "Encrypted persistent storage for session continuity",
                     "Memory query response <50ms for recent context"
                 ],
                 "priority": "P0"
             },
             "plugin_ecosystem": {
-                "id": "FA-005",
+                "id": "FA-011",
                 "description": "Extensible plugin system with capability security",
                 "acceptance_criteria": [
                     "WASM sandbox for plugin execution",
                     "Capability-based permission system",
                     "Hot-reload plugins without restart",
-                    "Plugin marketplace with signed packages"
+                    "Plugin marketplace with signed packages",
+                    "Plugins can expose new intents for agentic actions"
                 ],
                 "priority": "P1"
             },
             "cross_device_sync": {
-                "id": "FA-006",
-                "description": "Encrypted peer-to-peer synchronization",
+                "id": "FA-012",
+                "description": "Encrypted peer-to-peer synchronization with handoff",
                 "acceptance_criteria": [
                     "End-to-end encrypted sync via libp2p",
                     "Conflict resolution with vector timestamping",
                     "Delta synchronization for bandwidth efficiency",
-                    "QR code pairing for device setup"
+                    "QR code pairing for device setup",
+                    "Seamless handoff: continue conversation on another device"
                 ],
                 "priority": "P1"
             }
         },
         "non_functional": {
             "performance": {
-                "startup_time": "<2 seconds",
-                "memory_footprint": "<100MB core, <1GB with full model",
-                "response_time": "<100ms for local queries, <2s for cloud-augmented",
-                "battery_impact": "<5% per hour of active use"
+                "startup_time": "<1 second (core), <2 seconds with full model",
+                "memory_footprint": "<100MB core, <2GB with full model",
+                "response_time": "<200ms for local conversational AI, <2s for cloud-augmented",
+                "battery_impact": "<3% per hour of active use"
             },
             "security": {
                 "data_encryption": "AES-256-GCM for storage, TLS 1.3 for transport",
-                "privacy": "Zero data sent to cloud without explicit consent",
+                "privacy": "Zero data sent to cloud without explicit consent; on-device processing for personal data",
                 "integrity": "Code signing with Ed25519 signatures",
-                "access_control": "Capability tokens for all external access"
+                "access_control": "Capability tokens for all external access; biometric confirmation for critical actions"
             },
             "reliability": {
                 "uptime": "99.9% for core functionality",
@@ -94,20 +167,20 @@
                 "data_durability": "99.999% for encrypted persistent storage"
             },
             "usability": {
-                "accessibility": "WCAG 2.1 AA compliance",
-                "learnability": "New user proficiency within 10 minutes",
-                "efficiency": "Common tasks completable with ≤3 interactions"
+                "accessibility": "WCAG 2.1 AAA compliance, supports screen readers, voice control, high contrast, dynamic type",
+                "learnability": "New user proficiency within 5 minutes",
+                "efficiency": "Common tasks completable with ≤2 interactions or proactive suggestion"
             }
         },
         "platform_support": {
             "desktop": [
-                "macOS 11+",
-                "Windows 10+",
-                "Linux (glibc 2.28+)"
+                "macOS 12+",
+                "Windows 10+ (x64, arm64)",
+                "Linux (glibc 2.28+, all major distros)"
             ],
             "mobile": [
-                "iOS 15+",
-                "Android 8+"
+                "iOS 16+",
+                "Android 11+"
             ],
             "architecture": [
                 "x86_64",
@@ -115,9 +188,9 @@
                 "aarch64"
             ],
             "installation_methods": [
-                "standalone binary",
-                "package manager",
-                "app stores"
+                "standalone binary (desktop)",
+                "package manager (Homebrew, winget, apt)",
+                "app stores (Apple App Store, Google Play Store, Microsoft Store)"
             ]
         }
     },
@@ -180,6 +253,42 @@
                 "All functions accessible via voice commands",
                 "Screen reader announces AI responses",
                 "High contrast mode available"
+            ]
+        },
+        {
+            "id": "US-006",
+            "persona": "Busy Executive",
+            "scenario": "As an executive with a packed schedule",
+            "need": "I want the AI to proactively handle logistics for upcoming trips",
+            "so_that": "I can focus on strategic work",
+            "acceptance_tests": [
+                "AI automatically checks calendar for upcoming travel",
+                "Suggests flights, hotels, and flags passport expiry",
+                "Drafts itinerary with options for approval"
+            ]
+        },
+        {
+            "id": "US-007",
+            "persona": "DIY Enthusiast",
+            "scenario": "As someone who likes repairing things",
+            "need": "I want the AI to guide me through fixing a broken appliance",
+            "so_that": "I can save money and learn",
+            "acceptance_tests": [
+                "Point camera at appliance; AI identifies model",
+                "Overlays repair steps in AR",
+                "Can answer follow-up questions about the process"
+            ]
+        },
+        {
+            "id": "US-008",
+            "persona": "Health-conscious Individual",
+            "scenario": "As someone managing chronic condition",
+            "need": "I want the AI to monitor my health data and alert me to anomalies",
+            "so_that": "I can take early action",
+            "acceptance_tests": [
+                "Syncs with wearable devices",
+                "Detects abnormal heart rate patterns",
+                "Sends personalized notifications with suggestions"
             ]
         }
     ],
@@ -257,7 +366,9 @@
                             "input_mode": "enum(text, voice, screen)",
                             "confidence": "float 0-1",
                             "model_used": "string",
-                            "processing_time_ms": "integer"
+                            "processing_time_ms": "integer",
+                            "emotion_detected": "enum(neutral, happy, sad, angry, stressed)",
+                            "interrupted": "boolean"
                         }
                     }
                 ],
@@ -294,9 +405,51 @@
             ],
             "constraints": {
                 "message_limit": 1000,
-                "token_limit": 128000,
-                "storage_quota": "1GB per user"
+                "token_limit": 256000,
+                "storage_quota": "2GB per user"
             }
+        },
+        "knowledge_graph": {
+            "schema": {
+                "node_id": "UUID v7",
+                "user_id": "UUID v4",
+                "node_type": "enum(person, place, organization, event, file, concept)",
+                "label": "string",
+                "properties": {
+                    "aliases": "Array[string]",
+                    "importance": "float",
+                    "last_mentioned": "RFC3339",
+                    "embedding": "Array[float32] (optional)"
+                },
+                "created_at": "RFC3339",
+                "updated_at": "RFC3339"
+            },
+            "edges": {
+                "schema": {
+                    "edge_id": "UUID v7",
+                    "from_node": "UUID v7",
+                    "to_node": "UUID v7",
+                    "relationship": "enum(works_at, lives_in, knows, attended, wrote, mentions)",
+                    "strength": "float",
+                    "created_at": "RFC3339"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": [
+                        "user_id",
+                        "node_type"
+                    ],
+                    "type": "compound"
+                },
+                {
+                    "fields": [
+                        "embedding"
+                    ],
+                    "type": "vector",
+                    "dimensions": 768
+                }
+            ]
         },
         "memory_entry": {
             "schema": {
@@ -305,11 +458,12 @@
                 "content": "string",
                 "embedding": "Array[float32] (768 dimensions)",
                 "metadata": {
-                    "source": "enum(conversation, document, plugin, manual)",
+                    "source": "enum(conversation, document, plugin, manual, wearable)",
                     "importance_score": "float 0-1",
                     "access_frequency": "integer",
                     "last_accessed": "RFC3339",
-                    "tags": "Array[string]"
+                    "tags": "Array[string]",
+                    "related_nodes": "Array[UUID v7]"
                 },
                 "access_control": {
                     "capabilities_required": "Array[string]",
@@ -343,6 +497,63 @@
                     "type": "multi_key"
                 }
             ]
+        },
+        "health_data": {
+            "schema": {
+                "id": "UUID v7",
+                "user_id": "UUID v4",
+                "source": "enum(wearable, manual, device_sensors)",
+                "timestamp": "RFC3339",
+                "data_type": "enum(heart_rate, hrv, spo2, skin_temperature, steps, sleep, stress)",
+                "value": "float",
+                "unit": "string",
+                "confidence": "float",
+                "metadata": {
+                    "device_model": "string",
+                    "session_id": "string"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": [
+                        "user_id",
+                        "timestamp"
+                    ],
+                    "type": "time-series"
+                },
+                {
+                    "fields": [
+                        "data_type"
+                    ],
+                    "type": "btree"
+                }
+            ],
+            "retention": "90 days"
+        },
+        "action_plan": {
+            "schema": {
+                "id": "UUID v7",
+                "user_id": "UUID v4",
+                "trigger": "string (user command or proactive)",
+                "status": "enum(pending, in_progress, completed, failed, requires_approval)",
+                "steps": [
+                    {
+                        "step_id": "int",
+                        "description": "string",
+                        "action": {
+                            "type": "enum(app_intent, computer_vision, shell_command, http_request)",
+                            "target": "string",
+                            "parameters": "object"
+                        },
+                        "status": "enum(pending, succeeded, failed)",
+                        "result": "any"
+                    }
+                ],
+                "created_at": "RFC3339",
+                "completed_at": "RFC3339",
+                "requires_approval": "boolean",
+                "approval_granted": "boolean"
+            }
         },
         "plugin_manifest": {
             "schema": {
@@ -418,6 +629,402 @@
                     "data_cap_mb": "integer"
                 }
             }
+        },
+        "notification": {
+            "schema": {
+                "id": "UUID v7",
+                "user_id": "UUID v4",
+                "device_id": "UUID v4",
+                "type": "enum(alert, reminder, suggestion, health_alert, system)",
+                "title": "string",
+                "body": "string",
+                "priority": "enum(low, medium, high, critical)",
+                "data": "object (custom payload)",
+                "delivery_time": "RFC3339 (for scheduled)",
+                "expiration": "RFC3339",
+                "status": "enum(pending, delivered, read, actioned)",
+                "personalization": {
+                    "context": "string (description of why this notification was generated)",
+                    "action_deep_link": "string"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": [
+                        "user_id",
+                        "status",
+                        "delivery_time"
+                    ],
+                    "type": "compound"
+                }
+            ]
+        }
+    },
+    "frontend_pages": {
+        "desktop_gui": {
+            "main_window": {
+                "components": [
+                    {
+                        "name": "TitleBar",
+                        "type": "custom title bar with traffic lights (macOS) or standard (Windows/Linux)",
+                        "elements": [
+                            "app icon",
+                            "window title",
+                            "minimize/maximize/close"
+                        ]
+                    },
+                    {
+                        "name": "Sidebar",
+                        "type": "collapsible sidebar",
+                        "sections": [
+                            {
+                                "name": "Conversations",
+                                "items": "List of recent sessions with timestamps, search bar",
+                                "actions": "new conversation, delete, archive"
+                            },
+                            {
+                                "name": "Plugins",
+                                "items": "Installed plugins with toggle enable/disable",
+                                "actions": "open marketplace, configure"
+                            },
+                            {
+                                "name": "Settings",
+                                "link": "opens settings modal"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "ConversationView",
+                        "type": "main chat area",
+                        "elements": [
+                            "Message list with bubbles (user left, assistant right)",
+                            "Typing indicator with avatar",
+                            "Inline markdown rendering (code blocks, tables)",
+                            "File attachments preview (images, PDFs)",
+                            "Voice waveform when recording"
+                        ],
+                        "actions": "scroll to bottom, copy message, regenerate response"
+                    },
+                    {
+                        "name": "InputArea",
+                        "type": "multi-modal input",
+                        "elements": [
+                            "Text input with auto-resize",
+                            "Voice button (push-to-talk)",
+                            "Attachment button (file picker)",
+                            "Send button",
+                            "Emoji picker"
+                        ],
+                        "keyboard_shortcuts": "Enter send, Shift+Enter new line"
+                    },
+                    {
+                        "name": "StatusBar",
+                        "type": "bottom bar",
+                        "elements": [
+                            "AI model indicator (local/cloud)",
+                            "Sync status",
+                            "Notification bell (with count)",
+                            "Battery/network status"
+                        ]
+                    }
+                ],
+                "modals": [
+                    {
+                        "name": "SettingsModal",
+                        "tabs": [
+                            "General (theme, language, startup)",
+                            "AI (model selection, offline mode, cloud consent)",
+                            "Privacy (data retention, encryption, export)",
+                            "Plugins (manage, marketplace)",
+                            "Sync (devices, pairing, handoff)",
+                            "Notifications (permissions, quiet hours, personalization)"
+                        ]
+                    },
+                    {
+                        "name": "PluginMarketplace",
+                        "layout": "grid of plugin cards with search, categories",
+                        "card": {
+                            "icon": "string",
+                            "name": "string",
+                            "description": "string",
+                            "author": "string",
+                            "rating": "float",
+                            "install_button": "button"
+                        },
+                        "detail_view": "full description, permissions, screenshots, install"
+                    },
+                    {
+                        "name": "DevicePairing",
+                        "qr_code": "display QR for other device to scan",
+                        "manual_code": "6-digit code entry"
+                    }
+                ]
+            }
+        },
+        "mobile_ios_android": {
+            "screens": [
+                {
+                    "name": "Home",
+                    "components": [
+                        {
+                            "name": "Header",
+                            "elements": [
+                                "profile icon",
+                                "title",
+                                "notification icon"
+                            ]
+                        },
+                        {
+                            "name": "Quick Actions",
+                            "type": "scrollable horizontal chips",
+                            "chips": [
+                                "New Conversation",
+                                "Voice Mode",
+                                "Scan",
+                                "Smart Home"
+                            ]
+                        },
+                        {
+                            "name": "Recent Conversations",
+                            "type": "list with avatars, last message preview, timestamp",
+                            "actions": "tap to open, swipe to delete"
+                        },
+                        {
+                            "name": "Proactive Suggestions",
+                            "type": "carousel of cards with AI-generated suggestions",
+                            "card": {
+                                "title": "string",
+                                "description": "string",
+                                "action button": "Go"
+                            }
+                        },
+                        {
+                            "name": "Bottom Navigation",
+                            "items": [
+                                "Home",
+                                "Assistant",
+                                "Plugins",
+                                "Settings"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Assistant",
+                    "components": [
+                        {
+                            "name": "ConversationView",
+                            "type": "chat area with message bubbles",
+                            "features": "pull to refresh for history, tap and hold for actions"
+                        },
+                        {
+                            "name": "InputBar",
+                            "type": "fixed bottom bar",
+                            "elements": [
+                                "microphone button",
+                                "text field",
+                                "plus button for attachments",
+                                "send button"
+                            ]
+                        },
+                        {
+                            "name": "VoiceModal",
+                            "type": "full-screen modal when voice activated",
+                            "elements": [
+                                "waveform visualization",
+                                "live transcription",
+                                "cancel and send buttons"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Scan",
+                    "components": [
+                        {
+                            "name": "CameraView",
+                            "type": "live camera feed with overlay",
+                            "features": "object detection boxes, AR arrows for guidance"
+                        },
+                        {
+                            "name": "ResultPanel",
+                            "type": "bottom sheet",
+                            "elements": [
+                                "identified object name",
+                                "description",
+                                "actions (e.g., 'Show repair guide', 'Add to shopping list')"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Plugins",
+                    "components": [
+                        {
+                            "name": "InstalledPlugins",
+                            "type": "list with toggle switches"
+                        },
+                        {
+                            "name": "MarketplaceButton",
+                            "type": "button leading to marketplace webview"
+                        }
+                    ]
+                },
+                {
+                    "name": "Settings",
+                    "components": [
+                        {
+                            "name": "SettingsList",
+                            "type": "grouped list",
+                            "items": [
+                                "Account",
+                                "AI Models",
+                                "Privacy",
+                                "Notifications",
+                                "Sync",
+                                "Help"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "terminal_ui": {
+            "layout": "TUI with panels",
+            "panels": [
+                {
+                    "name": "Conversation",
+                    "position": "left 70%",
+                    "content": "scrollback of conversation with color coding (user/assistant)",
+                    "input": "bottom line for text input"
+                },
+                {
+                    "name": "Context",
+                    "position": "right 30%",
+                    "content": "dynamic panel showing: current model, recent memory items, graph connections"
+                },
+                {
+                    "name": "Status",
+                    "position": "bottom bar",
+                    "content": "sync status, battery, notification indicator"
+                }
+            ],
+            "keybindings": {
+                "Ctrl+N": "new conversation",
+                "Ctrl+V": "toggle voice input",
+                "Ctrl+P": "open plugin manager",
+                "Ctrl+S": "sync now",
+                "Tab": "switch focus between panels"
+            }
+        }
+    },
+    "backend_services": {
+        "orchestrator": {
+            "technology": "Rust with Tokio",
+            "components": {
+                "event_bus": {
+                    "protocol": "NATS JetStream",
+                    "topics": [
+                        "conversation.input",
+                        "conversation.output",
+                        "action.request",
+                        "action.result",
+                        "memory.update",
+                        "sync.trigger",
+                        "notification.send"
+                    ]
+                },
+                "intent_parser": {
+                    "model": "fine-tuned LLM for intent classification and entity extraction",
+                    "fallback": "rule-based parser"
+                },
+                "action_engine": {
+                    "planner": "chain-of-thought reasoning to decompose tasks",
+                    "executor": "calls registered app intents or computer-use vision",
+                    "approval_manager": "prompts user for biometric confirmation when needed"
+                },
+                "context_aggregator": {
+                    "sources": [
+                        "current conversation",
+                        "recent memories",
+                        "knowledge graph",
+                        "device sensors"
+                    ],
+                    "output": "enriched context for AI"
+                }
+            }
+        },
+        "ai_inference": {
+            "technology": "Python with FastAPI (for local and cloud)",
+            "models": {
+                "local": {
+                    "primary": "LLaMA 3 8B quantized (Q4_K_M)",
+                    "speech_to_text": "Whisper.cpp (multilingual)",
+                    "text_to_speech": "Piper TTS (offline)",
+                    "vision": "MobileNet SSD + CLIP for object recognition",
+                    "emotion": "fine-tuned wav2vec 2.0"
+                },
+                "cloud_augmentation": {
+                    "endpoint": "https://api.termio.cloud/v1/augment",
+                    "models": [
+                        "GPT-4o",
+                        "Claude 3.5 Sonnet"
+                    ],
+                    "consent_required": true
+                }
+            },
+            "inference_pipeline": {
+                "full_duplex": {
+                    "audio_stream": "WebRTC for real-time",
+                    "processing": "streaming ASR + LLM with chunking",
+                    "latency_target": "160ms"
+                }
+            }
+        },
+        "memory_service": {
+            "technology": "Rust with SQLite (embedded) + LanceDB (vector) + SurrealDB (graph)",
+            "operations": {
+                "store": "insert into ring buffer, vector DB, and graph",
+                "query": "semantic search + graph traversal",
+                "maintenance": "background jobs for clustering and cleanup"
+            }
+        },
+        "sync_engine": {
+            "technology": "Rust with libp2p + CRDTs",
+            "protocol": "peer-to-peer with relay fallback",
+            "handoff": {
+                "detection": "Bluetooth LE + mDNS",
+                "state_transfer": "encrypted session serialization"
+            }
+        },
+        "notification_service": {
+            "technology": "Rust core with platform-specific push",
+            "personalization": {
+                "on_device": "rule engine + ML model to decide when to notify",
+                "content": "generated by local LLM based on user context",
+                "scheduling": "time-aware (e.g., not during focus mode)"
+            },
+            "delivery": {
+                "mobile": "FCM (Android) / APNS (iOS) via push proxy",
+                "desktop": "system notifications (toast, notification center)",
+                "terminal": "bell + status bar indicator"
+            },
+            "queues": {
+                "pending": "SQLite with retry logic",
+                "expiry": "remove after TTL"
+            }
+        },
+        "plugin_host": {
+            "technology": "Wasmtime (Rust)",
+            "sandbox": {
+                "syscalls": "filtered by capability",
+                "memory_limit": "64MB",
+                "cpu_time": "100ms per invocation"
+            },
+            "registry": {
+                "local": "~/.termio/plugins",
+                "marketplace": "https://marketplace.termio.com/v1"
+            }
         }
     },
     "api_specifications": {
@@ -465,6 +1072,11 @@
                             "input": "SearchRequest",
                             "output": "SearchResponse",
                             "deadline": "200ms"
+                        },
+                        "GraphQuery": {
+                            "input": "GraphQueryRequest",
+                            "output": "GraphQueryResponse",
+                            "deadline": "150ms"
                         }
                     }
                 },
@@ -472,6 +1084,46 @@
                     "max_attempts": 3,
                     "initial_backoff": "100ms",
                     "max_backoff": "1s"
+                }
+            },
+            "action_api": {
+                "protocol": "gRPC",
+                "services": {
+                    "ActionEngine": {
+                        "Plan": {
+                            "input": "UserIntent",
+                            "output": "ActionPlan",
+                            "deadline": "500ms"
+                        },
+                        "Execute": {
+                            "input": "ActionStep",
+                            "output": "ActionResult",
+                            "deadline": "5s"
+                        },
+                        "GetStatus": {
+                            "input": "PlanID",
+                            "output": "PlanStatus"
+                        }
+                    }
+                }
+            },
+            "notification_api": {
+                "protocol": "gRPC",
+                "services": {
+                    "NotificationService": {
+                        "Schedule": {
+                            "input": "Notification",
+                            "output": "ScheduleResponse"
+                        },
+                        "Cancel": {
+                            "input": "NotificationID",
+                            "output": "Empty"
+                        },
+                        "List": {
+                            "input": "UserID",
+                            "output": "NotificationList"
+                        }
+                    }
                 }
             },
             "plugin_host": {
@@ -484,6 +1136,7 @@
                 "exports": {
                     "initialize": "func() -> result<_, error>",
                     "handle_event": "func(event: Event) -> result<Response, error>",
+                    "handle_intent": "func(intent: Intent) -> result<Action, error>",
                     "cleanup": "func() -> result<_, error>"
                 },
                 "memory_config": {
@@ -496,7 +1149,7 @@
         "external_apis": {
             "cloud_augmentation": {
                 "protocol": "HTTPS with mutual TLS",
-                "base_url": "https://api.hedtronix.cloud/v1",
+                "base_url": "https://api.termio.cloud/v1",
                 "endpoints": {
                     "augment": {
                         "method": "POST",
@@ -536,7 +1189,7 @@
             },
             "plugin_registry": {
                 "protocol": "HTTPS with package signing",
-                "base_url": "https://registry.hedtronix.com/v1",
+                "base_url": "https://registry.termio.com/v1",
                 "endpoints": {
                     "discover": {
                         "method": "GET",
@@ -590,6 +1243,34 @@
                 "retry_count": 3,
                 "retry_delay": "exponential 5s, 25s, 125s",
                 "fallback": "Continue with existing index if rebuild fails"
+            }
+        },
+        "knowledge_graph_inference": {
+            "schedule": "0 4 * * *",
+            "description": "Run inference to discover new relationships in graph",
+            "actions": [
+                "Scan recent memory entries",
+                "Extract entities and link to existing nodes",
+                "Compute importance scores",
+                "Prune low-importance edges"
+            ],
+            "resource_limits": {
+                "max_memory": "1GB",
+                "max_duration": "600s"
+            }
+        },
+        "proactive_suggestion_generation": {
+            "schedule": "0 */2 * * *",
+            "description": "Generate proactive suggestions based on user context",
+            "actions": [
+                "Collect recent context (calendar, location, health, etc.)",
+                "Run lightweight chain-of-thought model",
+                "Score suggestions by relevance",
+                "Store top N in queue for potential notification"
+            ],
+            "resource_limits": {
+                "max_memory": "512MB",
+                "max_duration": "120s"
             }
         },
         "encrypted_backup": {
@@ -663,13 +1344,19 @@
                         "messages": "Array<Message>",
                         "input_text": "string",
                         "is_recording": "boolean",
-                        "is_processing": "boolean"
+                        "is_processing": "boolean",
+                        "voice_mode": "boolean"
                     },
                     "settings": {
                         "theme": "enum(light, dark, system)",
                         "voice_enabled": "boolean",
                         "offline_mode": "boolean",
-                        "sync_preferences": "SyncConfig"
+                        "sync_preferences": "SyncConfig",
+                        "notification_preferences": "NotificationConfig"
+                    },
+                    "notifications": {
+                        "unread_count": "integer",
+                        "latest": "Array<Notification>"
                     }
                 },
                 "persistence": {
@@ -694,7 +1381,8 @@
                     "context": {
                         "current_context_window": "Array<Message>",
                         "token_count": "integer",
-                        "embeddings": "Map<string, Vector>"
+                        "embeddings": "Map<string, Vector>",
+                        "graph_context": "Array<GraphNode>"
                     }
                 },
                 "middleware": [
@@ -789,7 +1477,8 @@
                 "examples": [
                     "model_load_failed",
                     "inference_timeout",
-                    "context_overflow"
+                    "context_overflow",
+                    "emotion_detection_failed"
                 ],
                 "handling": "Fallback to simpler model, use cached responses, prompt user"
             },
@@ -821,7 +1510,8 @@
                 "fallback_strategies": {
                     "ai": "tiny_model → cached_response → static_response",
                     "memory": "ring_buffer_only → no_context → error_state",
-                    "sync": "local_only → conflict_tombstones → manual_resolution"
+                    "sync": "local_only → conflict_tombstones → manual_resolution",
+                    "action_engine": "decompose_fallback → user_guidance"
                 }
             },
             "manual": {
@@ -867,19 +1557,22 @@
                     "inference:basic",
                     "inference:advanced",
                     "model:fine_tune",
-                    "context:unlimited"
+                    "context:unlimited",
+                    "emotion:detect"
                 ],
                 "memory": [
                     "memory:read",
                     "memory:write",
                     "memory:delete",
-                    "memory:share"
+                    "memory:share",
+                    "graph:query"
                 ],
                 "device": [
                     "device:filesystem",
                     "device:camera",
                     "device:microphone",
-                    "device:location"
+                    "device:location",
+                    "device:wearable"
                 ],
                 "network": [
                     "network:local",
@@ -892,6 +1585,15 @@
                     "plugin:develop",
                     "plugin:marketplace",
                     "plugin:verify"
+                ],
+                "action": [
+                    "action:execute",
+                    "action:approve",
+                    "action:schedule"
+                ],
+                "home": [
+                    "home:control",
+                    "home:automation"
                 ]
             },
             "grant_mechanisms": {
@@ -952,19 +1654,20 @@
         "metrics_collection": {
             "performance": {
                 "app_startup_time": "histogram",
-                "ai_response_time": "histogram by model size",
+                "ai_response_time": "histogram by model size and mode (full-duplex vs batch)",
                 "memory_usage": "gauge with percentiles",
                 "battery_impact": "milliwatt-hours per hour"
             },
             "usage": {
                 "active_users_dau": "count distinct",
                 "interactions_per_session": "histogram",
-                "feature_adoption": "count by feature",
-                "retention": "cohort analysis"
+                "feature_adoption": "count by feature (voice, vision, agentic tasks, etc.)",
+                "retention": "cohort analysis",
+                "proactive_suggestion_acceptance_rate": "percentage"
             },
             "quality": {
                 "error_rate": "errors per 1000 interactions",
-                "user_satisfaction": "implicit via interaction patterns",
+                "user_satisfaction": "implicit via interaction patterns, explicit via feedback",
                 "ai_accuracy": "human evaluation sample"
             }
         },
@@ -1043,7 +1746,7 @@
                     "high": "7 days patch",
                     "medium": "30 days patch"
                 },
-                "disclosure": "Coordinated through security@hedtronix.com"
+                "disclosure": "Coordinated through security@termio.com"
             }
         },
         "compliance": {
@@ -1083,7 +1786,8 @@
             "ai_inference": {
                 "quantization": "Dynamic based on device capability",
                 "batching": "Parallel inference where possible",
-                "speculative_decoding": "For longer responses"
+                "speculative_decoding": "For longer responses",
+                "streaming": "Token-by-token for low latency"
             },
             "memory_management": {
                 "object_pooling": "Reuse frequent allocations",
@@ -1186,12 +1890,15 @@
             "frameworks": {
                 "rust": "cargo test with proptest",
                 "python": "pytest with hypothesis",
-                "typescript": "vitest with testing-library"
+                "typescript": "vitest with testing-library",
+                "swift": "XCTest",
+                "kotlin": "JUnit"
             },
             "mocking": {
                 "ai_models": "mock with deterministic responses",
                 "filesystem": "mock with in-memory filesystem",
-                "network": "mock with pre-recorded responses"
+                "network": "mock with pre-recorded responses",
+                "hardware": "mock sensors and camera"
             }
         },
         "integration_tests": {
@@ -1221,6 +1928,10 @@
                 "duration": "72 hours continuous",
                 "memory_leaks": "<1MB per hour",
                 "throughput_degradation": "<5% over test"
+            },
+            "speech_latency": {
+                "measure": "end-to-end from user speech to AI response start",
+                "threshold": "<200ms for 95th percentile"
             }
         },
         "security_tests": {
@@ -1228,23 +1939,29 @@
                 "tools": [
                     "semgrep",
                     "bandit",
-                    "cargo-audit"
+                    "cargo-audit",
+                    "mobsf (mobile)"
                 ],
                 "frequency": "on every commit",
                 "severity_threshold": "high and critical only"
             },
             "dynamic_analysis": {
-                "fuzzing": "24/7 for network protocols",
+                "fuzzing": "24/7 for network protocols and input parsers",
                 "penetration_testing": "quarterly by third party",
                 "dependency_scanning": "daily with automated patches"
             }
+        },
+        "usability_tests": {
+            "accessibility": "automated with axe-core, manual with screen reader users",
+            "user_sessions": "record and analyze with consent",
+            "a_b_testing": "for UI changes"
         }
     },
     "ci_cd": {
         "pipeline_stages": {
             "validate": {
                 "steps": [
-                    "code linting (clippy, black, eslint)",
+                    "code linting (clippy, black, eslint, swiftlint)",
                     "dependency audit",
                     "secret detection",
                     "commit message validation"
@@ -1261,17 +1978,17 @@
                     "performance baseline comparison",
                     "security scans"
                 ],
-                "parallelization": "4 parallel jobs",
+                "parallelization": "8 parallel jobs",
                 "timeout": "30 minutes"
             },
             "build": {
                 "steps": [
                     "multi-architecture docker images",
                     "platform-specific binaries (deb, rpm, dmg, exe)",
-                    "app store packages (ipa, apk)",
+                    "app store packages (ipa, apk, appx)",
                     "signing with hardware tokens"
                 ],
-                "caching": "layer caching for docker, ccache for native",
+                "caching": "layer caching for docker, ccache for native, gradle cache for android",
                 "artifacts": "stored for 90 days"
             },
             "deploy": {
@@ -1284,6 +2001,12 @@
                     "strategy": "canary with 1%, 5%, 10%, 100%",
                     "verification": "real user monitoring metrics",
                     "rollback": "manual with one-click"
+                },
+                "app_store": {
+                    "ios": "TestFlight beta then App Store release",
+                    "android": "internal track → closed track → production",
+                    "windows": "Microsoft Store submission",
+                    "macos": "Mac App Store or direct download with Sparkle"
                 }
             }
         },
@@ -1312,8 +2035,8 @@
                 "stable": "monthly with full regression"
             },
             "rollout": {
-                "mobile": "phased over 7 days",
-                "desktop": "immediate with auto-update",
+                "mobile": "phased over 7 days with monitoring",
+                "desktop": "immediate with auto-update (Sparkle/Windows Update)",
                 "enterprise": "scheduled maintenance windows"
             }
         }
@@ -1445,19 +2168,23 @@
             "user_guide": {
                 "core_features": "detailed feature explanations",
                 "best_practices": "tips for effective use",
-                "troubleshooting": "common problems and solutions"
+                "troubleshooting": "common problems and solutions",
+                "agentic_tasks": "how to use autonomous commands",
+                "proactive_suggestions": "how to manage and configure"
             },
             "accessibility": {
                 "screen_reader": "complete guide for visually impaired",
                 "keyboard_shortcuts": "reference card",
-                "voice_commands": "complete command list"
+                "voice_commands": "complete command list",
+                "eye_tracking": "setup and usage"
             }
         },
         "developer_documentation": {
             "api_reference": {
                 "rest_api": "OpenAPI 3.0 specification",
                 "grpc": "protobuf definitions with examples",
-                "webhooks": "event payload specifications"
+                "webhooks": "event payload specifications",
+                "intent_schema": "how to define new intents for plugins"
             },
             "plugin_development": {
                 "getting_started": "hello world plugin",
@@ -1490,25 +2217,65 @@
         }
     },
     "technology_stack": {
+        "core": {
+            "primary": "Rust",
+            "justification": "Memory safety, performance, cross-platform, async/await, excellent WASM support",
+            "crates": [
+                "tokio",
+                "axum",
+                "sqlx",
+                "tracing",
+                "serde",
+                "anyhow",
+                "thiserror",
+                "libp2p",
+                "wasmtime"
+            ]
+        },
         "frontend": {
             "terminal_ui": {
-                "primary": "Rust with tui-rs and ratatui",
+                "primary": "Rust with ratatui",
                 "justification": "Native performance, minimal footprint, cross-platform terminal rendering",
                 "dependencies": [
                     "crossterm",
                     "tokio",
-                    "serde",
-                    "anyhow"
+                    "ratatui",
+                    "tui-textarea"
                 ]
             },
+            "desktop_gui": {
+                "primary": "Tauri (Rust backend + SvelteKit frontend)",
+                "justification": "Small bundle size, native performance, secure IPC, web technologies for UI",
+                "dependencies": {
+                    "rust": [
+                        "tauri",
+                        "tauri-plugin-store",
+                        "tauri-plugin-sql"
+                    ],
+                    "frontend": [
+                        "svelte",
+                        "tailwindcss",
+                        "shadcn-svelte",
+                        "lucide-svelte"
+                    ]
+                }
+            },
             "mobile_app": {
-                "primary": "React Native with Reanimated 3",
-                "justification": "Cross-platform with native performance, iOS 26 design system compliance",
+                "primary": "React Native with Expo",
+                "justification": "Cross-platform with native performance, large ecosystem, fast development",
                 "dependencies": [
-                    "react-native-vector-icons",
+                    "react-native-reanimated",
                     "react-native-gesture-handler",
-                    "react-native-screens"
-                ]
+                    "react-native-screens",
+                    "expo-notifications",
+                    "expo-camera",
+                    "expo-av",
+                    "expo-secure-store"
+                ],
+                "native_modules": {
+                    "ios": "Swift for performance-critical parts",
+                    "android": "Kotlin for performance-critical parts"
+                }
             },
             "state_management": {
                 "primary": "Zustand with Immer",
@@ -1519,34 +2286,51 @@
                 ]
             }
         },
-        "backend": {
-            "core_orchestrator": {
-                "primary": "Rust with Tokio runtime",
-                "justification": "Memory safety, performance, async/await for concurrent AI operations",
+        "backend_services": {
+            "orchestrator": {
+                "primary": "Rust with Tokio",
                 "dependencies": [
-                    "tokio",
                     "axum",
-                    "sqlx",
-                    "anyhow",
-                    "thiserror"
+                    "tonic",
+                    "nats",
+                    "sqlx"
                 ]
             },
-            "ai_orchestration": {
-                "primary": "Python 3.11 with FastAPI",
+            "ai_inference": {
+                "primary": "Python 3.12 with FastAPI",
                 "justification": "Rich AI/ML ecosystem, async support, easy integration with ML libraries",
                 "dependencies": [
                     "fastapi",
                     "pydantic",
                     "llama-cpp-python",
-                    "sentence-transformers"
+                    "sentence-transformers",
+                    "transformers",
+                    "torch",
+                    "whisper",
+                    "piper-tts"
                 ]
             },
             "event_system": {
                 "primary": "NATS JetStream",
                 "justification": "High-performance messaging, persistence, exactly-once delivery guarantees",
                 "dependencies": [
-                    "nats-py",
                     "async-nats"
+                ]
+            },
+            "memory_service": {
+                "primary": "Rust",
+                "databases": {
+                    "embedded": "SQLite with rusqlite",
+                    "vector": "LanceDB (Rust)",
+                    "graph": "SurrealDB (embedded)"
+                }
+            },
+            "sync_engine": {
+                "primary": "Rust with libp2p",
+                "dependencies": [
+                    "libp2p",
+                    "serde",
+                    "crdts"
                 ]
             }
         },
@@ -1561,8 +2345,12 @@
                 ]
             },
             "vector": {
-                "primary": "Milvus 2.3",
-                "justification": "Production-ready vector database, GPU acceleration, distributed architecture"
+                "primary": "LanceDB (embedded) + Milvus (cloud)",
+                "justification": "LanceDB for local, Milvus for cloud scale"
+            },
+            "graph": {
+                "primary": "SurrealDB (embedded) + Neo4j (cloud)",
+                "justification": "SurrealDB for local, Neo4j for cloud"
             },
             "cache": {
                 "primary": "Redis 7.2",
@@ -1571,10 +2359,6 @@
                     "RedisJSON",
                     "RedisSearch"
                 ]
-            },
-            "embedded": {
-                "primary": "SQLite with WAL mode",
-                "justification": "Zero-configuration, serverless, perfect for offline-first mobile"
             }
         },
         "infrastructure": {
@@ -1601,14 +2385,181 @@
                 "justification": "Consistent environments, remote development, extensive extensions"
             },
             "testing": {
-                "framework": "Playwright for E2E, Jest for unit",
-                "justification": "Cross-browser testing, reliable selectors, parallel execution"
+                "framework": "Playwright for E2E, Jest for unit, XCTest for iOS, JUnit for Android",
+                "justification": "Cross-platform testing, reliable selectors, parallel execution"
             },
             "package_management": {
                 "rust": "Cargo with workspaces",
                 "python": "Poetry with dependency groups",
-                "javascript": "pnpm with workspace support"
+                "javascript": "pnpm with workspace support",
+                "swift": "Swift Package Manager",
+                "kotlin": "Gradle"
             }
+        }
+    },
+    "codebase_organization": {
+        "monorepo_structure": {
+            "root": {
+                "Cargo.toml": "workspace for Rust crates",
+                "package.json": "root for frontend packages",
+                "pnpm-workspace.yaml": "pnpm workspace config",
+                "poetry.toml": "Python workspace config",
+                "docker-compose.yml": "local development",
+                "Makefile": "build scripts"
+            },
+            "crates": {
+                "core": "Rust core library (shared logic)",
+                "memory": "memory service implementation",
+                "sync": "sync engine implementation",
+                "plugin_host": "WASM plugin host",
+                "ai_client": "client for AI inference (local/cloud)",
+                "event_bus": "NATS client wrapper",
+                "utils": "common utilities"
+            },
+            "apps": {
+                "desktop": {
+                    "src-tauri": "Tauri Rust backend",
+                    "src": "Svelte frontend",
+                    "public": "static assets"
+                },
+                "mobile": {
+                    "ios": "React Native iOS specific",
+                    "android": "React Native Android specific",
+                    "src": "shared React Native code"
+                },
+                "terminal": {
+                    "src": "Rust terminal app"
+                }
+            },
+            "services": {
+                "orchestrator": "Rust service (event bus, action engine)",
+                "ai_inference": "Python service",
+                "memory_service": "Rust service (gRPC)",
+                "sync_service": "Rust service (libp2p)"
+            },
+            "shared": {
+                "protos": "gRPC protobuf definitions",
+                "types": "TypeScript types for frontend",
+                "ui_components": "shared Svelte/React components"
+            },
+            "scripts": "build, deploy, dev scripts",
+            "docs": "documentation"
+        },
+        "sharing_logic": {
+            "rust_core": "compiled to each platform via Cargo, used in desktop/terminal/services",
+            "typescript_types": "generated from protobuf and shared",
+            "ui_components": "separate for Svelte and React but design tokens shared"
+        }
+    },
+    "testing_and_running": {
+        "local_development": {
+            "prerequisites": "Rust, Python 3.12, Node.js 20, Docker",
+            "steps": [
+                "Clone repository",
+                "Run `make setup` to install dependencies",
+                "Run `make dev` to start all services in docker-compose",
+                "Run `make run-desktop` to start desktop app",
+                "Run `make run-terminal` to start terminal app",
+                "Run `make run-mobile` to start Expo dev server"
+            ],
+            "environment_variables": {
+                "DATABASE_URL": "postgresql://...",
+                "REDIS_URL": "redis://...",
+                "NATS_URL": "nats://...",
+                "AI_MODEL_PATH": "/path/to/models"
+            }
+        },
+        "testing": {
+            "unit": "`make test-unit`",
+            "integration": "`make test-integration`",
+            "e2e": "`make test-e2e`",
+            "performance": "`make test-perf`"
+        },
+        "production_build": {
+            "desktop": "`make build-desktop` outputs installers (dmg, exe, deb, rpm)",
+            "mobile": "`make build-mobile` outputs ipa and apk",
+            "server": "`make build-server` outputs docker images"
+        }
+    },
+    "deployment_and_distribution": {
+        "app_stores": {
+            "ios": "Submit to Apple App Store via App Store Connect, using TestFlight for beta",
+            "android": "Submit to Google Play Store via Play Console, using internal/closed tracks",
+            "windows": "Submit to Microsoft Store via Partner Center",
+            "macos": "Option 1: Mac App Store; Option 2: direct download with Sparkle auto-updates",
+            "linux": "Distribute via package managers (Snap, Flatpak, APT, RPM) and direct download"
+        },
+        "auto_updates": {
+            "desktop": {
+                "macos": "Sparkle framework",
+                "windows": "MSIX with auto-update or Squirrel.Windows",
+                "linux": "Package manager updates or self-updater (AppImage)"
+            },
+            "mobile": {
+                "ios": "App Store automatic updates",
+                "android": "Play Store automatic updates"
+            }
+        },
+        "update_mechanism": {
+            "delta_updates": "For desktop, use binary diff to minimize download size",
+            "background_download": "Download updates in background, notify user to install",
+            "rollback": "Keep previous version for safe rollback on failure"
+        }
+    },
+    "notification_system": {
+        "personalization_logic": {
+            "context_collection": "Collect user context (calendar, location, recent interactions, health data) with privacy constraints",
+            "relevance_model": "On-device ML model trained to predict which notifications are useful",
+            "scheduling": "Respect user's focus mode, quiet hours, and notification preferences",
+            "content_generation": "Use local LLM to generate personalized message (e.g., 'Your meeting with John is in 15 minutes, and traffic is heavy. You should leave now.')"
+        },
+        "delivery_channels": {
+            "mobile": "FCM (Android) / APNS (iOS) via push proxy service that relays encrypted payload",
+            "desktop": "System notifications via Tauri's notification plugin",
+            "terminal": "Bell and status bar indicator, with optional desktop notification fallback"
+        },
+        "push_proxy": {
+            "purpose": "Relay notifications from server to device when device is offline, but never decrypt content",
+            "security": "End-to-end encrypted, push proxy only sees device token and encrypted payload",
+            "scalability": "Horizontal auto-scaling based on queue length"
+        },
+        "user_control": {
+            "permissions": "Granular per notification type",
+            "quiet_hours": "Configurable time ranges",
+            "snooze": "Temporary disable all notifications"
+        }
+    },
+    "autonomous_tasks": {
+        "capabilities": {
+            "task_types": [
+                "Information retrieval (web search, document query)",
+                "Transaction execution (order, book, pay)",
+                "Data processing (summarize, analyze, visualize)",
+                "Communication (send email, message)",
+                "Device control (smart home, file management)",
+                "Scheduling (calendar, reminders)"
+            ],
+            "execution_modes": {
+                "automatic": "Execute without user intervention for low-risk tasks",
+                "confirm": "Ask user for confirmation before executing",
+                "supervised": "Execute step-by-step with user approval"
+            }
+        },
+        "planning": {
+            "decomposition": "Break down complex command into atomic steps",
+            "dependency_resolution": "Order steps based on dependencies",
+            "fallback": "If a step fails, attempt alternative method or ask user"
+        },
+        "examples": {
+            "command": "Book a flight to New York next Friday for the team meeting",
+            "plan": [
+                "Check calendar for 'team meeting' on Friday",
+                "Identify participants",
+                "Search flights from each participant's home airport to NYC",
+                "Compare prices and times",
+                "Present options with recommendation",
+                "Upon approval, book using user's preferred service"
+            ]
         }
     },
     "ios_26_design_system": {
@@ -2026,8 +2977,8 @@
                 },
                 "handoff": {
                     "activity_types": [
-                        "com.hedtronix.conversation",
-                        "com.hedtronix.plugin"
+                        "com.termio.conversation",
+                        "com.termio.plugin"
                     ],
                     "continuity": "seamless device switching"
                 }

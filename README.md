@@ -1,4 +1,4 @@
-# HEDTRONIX
+# TERMIO
 
 A next-generation AI assistant that is terminal-native, offline-first, privacy-focused, and cross-platform.
 
@@ -16,11 +16,11 @@ Ubiquitous private AI companion across all devices with deterministic execution 
 ## Project Structure
 
 ```
-hedtronix/
+termio/
 ├── crates/
-│   ├── hedtronix-core/    # Shared library (models, memory, config)
-│   ├── hedtronix-tui/     # Terminal UI application
-│   └── hedtronix-server/  # HTTP backend service
+│   ├── termio-core/    # Shared library (models, memory, config)
+│   ├── termio-tui/     # Terminal UI application
+│   └── termio-server/  # HTTP backend service
 ├── ai_service/            # Python FastAPI AI inference service
 ├── migrations/            # Database migrations
 └── config/               # Configuration files
@@ -48,10 +48,10 @@ cargo build --workspace --release
 
 ```bash
 # Run the terminal UI
-cargo run -p hedtronix-tui
+cargo run -p termio-tui
 
 # Run the backend server
-cargo run -p hedtronix-server
+cargo run -p termio-server
 
 # Run the AI service
 cd ai_service && poetry install && poetry run uvicorn src.main:app --port 8000
@@ -63,7 +63,7 @@ Configuration is loaded hierarchically:
 1. Default values in code
 2. `config/default.toml`
 3. Environment-specific overrides
-4. Environment variables (prefixed with `HEDTRONIX_`)
+4. Environment variables (prefixed with `TERMIO_`)
 
 ## Development
 
@@ -72,7 +72,7 @@ Configuration is loaded hierarchically:
 cargo test --workspace
 
 # Run with verbose logging
-RUST_LOG=debug cargo run -p hedtronix-tui
+RUST_LOG=debug cargo run -p termio-tui
 
 # Check code quality
 cargo clippy --workspace -- -D warnings
