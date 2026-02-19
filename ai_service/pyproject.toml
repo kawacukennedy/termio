@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "hedtronix-ai"
+name = "termio-ai"
 version = "1.0.0"
-description = "AI inference service for HEDTRONIX"
-authors = ["HEDTRONIX Team"]
+description = "AI inference service for TERMIO"
+authors = ["TERMIO Team"]
 readme = "README.md"
 packages = [{include = "src"}]
 
@@ -15,6 +15,11 @@ llama-cpp-python = "^0.2.55"
 sentence-transformers = "^2.3.0"
 numpy = "^1.26.0"
 httpx = "^0.26.0"
+faster-whisper = "^1.0.0"
+piper-tts = {version = "^1.2.0", markers = "sys_platform == 'linux'"}
+transformers = "^4.36.0"
+torch = {version = "^2.1.0", index = "pypi"}
+librosa = "^0.10.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"

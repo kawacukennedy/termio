@@ -1,1 +1,1 @@
-"""HEDTRONIX AI Service package."""
+"""TERMIO AI Service package."""
