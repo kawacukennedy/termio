@@ -1,0 +1,108 @@
+{
+  ".svelte-kit/generated/client-optimized/app.js": {
+    "file": "_app/immutable/entry/app.BnhaFSQG.js",
+    "name": "entry/app",
+    "src": ".svelte-kit/generated/client-optimized/app.js",
+    "isEntry": true,
+    "imports": [
+      "_C1FmrZbK.js",
+      "_myKowI8s.js",
+      "_CK5bAZH2.js"
+    ],
+    "dynamicImports": [
+      ".svelte-kit/generated/client-optimized/nodes/0.js",
+      ".svelte-kit/generated/client-optimized/nodes/1.js",
+      ".svelte-kit/generated/client-optimized/nodes/2.js"
+    ]
+  },
+  ".svelte-kit/generated/client-optimized/nodes/0.js": {
+    "file": "_app/immutable/nodes/0.Cxqyw10L.js",
+    "name": "nodes/0",
+    "src": ".svelte-kit/generated/client-optimized/nodes/0.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_myKowI8s.js",
+      "_CK5bAZH2.js"
+    ]
+  },
+  ".svelte-kit/generated/client-optimized/nodes/1.js": {
+    "file": "_app/immutable/nodes/1.C8udAJnB.js",
+    "name": "nodes/1",
+    "src": ".svelte-kit/generated/client-optimized/nodes/1.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_myKowI8s.js",
+      "_CK5bAZH2.js",
+      "_LkcnRoe0.js"
+    ]
+  },
+  ".svelte-kit/generated/client-optimized/nodes/2.js": {
+    "file": "_app/immutable/nodes/2.DQIEyS_n.js",
+    "name": "nodes/2",
+    "src": ".svelte-kit/generated/client-optimized/nodes/2.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_C1FmrZbK.js",
+      "_myKowI8s.js",
+      "_CK5bAZH2.js",
+      "_8BKlv0Op.js"
+    ],
+    "dynamicImports": [
+      "node_modules/@tauri-apps/api/core.js",
+      "node_modules/@tauri-apps/api/core.js",
+      "node_modules/@tauri-apps/api/core.js",
+      "node_modules/@tauri-apps/api/core.js"
+    ],
+    "css": [
+      "_app/immutable/assets/2.Dz3OSMBF.css"
+    ]
+  },
+  "_8BKlv0Op.js": {
+    "file": "_app/immutable/chunks/8BKlv0Op.js",
+    "name": "index",
+    "imports": [
+      "_myKowI8s.js"
+    ]
+  },
+  "_C1FmrZbK.js": {
+    "file": "_app/immutable/chunks/C1FmrZbK.js",
+    "name": "preload-helper"
+  },
+  "_CK5bAZH2.js": {
+    "file": "_app/immutable/chunks/CK5bAZH2.js",
+    "name": "index",
+    "imports": [
+      "_myKowI8s.js"
+    ]
+  },
+  "_LkcnRoe0.js": {
+    "file": "_app/immutable/chunks/LkcnRoe0.js",
+    "name": "entry",
+    "imports": [
+      "_myKowI8s.js",
+      "_8BKlv0Op.js"
+    ]
+  },
+  "_myKowI8s.js": {
+    "file": "_app/immutable/chunks/myKowI8s.js",
+    "name": "scheduler"
+  },
+  "node_modules/@sveltejs/kit/src/runtime/client/entry.js": {
+    "file": "_app/immutable/entry/start.BU73cOAC.js",
+    "name": "entry/start",
+    "src": "node_modules/@sveltejs/kit/src/runtime/client/entry.js",
+    "isEntry": true,
+    "imports": [
+      "_LkcnRoe0.js"
+    ]
+  },
+  "node_modules/@tauri-apps/api/core.js": {
+    "file": "_app/immutable/chunks/DhEqZVGG.js",
+    "name": "core",
+    "src": "node_modules/@tauri-apps/api/core.js",
+    "isDynamicEntry": true
+  }
+}

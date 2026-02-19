@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg-primary: #0C0C0C;
+  --color-bg-secondary: #171717;
+  --color-bg-tertiary: #262626;
+  --color-surface-primary: #171717;
+  --color-surface-secondary: #262626;
+  --color-surface-tertiary: #404040;
+  --color-text-primary: #FAFAFA;
+  --color-text-secondary: #D4D4D4;
+  --color-text-tertiary: #A3A3A3;
+  --color-accent: #0EA5E9;
+  --color-accent-hover: #0284C7;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
