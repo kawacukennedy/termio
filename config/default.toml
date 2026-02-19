@@ -1,7 +1,7 @@
-# HEDTRONIX Default Configuration
+# TERMIO Default Configuration
 
 [app]
-name = "HEDTRONIX"
+name = "TERMIO"
 version = "1.0.0"
 log_level = "info"
 
@@ -15,7 +15,7 @@ local_inference = true
 
 [memory]
 ring_buffer_size = 100
-database_path = "hedtronix.db"
+database_path = "termio.db"
 query_timeout_ms = 50
 enable_embeddings = false
 
@@ -28,3 +28,23 @@ enable_cors = true
 theme = "dark"
 animations = true
 shortcut_prefix = "Ctrl"
+
+[notifications]
+# Maximum notifications to retain in memory
+max_notifications = 200
+# Enable desktop notifications (future)
+desktop_notifications = false
+
+[health]
+# Health check interval in seconds
+check_interval_secs = 60
+# AI service health timeout in seconds
+ai_health_timeout_secs = 2
+
+[sync]
+# Enable cross-device sync
+enabled = false
+# Sync interval in seconds
+interval_secs = 300
+# Discovery method: mdns, manual
+discovery = "mdns"
