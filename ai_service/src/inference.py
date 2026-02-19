@@ -72,7 +72,7 @@ class InferenceEngine:
     def _build_prompt(self, prompt: str, system_prompt: str | None = None) -> str:
         """Build the full prompt with optional system prompt."""
         default_system = (
-            "You are HEDTRONIX, a helpful, terminal-native AI assistant. "
+            "You are TERMIO, a helpful, terminal-native AI assistant. "
             "You are privacy-focused and run locally on the user's device. "
             "Be concise, accurate, and helpful."
         )
