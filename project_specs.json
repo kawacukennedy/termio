@@ -1,8 +1,8 @@
 {
     "project": {
         "name": "TERMIO",
-        "version": "2.0.0",
-        "description": "A next-generation agentic AI assistant that is terminal-native, offline-first, privacy-focused, and cross-platform, inspired by JARVIS-class capabilities.",
+        "version": "3.0.0",
+        "description": "A next-generation agentic AI assistant that is terminal-native, offline-first, privacy-focused, and cross-platform, inspired by JARVIS-class capabilities. Now with tiered subscription models, enterprise-grade security, and seamless cross-platform UI adhering to iOS 26 design language.",
         "vision": "Ubiquitous private AI companion across all devices with deterministic execution, enterprise-grade security, and human-level conversational intelligence."
     },
     "product_requirements": {
@@ -17,7 +17,8 @@
                     "Emotional prosody: AI modulates tone based on detected user emotion",
                     "Works completely offline with core functionality"
                 ],
-                "priority": "P0"
+                "priority": "P0",
+                "tier": "all"
             },
             "agentic_os": {
                 "id": "FA-002",
@@ -29,7 +30,8 @@
                     "Verifies critical actions with biometric approval",
                     "Maintains state across device handoff"
                 ],
-                "priority": "P0"
+                "priority": "P0",
+                "tier": "Pro, Business, Enterprise"
             },
             "contextual_memory": {
                 "id": "FA-003",
@@ -40,7 +42,8 @@
                     "Automatically extracts entities from conversations and documents",
                     "Encrypted and private, never leaves device without consent"
                 ],
-                "priority": "P0"
+                "priority": "P0",
+                "tier": "Pro, Business, Enterprise"
             },
             "visual_intelligence": {
                 "id": "FA-004",
@@ -51,7 +54,8 @@
                     "Semantic environmental analysis for accessibility (e.g., 'Where is the entrance?')",
                     "Works offline with on-device vision models"
                 ],
-                "priority": "P1"
+                "priority": "P1",
+                "tier": "Pro, Business, Enterprise"
             },
             "proactive_thinker": {
                 "id": "FA-005",
@@ -62,7 +66,8 @@
                     "Respects user-configurable proactivity level",
                     "All suggestions are explainable and can be disabled"
                 ],
-                "priority": "P1"
+                "priority": "P1",
+                "tier": "Pro, Business, Enterprise"
             },
             "environmental_orchestration": {
                 "id": "FA-006",
@@ -73,7 +78,8 @@
                     "Executes scenes based on context (time, occupancy, weather)",
                     "Local control without cloud dependency"
                 ],
-                "priority": "P1"
+                "priority": "P1",
+                "tier": "Pro, Business, Enterprise"
             },
             "sentinel_health": {
                 "id": "FA-007",
@@ -84,7 +90,8 @@
                     "Fall/crash detection with autonomous emergency response",
                     "Mental health insights (stress patterns, sleep quality)"
                 ],
-                "priority": "P2"
+                "priority": "P2",
+                "tier": "Business, Enterprise"
             },
             "multi_modal_input": {
                 "id": "FA-008",
@@ -96,7 +103,8 @@
                     "Simultaneous input mode handling without conflicts",
                     "Eye tracking integration (optional)"
                 ],
-                "priority": "P0"
+                "priority": "P0",
+                "tier": "all"
             },
             "hybrid_ai_inference": {
                 "id": "FA-009",
@@ -108,7 +116,8 @@
                     "Model caching and quantization on-device",
                     "Supports on-device fine-tuning for personalization"
                 ],
-                "priority": "P0"
+                "priority": "P0",
+                "tier": "Freemium (local only), Pro+ (cloud optional)"
             },
             "memory_system": {
                 "id": "FA-010",
@@ -120,7 +129,8 @@
                     "Encrypted persistent storage for session continuity",
                     "Memory query response <50ms for recent context"
                 ],
-                "priority": "P0"
+                "priority": "P0",
+                "tier": "Freemium (ring only), Pro+ (full)"
             },
             "plugin_ecosystem": {
                 "id": "FA-011",
@@ -132,7 +142,8 @@
                     "Plugin marketplace with signed packages",
                     "Plugins can expose new intents for agentic actions"
                 ],
-                "priority": "P1"
+                "priority": "P1",
+                "tier": "Pro, Business, Enterprise"
             },
             "cross_device_sync": {
                 "id": "FA-012",
@@ -144,7 +155,8 @@
                     "QR code pairing for device setup",
                     "Seamless handoff: continue conversation on another device"
                 ],
-                "priority": "P1"
+                "priority": "P1",
+                "tier": "Pro, Business, Enterprise"
             }
         },
         "non_functional": {
@@ -158,7 +170,8 @@
                 "data_encryption": "AES-256-GCM for storage, TLS 1.3 for transport",
                 "privacy": "Zero data sent to cloud without explicit consent; on-device processing for personal data",
                 "integrity": "Code signing with Ed25519 signatures",
-                "access_control": "Capability tokens for all external access; biometric confirmation for critical actions"
+                "access_control": "Capability tokens for all external access; biometric confirmation for critical actions",
+                "additional_measures": "See 'security_enhancements' section"
             },
             "reliability": {
                 "uptime": "99.9% for core functionality",
@@ -168,15 +181,30 @@
             },
             "usability": {
                 "accessibility": "WCAG 2.1 AAA compliance, supports screen readers, voice control, high contrast, dynamic type",
-                "learnability": "New user proficiency within 5 minutes",
-                "efficiency": "Common tasks completable with ≤2 interactions or proactive suggestion"
+                "learnability": "New user proficiency within 5 minutes (aided by onboarding)",
+                "efficiency": "Common tasks completable with \u22642 interactions or proactive suggestion"
+            },
+            "disk_space": {
+                "freemium": {
+                    "core": "<100MB",
+                    "models": "downloaded on-demand, up to 2GB",
+                    "total": "configurable cache limit"
+                },
+                "pro_business": {
+                    "core": "<100MB",
+                    "full_model_suite": "up to 4GB (LLaMA, Whisper, vision, etc.)",
+                    "optional_models": "additional downloads"
+                }
             }
         },
         "platform_support": {
             "desktop": [
                 "macOS 12+",
                 "Windows 10+ (x64, arm64)",
-                "Linux (glibc 2.28+, all major distros)"
+                "Linux (glibc 2.28+, all major distros)",
+                "macOS 12+ (menu bar app with global shortcut Cmd+Space)",
+                "Windows 10+ (x64, arm64) (global hotkey Ctrl+T)",
+                "Linux (glibc 2.28+, all major distros) (configurable hotkey)"
             ],
             "mobile": [
                 "iOS 16+",
@@ -290,6 +318,18 @@
                 "Detects abnormal heart rate patterns",
                 "Sends personalized notifications with suggestions"
             ]
+        },
+        {
+            "id": "US-009",
+            "persona": "Enterprise Admin",
+            "scenario": "As an IT administrator",
+            "need": "I need to deploy TERMIO across my organization with SSO and compliance",
+            "so_that": "Employees can use AI securely while meeting regulatory requirements",
+            "acceptance_tests": [
+                "SSO integration (SAML/OIDC) works",
+                "Audit logs capture all user interactions with tamper-evident storage",
+                "Compliance reports can be generated on demand"
+            ]
         }
     ],
     "edge_cases": {
@@ -318,7 +358,7 @@
             "clock_skew": {
                 "description": "Devices with significant time difference",
                 "handling": "Lamport timestamps for logical ordering, NTP sync on connection",
-                "tolerance": "±5 minutes corrected automatically, beyond requires manual sync"
+                "tolerance": "\u00b15 minutes corrected automatically, beyond requires manual sync"
             }
         },
         "ai_failures": {
@@ -329,7 +369,7 @@
             },
             "inference_timeout": {
                 "description": "AI takes >30 seconds to respond",
-                "handling": "Timeout with progressive fallback: smaller model → cached response → error message",
+                "handling": "Timeout with progressive fallback: smaller model \u2192 cached response \u2192 error message",
                 "timeouts": {
                     "initial": "10s",
                     "fallback": "5s",
@@ -348,6 +388,10 @@
                 "handling": "Remote wipe capability, encryption keys protected by hardware security module when available",
                 "protection": "Rate-limited decryption attempts, secure element storage for keys on supported devices"
             }
+        },
+        "update_failure": {
+            "description": "Update download fails or installation crashes",
+            "handling": "Automatic rollback to previous version, user notified, error logged"
         }
     },
     "data_models": {
@@ -658,6 +702,29 @@
                     "type": "compound"
                 }
             ]
+        },
+        "subscription": {
+            "schema": {
+                "id": "UUID v7",
+                "user_id": "UUID v4",
+                "tier": "enum(freemium, pro, business, enterprise)",
+                "status": "enum(active, past_due, canceled, expired)",
+                "provider": "enum(stripe, binance, manual)",
+                "provider_subscription_id": "string",
+                "start_date": "RFC3339",
+                "end_date": "RFC3339",
+                "auto_renew": "boolean",
+                "features": "object (snapshot of allowed features)"
+            }
+        },
+        "payment_method": {
+            "schema": {
+                "id": "UUID v7",
+                "user_id": "UUID v4",
+                "type": "enum(card, bank_account, crypto)",
+                "details_encrypted": "encrypted JSON (token, last4, etc.)",
+                "is_default": "boolean"
+            }
         }
     },
     "frontend_pages": {
@@ -757,6 +824,15 @@
                         "name": "DevicePairing",
                         "qr_code": "display QR for other device to scan",
                         "manual_code": "6-digit code entry"
+                    },
+                    {
+                        "name": "SubscriptionModal",
+                        "tabs": [
+                            "Plans (compare tiers)",
+                            "Payment Methods (add card, crypto)",
+                            "Billing History",
+                            "Manage Subscription (upgrade/downgrade/cancel)"
+                        ]
                     }
                 ]
             }
@@ -884,6 +960,23 @@
                                 "Sync",
                                 "Help"
                             ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Subscription",
+                    "components": [
+                        {
+                            "name": "CurrentPlan",
+                            "type": "card with details and 'Manage' button"
+                        },
+                        {
+                            "name": "AvailablePlans",
+                            "type": "list of plans with features and 'Subscribe' button"
+                        },
+                        {
+                            "name": "PaymentMethods",
+                            "type": "list with add/edit"
                         }
                     ]
                 }
@@ -1508,10 +1601,10 @@
                     "half_open_max_requests": 3
                 },
                 "fallback_strategies": {
-                    "ai": "tiny_model → cached_response → static_response",
-                    "memory": "ring_buffer_only → no_context → error_state",
-                    "sync": "local_only → conflict_tombstones → manual_resolution",
-                    "action_engine": "decompose_fallback → user_guidance"
+                    "ai": "tiny_model \u2192 cached_response \u2192 static_response",
+                    "memory": "ring_buffer_only \u2192 no_context \u2192 error_state",
+                    "sync": "local_only \u2192 conflict_tombstones \u2192 manual_resolution",
+                    "action_engine": "decompose_fallback \u2192 user_guidance"
                 }
             },
             "manual": {
@@ -1637,7 +1730,7 @@
         "privacy_preserving": {
             "differential_privacy": {
                 "epsilon": 0.1,
-                "delta": 1e-5,
+                "delta": 1e-05,
                 "mechanism": "Laplace noise addition"
             },
             "on_device_aggregation": {
@@ -2004,7 +2097,7 @@
                 },
                 "app_store": {
                     "ios": "TestFlight beta then App Store release",
-                    "android": "internal track → closed track → production",
+                    "android": "internal track \u2192 closed track \u2192 production",
                     "windows": "Microsoft Store submission",
                     "macos": "Mac App Store or direct download with Sparkle"
                 }
@@ -2567,8 +2660,8 @@
             "adaptive_layout": {
                 "breakpoints": {
                     "compact": "width < 576",
-                    "regular": "576 ≤ width < 992",
-                    "expanded": "width ≥ 992"
+                    "regular": "576 \u2264 width < 992",
+                    "expanded": "width \u2265 992"
                 },
                 "container_queries": "used for component-level adaptation",
                 "intrinsic_sizing": "content-based dimensions preferred"
@@ -2714,14 +2807,12 @@
                     "cubic_bezier": [
                         0.2,
                         0.0,
-                        0,
                         1.0
                     ],
                     "duration": 300
                 },
                 "decelerate": {
                     "cubic_bezier": [
-                        0.0,
                         0.0,
                         0.2,
                         1
@@ -2732,7 +2823,6 @@
                     "cubic_bezier": [
                         0.3,
                         0.0,
-                        1,
                         1
                     ],
                     "duration": 200
@@ -2983,6 +3073,431 @@
                     "continuity": "seamless device switching"
                 }
             }
+        }
+    },
+    "pricing_models": {
+        "tiers": [
+            {
+                "name": "Freemium",
+                "price": "Free",
+                "description": "Core AI assistant with essential features, perfect for individuals who want a private, offline-first companion.",
+                "features": {
+                    "core_assistant": true,
+                    "multi_modal_input": true,
+                    "hybrid_ai_inference": "local-only (LLaMA 3 8B quantized, no cloud augmentation)",
+                    "memory_system": "ring buffer only (last 100 interactions)",
+                    "plugin_ecosystem": false,
+                    "agentic_os": false,
+                    "contextual_memory": false,
+                    "visual_intelligence": false,
+                    "proactive_thinker": false,
+                    "environmental_orchestration": false,
+                    "sentinel_health": false,
+                    "cross_device_sync": false,
+                    "devices": "1 device",
+                    "support": "community support",
+                    "disk_space": "core <100MB, optional model downloads up to 2GB"
+                },
+                "limitations": {
+                    "cloud_augmentation": false,
+                    "vector_memory": false,
+                    "graph_memory": false,
+                    "max_conversation_history": "100 messages",
+                    "plugin_installation": false,
+                    "sync": false
+                }
+            },
+            {
+                "name": "Pro",
+                "price": "$9.99/month",
+                "description": "Unlock the full potential of TERMIO with autonomous task execution, long-term memory, visual intelligence, and cross-device sync. Ideal for power users and professionals.",
+                "features": {
+                    "core_assistant": true,
+                    "multi_modal_input": true,
+                    "hybrid_ai_inference": "local + cloud augmentation (with consent)",
+                    "memory_system": "full three-tier (ring, vector, graph)",
+                    "plugin_ecosystem": true,
+                    "agentic_os": true,
+                    "contextual_memory": true,
+                    "visual_intelligence": true,
+                    "proactive_thinker": true,
+                    "environmental_orchestration": true,
+                    "cross_device_sync": true,
+                    "sentinel_health": false,
+                    "devices": "up to 5 devices",
+                    "support": "priority email support",
+                    "disk_space": "core <100MB, full models up to 4GB"
+                },
+                "limitations": {
+                    "sentinel_health": false,
+                    "team_collaboration": false,
+                    "enterprise_compliance": false
+                }
+            },
+            {
+                "name": "Business",
+                "price": "$29.99/month per user",
+                "description": "Everything in Pro, plus advanced health monitoring, team collaboration tools, and enhanced security features for small to medium teams.",
+                "features": {
+                    "core_assistant": true,
+                    "multi_modal_input": true,
+                    "hybrid_ai_inference": "local + cloud (priority queue)",
+                    "memory_system": "full three-tier",
+                    "plugin_ecosystem": true,
+                    "agentic_os": true,
+                    "contextual_memory": true,
+                    "visual_intelligence": true,
+                    "proactive_thinker": true,
+                    "environmental_orchestration": true,
+                    "cross_device_sync": true,
+                    "sentinel_health": true,
+                    "team_collaboration": "shared knowledge graphs, team workspaces",
+                    "audit_logs": true,
+                    "devices": "unlimited devices per user",
+                    "support": "24/7 priority support",
+                    "disk_space": "core <100MB, full models up to 4GB"
+                },
+                "limitations": {
+                    "custom_deployment": false,
+                    "dedicated_support": false
+                }
+            },
+            {
+                "name": "Enterprise",
+                "price": "Custom",
+                "description": "Tailored solutions for large organizations with on-premise deployment, custom models, compliance certifications, and dedicated account management.",
+                "features": {
+                    "core_assistant": true,
+                    "multi_modal_input": true,
+                    "hybrid_ai_inference": "on-premise or private cloud",
+                    "memory_system": "full three-tier with unlimited retention",
+                    "plugin_ecosystem": true,
+                    "agentic_os": true,
+                    "contextual_memory": true,
+                    "visual_intelligence": true,
+                    "proactive_thinker": true,
+                    "environmental_orchestration": true,
+                    "cross_device_sync": true,
+                    "sentinel_health": true,
+                    "team_collaboration": "advanced team management, role-based access",
+                    "audit_logs": "tamper-evident, exportable",
+                    "compliance": "HIPAA, GDPR, SOC2, FedRAMP (on request)",
+                    "deployment": "on-premise, VPC, or hybrid",
+                    "custom_models": "fine-tuned on enterprise data",
+                    "sso_integration": "SAML, OIDC, LDAP",
+                    "devices": "unlimited",
+                    "support": "dedicated account manager, 24/7 phone support",
+                    "disk_space": "core <100MB, models as needed"
+                }
+            }
+        ]
+    },
+    "payment_integration": {
+        "bank_payments": {
+            "provider": "Stripe Connect (customized for direct bank account/card payments)",
+            "implementation": {
+                "server_side": "Stripe API with idempotency keys, webhooks for subscription events",
+                "client_side": "Stripe Payment Element embedded in app (PCI SAQ A compliant)",
+                "data_storage": "No raw payment details stored; Stripe tokens only, encrypted at rest",
+                "compliance": "PCI DSS Level 1, SCA ready, 3D Secure where required"
+            },
+            "subscription_management": {
+                "plans": "mapped to Stripe product/price IDs",
+                "webhooks": "handle subscription updates, cancellations, payment failures",
+                "customer_portal": "self-service via Stripe Customer Portal"
+            }
+        },
+        "crypto_payments": {
+            "binance_api": {
+                "enabled": true,
+                "purpose": "Accept USDT, BTC, ETH, BNB, and other major cryptocurrencies",
+                "integration": {
+                    "api_key": "stored encrypted in secure backend (HSM-backed)",
+                    "endpoints": [
+                        "create order",
+                        "check payment status",
+                        "get exchange rates"
+                    ],
+                    "webhook": "Binance Pay webhook for payment confirmation"
+                },
+                "wallet_addresses": {
+                    "btc": "bc1q... (static address for each user, or dynamic via Binance Pay)",
+                    "eth": "0x...",
+                    "usdt_trc20": "T...",
+                    "usdt_erc20": "0x..."
+                },
+                "security": {
+                    "withdrawal_restrictions": "No automatic withdrawals; manual reconciliation",
+                    "ip_whitelist": "API calls only from trusted servers",
+                    "rate_limiting": "per user to prevent abuse"
+                }
+            },
+            "direct_wallet": {
+                "purpose": "Users can send crypto directly to a company wallet; subscription mapped via unique payment reference",
+                "wallet_addresses": {
+                    "btc": "bc1q...",
+                    "eth": "0x...",
+                    "usdt_trc20": "T..."
+                },
+                "payment_verification": {
+                    "mechanism": "Blockchain scanners (e.g., BlockCypher, Etherscan API) monitor incoming transactions; credits applied after 3 confirmations",
+                    "reference": "User generates a unique deposit address or includes memo ID"
+                }
+            }
+        }
+    },
+    "update_mechanism": {
+        "overview": "Seamless, secure, delta-based updates with automatic rollback on failure, ensuring zero downtime and integrity.",
+        "components": {
+            "update_server": {
+                "url": "https://updates.termio.com",
+                "protocol": "HTTPS with certificate pinning",
+                "manifest": "signed JSON containing version metadata, delta patches, and SHA-256 hashes"
+            },
+            "client_update_engine": {
+                "check_frequency": "every 6 hours (configurable), background task",
+                "download_strategy": {
+                    "delta": "binary diff (bsdiff) for desktop; full package for mobile (App Store/Play Store managed)",
+                    "background": "download only on unmetered network and sufficient battery",
+                    "resume": "interrupted downloads resume"
+                },
+                "verification": {
+                    "signature": "Ed25519 signature on manifest; each package hash verified",
+                    "integrity_check": "after download, compute SHA-256 and compare"
+                },
+                "installation": {
+                    "desktop": {
+                        "windows": "MSIX with atomic install, rollback on failure",
+                        "macos": "Sparkle with delta updates, signed .dmg",
+                        "linux": "Package manager or AppImage update with backup"
+                    },
+                    "mobile": {
+                        "ios": "App Store automatic updates (managed by Apple)",
+                        "android": "Play Store automatic updates or in-app update API (for immediate)"
+                    }
+                },
+                "rollback": {
+                    "trigger": "if new version crashes on startup or fails health checks",
+                    "mechanism": "keep previous version backup; revert automatically and report error"
+                },
+                "security": {
+                    "code_signing": "all updates signed with hardware-stored private key",
+                    "pinning": "update server certificate pinned in app",
+                    "tamper_detection": "runtime integrity check of installed files"
+                }
+            }
+        },
+        "edge_cases": {
+            "offline_updates": "Queued until online, then applied",
+            "partial_download": "Resume using HTTP Range requests",
+            "conflict_with_plugin_updates": "Plugins updated independently via WASM registry"
+        }
+    },
+    "security_enhancements": {
+        "runtime_integrity": {
+            "jailbreak_root_detection": {
+                "mobile": "detect common jailbreak/root signs; if detected, limit functionality or warn user",
+                "desktop": "check for unsigned code injection, library hijacking"
+            },
+            "code_integrity": {
+                "mechanism": "on launch, verify HMAC of core executable; if tampered, refuse to run",
+                "anti_debugging": "detect debugger presence and optionally terminate"
+            },
+            "secure_enclave_tpm": {
+                "usage": "store encryption keys, biometric data, and signing keys in hardware-backed secure element (Secure Enclave, TPM, TrustZone)",
+                "key_attestation": "verify that keys are generated and stored in hardware"
+            }
+        },
+        "network_security": {
+            "certificate_pinning": "pinned certificates for all critical endpoints (api.termio.com, updates.termio.com, etc.)",
+            "dnssec": "validate DNS responses",
+            "tls_13_only": "enforce TLS 1.3 with strong ciphers"
+        },
+        "data_protection": {
+            "file_level_encryption": {
+                "windows": "EFS or BitLocker integration",
+                "macos": "FileVault2 integration, Data Protection API",
+                "linux": "eCryptfs or LUKS",
+                "mobile": "iOS Data Protection (NSFileProtectionComplete), Android Keystore + encrypted shared preferences"
+            },
+            "database_encryption": {
+                "sqlite": "SQLCipher with AES-256",
+                "vector_db": "LanceDB with encryption at rest",
+                "graph_db": "SurrealDB with encryption"
+            }
+        },
+        "access_control": {
+            "biometric_verification": "required for critical actions (e.g., payments, export of sensitive data)",
+            "session_management": {
+                "tokens": "JWT with short expiry (15 min), refresh tokens rotated every 7 days",
+                "revocation": "immediate across all devices on password change or logout",
+                "device_limits": "enforced per plan"
+            }
+        },
+        "vulnerability_management": {
+            "bug_bounty": "public program via HackerOne",
+            "regular_audits": "quarterly third-party penetration tests",
+            "supply_chain_security": {
+                "dependencies": "SBOM generation, automated CVE scanning",
+                "code_signing": "all artifacts signed in CI/CD"
+            }
+        }
+    },
+    "onboarding": {
+        "wizard": {
+            "steps": [
+                {
+                    "name": "Welcome",
+                    "content": "Brief introduction to TERMIO's capabilities and privacy-first approach.",
+                    "ui": "animated illustration, 'Get Started' button"
+                },
+                {
+                    "name": "Account Creation / Sign In",
+                    "content": "Offer options: Google, GitHub, or email/password (with optional 2FA later).",
+                    "ui": "clean buttons with respective icons; email form with validation"
+                },
+                {
+                    "name": "Personalization Profile",
+                    "content": "Ask user to select their primary role/industry:",
+                    "options": [
+                        "Software Developer",
+                        "Business Executive",
+                        "Researcher/Academic",
+                        "Student",
+                        "Healthcare Professional",
+                        "Creative (Designer, Writer)",
+                        "DIY Enthusiast",
+                        "Other (free text)"
+                    ],
+                    "purpose": "Tailor proactive suggestions and default capabilities"
+                },
+                {
+                    "name": "Interest & Goals",
+                    "content": "Select areas of interest (multi-select):",
+                    "options": [
+                        "Productivity & Task Automation",
+                        "Learning & Research",
+                        "Health & Wellness",
+                        "Smart Home Control",
+                        "Coding & Development",
+                        "Content Creation",
+                        "Accessibility",
+                        "Privacy & Security"
+                    ],
+                    "purpose": "Configure feature emphasis and notification types"
+                },
+                {
+                    "name": "Device & Sync Preferences",
+                    "content": "Choose how you'd like TERMIO to sync across devices:",
+                    "options": [
+                        "Sync all devices automatically (secure P2P)",
+                        "Manual sync only",
+                        "No sync, use locally"
+                    ],
+                    "note": "Based on plan, sync may be limited; inform user"
+                },
+                {
+                    "name": "Notification & Proactivity",
+                    "content": "Set your proactivity level:",
+                    "options": [
+                        "Low (only critical alerts)",
+                        "Medium (helpful suggestions, learn as you go)",
+                        "High (proactive assistant, anticipates needs)"
+                    ],
+                    "note": "Can be changed later in settings"
+                },
+                {
+                    "name": "Privacy Consent",
+                    "content": "Granular consent for:",
+                    "options": [
+                        "Collect usage metrics (anonymized, differential privacy)",
+                        "Allow cloud augmentation (optional, requires consent each time)",
+                        "Share anonymized crash reports"
+                    ],
+                    "ui": "toggle switches with explanations"
+                },
+                {
+                    "name": "Final Setup",
+                    "content": "TERMIO is now configured. It will download necessary models in the background (approx. 500MB for full experience). You can start using core features immediately.",
+                    "ui": "progress indicator for model download, 'Start Using TERMIO' button"
+                }
+            ],
+            "design": {
+                "theme": "iOS 26 design system (see below)",
+                "interactivity": "each step animated with haptic feedback on mobile, spring transitions",
+                "accessibility": "full VoiceOver/TalkBack support, dynamic type"
+            },
+            "adaptability": "Questions adapt based on previous answers; e.g., if 'Developer' selected, show more coding-related interests."
+        }
+    },
+    "ui_cross_platform": {
+        "design_system": "iOS 26 (as defined in 'ios_26_design_system' section) applied consistently across all platforms with platform-specific adaptations.",
+        "implementation": {
+            "desktop_gui": {
+                "framework": "Tauri (Rust + SvelteKit)",
+                "design_adaptation": "Use CSS media queries to mimic iOS 26 spacing, typography, and motion; use native window controls (traffic lights on macOS, standard on Windows/Linux).",
+                "macos_specific": "App runs as a menu bar item (like Siri). Clicking icon opens main window; global shortcut Cmd+Space (configurable) to activate.",
+                "windows_specific": "Global hotkey Ctrl+T to open the app from anywhere; system tray icon for background."
+            },
+            "mobile_app": {
+                "framework": "React Native with Expo",
+                "design_adaptation": "Use iOS 26 design tokens via styled-components; platform-specific navigation (native stack on iOS, bottom tabs on Android) while maintaining consistent visual language.",
+                "ios_specific": "Uses native gestures, haptics, and dynamic type.",
+                "android_specific": "Uses Material You where appropriate but overridden to match iOS 26 palette; edge-to-edge display."
+            },
+            "terminal_ui": {
+                "framework": "Rust with ratatui",
+                "design_adaptation": "Color palette mapped to iOS 26 light/dark themes; typography uses monospace (SF Mono). Motion limited due to terminal constraints."
+            },
+            "shared_design_tokens": {
+                "colors": "from ios_26_design_system.color_system",
+                "typography": "from ios_26_design_system.typography (with web-safe fallbacks)",
+                "spacing": "from ios_26_design_system.layout_systems.spacing_scale",
+                "motion": "from ios_26_design_system.motion (implemented with CSS transitions or React Native Reanimated)",
+                "accessibility": "from ios_26_design_system.accessibility"
+            }
+        }
+    },
+    "authentication": {
+        "methods": [
+            {
+                "type": "email/password",
+                "security": "bcrypt with 12 rounds, optional 2FA (TOTP or SMS)",
+                "features": [
+                    "password reset via email",
+                    "account recovery with backup codes"
+                ]
+            },
+            {
+                "type": "oauth",
+                "providers": [
+                    {
+                        "name": "Google",
+                        "scopes": [
+                            "openid",
+                            "profile",
+                            "email"
+                        ],
+                        "client_id": "stored securely"
+                    },
+                    {
+                        "name": "GitHub",
+                        "scopes": [
+                            "user:email"
+                        ],
+                        "client_id": "stored securely"
+                    }
+                ],
+                "flow": "PKCE OAuth 2.0 for mobile/desktop"
+            }
+        ],
+        "session_management": {
+            "tokens": {
+                "access_token": "JWT, short-lived (15 min)",
+                "refresh_token": "rotating, stored in secure storage (Keychain/Keystore)"
+            },
+            "device_registration": "each device gets a unique ID, can be revoked from account settings",
+            "mfa": "optional, enforced for enterprise"
         }
     }
 }
