@@ -1,7 +1,7 @@
 {
     "project": {
         "name": "TERMIO",
-        "version": "3.0.0",
+        "version": "1.0.0",
         "description": "A next-generation agentic AI assistant that is terminal-native, offline-first, privacy-focused, and cross-platform, inspired by JARVIS-class capabilities. Now with tiered subscription models, enterprise-grade security, and seamless cross-platform UI adhering to iOS 26 design language.",
         "vision": "Ubiquitous private AI companion across all devices with deterministic execution, enterprise-grade security, and human-level conversational intelligence."
     },
