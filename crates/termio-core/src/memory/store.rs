@@ -236,6 +236,88 @@ impl MemoryStore {
         .execute(&self.pool)
         .await?;
 
+        // Subscriptions
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                tier TEXT NOT NULL DEFAULT 'freemium',
+                status TEXT NOT NULL DEFAULT 'active',
+                provider TEXT NOT NULL DEFAULT 'manual',
+                provider_subscription_id TEXT,
+                start_date TEXT NOT NULL,
+                end_date TEXT NOT NULL,
+                auto_renew INTEGER NOT NULL DEFAULT 0,
+                features TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id
+            ON subscriptions(user_id);
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        // Payment methods
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS payment_methods (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                method_type TEXT NOT NULL DEFAULT 'card',
+                details_encrypted TEXT NOT NULL DEFAULT '{}',
+                is_default INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_payment_methods_user_id
+            ON payment_methods(user_id);
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        // Smart home devices (FA-006)
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS smart_devices (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                device_type TEXT NOT NULL DEFAULT 'unknown',
+                protocol TEXT NOT NULL DEFAULT 'matter',
+                is_online INTEGER NOT NULL DEFAULT 1,
+                state TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_smart_devices_user_id
+            ON smart_devices(user_id);
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        // Smart home scenes (FA-006)
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS smart_scenes (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                actions TEXT NOT NULL DEFAULT '[]',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_smart_scenes_user_id
+            ON smart_scenes(user_id);
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
+
         Ok(())
     }
 
@@ -1133,6 +1215,248 @@ impl MemoryStore {
         .execute(&self.pool)
         .await?;
         Ok(result.rows_affected())
+    }
+
+    // ======================================================================
+    // Subscriptions
+    // ======================================================================
+
+    /// Save a subscription
+    pub async fn save_subscription(&self, subscription: &crate::models::subscription::Subscription) -> Result<()> {
+        let now = chrono::Utc::now().to_rfc3339();
+        sqlx::query(
+            r#"
+            INSERT OR REPLACE INTO subscriptions
+            (id, user_id, tier, status, provider, provider_subscription_id, start_date, end_date, auto_renew, features, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            "#,
+        )
+        .bind(subscription.id.to_string())
+        .bind(subscription.user_id.to_string())
+        .bind(serde_json::to_string(&subscription.tier)?.trim_matches('"'))
+        .bind(serde_json::to_string(&subscription.status)?.trim_matches('"'))
+        .bind(serde_json::to_string(&subscription.provider)?.trim_matches('"'))
+        .bind(&subscription.provider_subscription_id)
+        .bind(subscription.start_date.to_rfc3339())
+        .bind(subscription.end_date.to_rfc3339())
+        .bind(subscription.auto_renew as i32)
+        .bind(serde_json::to_string(&subscription.features)?)
+        .bind(&now)
+        .bind(&now)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// Get subscription for a user
+    pub async fn get_subscription(&self, user_id: &str) -> Result<Option<crate::models::subscription::Subscription>> {
+        use sqlx::Row;
+        let row = sqlx::query(
+            r#"SELECT id, user_id, tier, status, provider, provider_subscription_id, start_date, end_date, auto_renew, features
+               FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1"#,
+        )
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        match row {
+            Some(row) => {
+                let id: String = row.get("id");
+                let user_id: String = row.get("user_id");
+                let tier_str: String = row.get("tier");
+                let status_str: String = row.get("status");
+                let provider_str: String = row.get("provider");
+                let provider_subscription_id: Option<String> = row.get("provider_subscription_id");
+                let start_date_str: String = row.get("start_date");
+                let end_date_str: String = row.get("end_date");
+                let auto_renew_val: i32 = row.get("auto_renew");
+                let features_str: String = row.get("features");
+
+                Ok(Some(crate::models::subscription::Subscription {
+                    id: id.parse().unwrap_or_default(),
+                    user_id: user_id.parse().unwrap_or_default(),
+                    tier: serde_json::from_str(&format!("\"{}\"", tier_str)).unwrap_or(crate::models::subscription::SubscriptionTier::Freemium),
+                    status: serde_json::from_str(&format!("\"{}\"", status_str)).unwrap_or(crate::models::subscription::SubscriptionStatus::Active),
+                    provider: serde_json::from_str(&format!("\"{}\"", provider_str)).unwrap_or(crate::models::subscription::PaymentProvider::Manual),
+                    provider_subscription_id,
+                    start_date: chrono::DateTime::parse_from_rfc3339(&start_date_str).map(|dt| dt.into()).unwrap_or_else(|_| chrono::Utc::now()),
+                    end_date: chrono::DateTime::parse_from_rfc3339(&end_date_str).map(|dt| dt.into()).unwrap_or_else(|_| chrono::Utc::now()),
+                    auto_renew: auto_renew_val != 0,
+                    features: serde_json::from_str(&features_str).unwrap_or_default(),
+                }))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Update subscription tier
+    pub async fn update_subscription_tier(&self, user_id: &str, tier: &str) -> Result<bool> {
+        let now = chrono::Utc::now().to_rfc3339();
+        let result = sqlx::query(
+            "UPDATE subscriptions SET tier = ?, updated_at = ? WHERE user_id = ?",
+        )
+        .bind(tier)
+        .bind(&now)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(result.rows_affected() > 0)
+    }
+
+    // ======================================================================
+    // Smart Home Devices (FA-006)
+    // ======================================================================
+
+    /// Save a smart device
+    pub async fn save_smart_device(&self, device: &crate::models::smart_home::SmartDevice) -> Result<()> {
+        let now = chrono::Utc::now().to_rfc3339();
+        let device_type_str = serde_json::to_string(&device.device_type)?.trim_matches('"').to_string();
+        
+        sqlx::query(
+            r#"
+            INSERT OR REPLACE INTO smart_devices
+            (id, user_id, name, device_type, protocol, is_online, state, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            "#,
+        )
+        .bind(device.id.to_string())
+        .bind(device.user_id.to_string())
+        .bind(&device.name)
+        .bind(&device_type_str)
+        .bind(&device.protocol)
+        .bind(device.is_online as i32)
+        .bind(serde_json::to_string(&device.state)?)
+        .bind(&now)
+        .bind(&now)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// List smart devices for a user
+    pub async fn list_smart_devices(&self, user_id: &str) -> Result<Vec<crate::models::smart_home::SmartDevice>> {
+        use sqlx::Row;
+        let rows = sqlx::query(
+            r#"SELECT id, user_id, name, device_type, protocol, is_online, state FROM smart_devices WHERE user_id = ?"#,
+        )
+        .bind(user_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let devices: Vec<crate::models::smart_home::SmartDevice> = rows
+            .iter()
+            .map(|row| {
+                let id: String = row.get("id");
+                let user_id: String = row.get("user_id");
+                let name: String = row.get("name");
+                let device_type_str: String = row.get("device_type");
+                let protocol: String = row.get("protocol");
+                let is_online_val: i32 = row.get("is_online");
+                let state_str: String = row.get("state");
+
+                crate::models::smart_home::SmartDevice {
+                    id: id.parse().unwrap_or_default(),
+                    user_id: user_id.parse().unwrap_or_default(),
+                    name,
+                    device_type: serde_json::from_str(&format!("\"{}\"", device_type_str)).unwrap_or(crate::models::smart_home::DeviceType::Unknown("unknown".to_string())),
+                    protocol,
+                    is_online: is_online_val != 0,
+                    state: serde_json::from_str(&state_str).unwrap_or_default(),
+                }
+            })
+            .collect();
+
+        Ok(devices)
+    }
+
+    /// Update smart device state
+    pub async fn update_smart_device_state(&self, device_id: &str, state: &serde_json::Value) -> Result<bool> {
+        let now = chrono::Utc::now().to_rfc3339();
+        let result = sqlx::query(
+            "UPDATE smart_devices SET state = ?, updated_at = ? WHERE id = ?",
+        )
+        .bind(serde_json::to_string(state)?)
+        .bind(&now)
+        .bind(device_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// Delete a smart device
+    pub async fn delete_smart_device(&self, device_id: &str) -> Result<bool> {
+        let result = sqlx::query("DELETE FROM smart_devices WHERE id = ?")
+            .bind(device_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(result.rows_affected() > 0)
+    }
+
+    // ======================================================================
+    // Smart Home Scenes (FA-006)
+    // ======================================================================
+
+    /// Save a smart scene
+    pub async fn save_smart_scene(&self, scene: &crate::models::smart_home::HomeScene) -> Result<()> {
+        let now = chrono::Utc::now().to_rfc3339();
+        sqlx::query(
+            r#"
+            INSERT OR REPLACE INTO smart_scenes
+            (id, user_id, name, description, actions, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            "#,
+        )
+        .bind(scene.id.to_string())
+        .bind(scene.user_id.to_string())
+        .bind(&scene.name)
+        .bind(&scene.description)
+        .bind(serde_json::to_string(&scene.actions)?)
+        .bind(&now)
+        .bind(&now)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// List smart scenes for a user
+    pub async fn list_smart_scenes(&self, user_id: &str) -> Result<Vec<crate::models::smart_home::HomeScene>> {
+        use sqlx::Row;
+        let rows = sqlx::query(
+            r#"SELECT id, user_id, name, description, actions FROM smart_scenes WHERE user_id = ?"#,
+        )
+        .bind(user_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let scenes: Vec<crate::models::smart_home::HomeScene> = rows
+            .iter()
+            .map(|row| {
+                let id: String = row.get("id");
+                let user_id: String = row.get("user_id");
+                let name: String = row.get("name");
+                let description: Option<String> = row.get("description");
+                let actions_str: String = row.get("actions");
+
+                crate::models::smart_home::HomeScene {
+                    id: id.parse().unwrap_or_default(),
+                    user_id: user_id.parse().unwrap_or_default(),
+                    name,
+                    description,
+                    actions: serde_json::from_str(&actions_str).unwrap_or_default(),
+                }
+            })
+            .collect();
+
+        Ok(scenes)
+    }
+
+    /// Delete a smart scene
+    pub async fn delete_smart_scene(&self, scene_id: &str) -> Result<bool> {
+        let result = sqlx::query("DELETE FROM smart_scenes WHERE id = ?")
+            .bind(scene_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(result.rows_affected() > 0)
     }
 }
 
