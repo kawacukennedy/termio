@@ -847,3 +847,283 @@ pub async fn trigger_sync(
         "timestamp": chrono::Utc::now().to_rfc3339()
     }))
 }
+
+// --- New Feature Handlers (Subscriptions, Payments, Smart Home) ---
+use termio_core::models::subscription::{Subscription, SubscriptionTier, SubscriptionStatus, PaymentProvider};
+use termio_core::payments::{StripeWebhookPayload, BinanceWebhookPayload, PaymentProcessor};
+use termio_core::models::smart_home::{SmartDevice, HomeScene};
+
+#[derive(Serialize)]
+pub struct SubscriptionPlan {
+    pub id: String,
+    pub name: String,
+    pub tier: String,
+    pub price_monthly: f64,
+    pub price_yearly: f64,
+    pub features: Vec<String>,
+    pub device_limit: i32,
+    pub model_limit_gb: i32,
+}
+
+pub async fn get_subscription(State(state): State<AppState>) -> Result<Json<Subscription>, StatusCode> {
+    let user_id = "default-user".to_string();
+    
+    let store = state.memory_store.read().await;
+    match store.get_subscription(&user_id).await {
+        Ok(Some(sub)) => Ok(Json(sub)),
+        Ok(None) => {
+            let default_sub = Subscription {
+                id: uuid::Uuid::new_v4(),
+                user_id: uuid::Uuid::new_v4(),
+                tier: SubscriptionTier::Freemium,
+                status: SubscriptionStatus::Active,
+                provider: PaymentProvider::Manual,
+                provider_subscription_id: None,
+                start_date: chrono::Utc::now(),
+                end_date: chrono::Utc::now() + chrono::Duration::days(365),
+                auto_renew: false,
+                features: serde_json::json!({
+                    "core_assistant": true,
+                    "multi_modal_input": true,
+                    "hybrid_ai_inference": "local_only",
+                    "memory_system": "ring_buffer_only",
+                    "plugin_ecosystem": false,
+                    "devices": 1,
+                    "support": "community"
+                }),
+            };
+            Ok(Json(default_sub))
+        }
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct UpdateSubscriptionRequest {
+    tier: String,
+}
+
+pub async fn update_subscription(
+    State(state): State<AppState>,
+    Json(payload): Json<UpdateSubscriptionRequest>,
+) -> Result<Json<Subscription>, StatusCode> {
+    let user_id = "default-user".to_string();
+    
+    let tier = match payload.tier.to_lowercase().as_str() {
+        "freemium" => SubscriptionTier::Freemium,
+        "pro" => SubscriptionTier::Pro,
+        "business" => SubscriptionTier::Business,
+        "enterprise" => SubscriptionTier::Enterprise,
+        _ => return Err(StatusCode::BAD_REQUEST),
+    };
+    
+    let store = state.memory_store.read().await;
+    
+    let subscription = Subscription {
+        id: uuid::Uuid::new_v4(),
+        user_id: uuid::Uuid::new_v4(),
+        tier,
+        status: SubscriptionStatus::Active,
+        provider: PaymentProvider::Stripe,
+        provider_subscription_id: None,
+        start_date: chrono::Utc::now(),
+        end_date: chrono::Utc::now() + chrono::Duration::days(30),
+        auto_renew: true,
+        features: serde_json::json!({}),
+    };
+    
+    if let Err(_) = store.save_subscription(&subscription).await {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+    
+    Ok(Json(subscription))
+}
+
+pub async fn list_plans(State(_state): State<AppState>) -> Result<Json<Vec<SubscriptionPlan>>, StatusCode> {
+    let plans = vec![
+        SubscriptionPlan {
+            id: "freemium".to_string(),
+            name: "Freemium".to_string(),
+            tier: "freemium".to_string(),
+            price_monthly: 0.0,
+            price_yearly: 0.0,
+            features: vec![
+                "Core AI assistant".to_string(),
+                "Local-only AI inference".to_string(),
+                "Ring buffer memory (100 interactions)".to_string(),
+                "1 device".to_string(),
+                "Community support".to_string(),
+            ],
+            device_limit: 1,
+            model_limit_gb: 2,
+        },
+        SubscriptionPlan {
+            id: "pro".to_string(),
+            name: "Pro".to_string(),
+            tier: "pro".to_string(),
+            price_monthly: 9.99,
+            price_yearly: 99.99,
+            features: vec![
+                "Everything in Freemium".to_string(),
+                "Cloud augmentation".to_string(),
+                "Full memory system (vector + graph)".to_string(),
+                "Plugin ecosystem".to_string(),
+                "Agentic OS".to_string(),
+                "Visual intelligence".to_string(),
+                "Proactive thinker".to_string(),
+                "Smart home control".to_string(),
+                "Cross-device sync".to_string(),
+                "Up to 5 devices".to_string(),
+                "Priority email support".to_string(),
+            ],
+            device_limit: 5,
+            model_limit_gb: 4,
+        },
+        SubscriptionPlan {
+            id: "business".to_string(),
+            name: "Business".to_string(),
+            tier: "business".to_string(),
+            price_monthly: 29.99,
+            price_yearly: 299.99,
+            features: vec![
+                "Everything in Pro".to_string(),
+                "Health monitoring".to_string(),
+                "Team collaboration".to_string(),
+                "Audit logs".to_string(),
+                "Unlimited devices".to_string(),
+                "24/7 priority support".to_string(),
+            ],
+            device_limit: -1,
+            model_limit_gb: 4,
+        },
+        SubscriptionPlan {
+            id: "enterprise".to_string(),
+            name: "Enterprise".to_string(),
+            tier: "enterprise".to_string(),
+            price_monthly: 0.0,
+            price_yearly: 0.0,
+            features: vec![
+                "Everything in Business".to_string(),
+                "On-premise deployment".to_string(),
+                "Custom models".to_string(),
+                "SSO integration (SAML, OIDC)".to_string(),
+                "HIPAA, GDPR, SOC2 compliance".to_string(),
+                "Dedicated account manager".to_string(),
+                "24/7 phone support".to_string(),
+            ],
+            device_limit: -1,
+            model_limit_gb: -1,
+        },
+    ];
+    
+    Ok(Json(plans))
+}
+
+pub async fn stripe_webhook(State(_state): State<AppState>, Json(payload): Json<StripeWebhookPayload>) -> Result<StatusCode, StatusCode> {
+    PaymentProcessor::process_stripe_webhook(&payload).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(StatusCode::OK)
+}
+
+pub async fn binance_webhook(State(_state): State<AppState>, Json(payload): Json<BinanceWebhookPayload>) -> Result<StatusCode, StatusCode> {
+    PaymentProcessor::process_binance_webhook(&payload).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(StatusCode::OK)
+}
+
+pub async fn list_devices(State(state): State<AppState>) -> Result<Json<Vec<SmartDevice>>, StatusCode> {
+    let user_id = "default-user".to_string();
+    let store = state.memory_store.read().await;
+    
+    match store.list_smart_devices(&user_id).await {
+        Ok(devices) => Ok(Json(devices)),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct AddDeviceRequest {
+    name: String,
+    device_type: String,
+    protocol: Option<String>,
+    state: Option<serde_json::Value>,
+}
+
+pub async fn add_device(State(state): State<AppState>, Json(req): Json<AddDeviceRequest>) -> Result<Json<SmartDevice>, StatusCode> {
+    let user_id = uuid::Uuid::new_v4();
+    
+    let device_type = match req.device_type.to_lowercase().as_str() {
+        "light" => termio_core::models::smart_home::DeviceType::Light,
+        "thermostat" => termio_core::models::smart_home::DeviceType::Thermostat,
+        "lock" => termio_core::models::smart_home::DeviceType::Lock,
+        "camera" => termio_core::models::smart_home::DeviceType::Camera,
+        "sensor" => termio_core::models::smart_home::DeviceType::Sensor,
+        "speaker" => termio_core::models::smart_home::DeviceType::Speaker,
+        other => termio_core::models::smart_home::DeviceType::Unknown(other.to_string()),
+    };
+    
+    let device = SmartDevice {
+        id: uuid::Uuid::new_v4(),
+        user_id,
+        name: req.name,
+        device_type,
+        protocol: req.protocol.unwrap_or_else(|| "matter".to_string()),
+        is_online: true,
+        state: req.state.unwrap_or_default(),
+    };
+    
+    let store = state.memory_store.read().await;
+    if let Err(_) = store.save_smart_device(&device).await {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+    
+    Ok(Json(device))
+}
+
+pub async fn update_device_state(
+    State(state): State<AppState>,
+    axum::extract::Path(id): axum::extract::Path<uuid::Uuid>,
+    Json(state_payload): Json<serde_json::Value>,
+) -> Result<StatusCode, StatusCode> {
+    let store = state.memory_store.read().await;
+    
+    match store.update_smart_device_state(&id.to_string(), &state_payload).await {
+        Ok(true) => Ok(StatusCode::NO_CONTENT),
+        Ok(false) => Err(StatusCode::NOT_FOUND),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+pub async fn list_scenes(State(state): State<AppState>) -> Result<Json<Vec<HomeScene>>, StatusCode> {
+    let user_id = "default-user".to_string();
+    let store = state.memory_store.read().await;
+    
+    match store.list_smart_scenes(&user_id).await {
+        Ok(scenes) => Ok(Json(scenes)),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct CreateSceneRequest {
+    name: String,
+    description: Option<String>,
+    actions: Option<Vec<serde_json::Value>>,
+}
+
+pub async fn create_scene(State(state): State<AppState>, Json(req): Json<CreateSceneRequest>) -> Result<Json<HomeScene>, StatusCode> {
+    let user_id = uuid::Uuid::new_v4();
+    
+    let scene = HomeScene {
+        id: uuid::Uuid::new_v4(),
+        user_id,
+        name: req.name,
+        description: req.description,
+        actions: req.actions.unwrap_or_default(),
+    };
+    
+    let store = state.memory_store.read().await;
+    if let Err(_) = store.save_smart_scene(&scene).await {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+    
+    Ok(Json(scene))
+}
