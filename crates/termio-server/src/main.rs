@@ -50,6 +50,9 @@ fn build_router(state: AppState) -> Router {
                 .merge(routes::knowledge_graph_routes())
                 .merge(routes::health_data_routes())
                 .merge(routes::action_plan_routes())
+                .merge(routes::subscription_routes())
+                .merge(routes::payment_routes())
+                .merge(routes::smart_home_routes())
                 .layer(from_fn_with_state(
                     state.clone(),
                     middleware::auth::auth_middleware,
