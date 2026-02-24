@@ -97,3 +97,25 @@ pub fn action_plan_routes() -> Router<AppState> {
         .route("/api/action-plans/:id/approve", put(handlers::approve_action_plan))
         .route("/api/action-plans/:id/execute", post(handlers::execute_action_plan_step))
 }
+
+/// Subscription routes (requires auth)
+pub fn subscription_routes() -> Router<AppState> {
+    Router::new()
+        .route("/api/subscriptions", get(handlers::get_subscription).put(handlers::update_subscription))
+        .route("/api/subscriptions/plans", get(handlers::list_plans))
+}
+
+/// Payment webhooks (public out of necessity, uses signature verification)
+pub fn payment_routes() -> Router<AppState> {
+    Router::new()
+        .route("/webhooks/stripe", post(handlers::stripe_webhook))
+        .route("/webhooks/binance", post(handlers::binance_webhook))
+}
+
+/// Smart home routes (requires auth)
+pub fn smart_home_routes() -> Router<AppState> {
+    Router::new()
+        .route("/api/smart-home/devices", get(handlers::list_devices).post(handlers::add_device))
+        .route("/api/smart-home/devices/:id/state", put(handlers::update_device_state))
+        .route("/api/smart-home/scenes", get(handlers::list_scenes).post(handlers::create_scene))
+}
