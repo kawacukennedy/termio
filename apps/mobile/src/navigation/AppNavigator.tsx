@@ -9,6 +9,8 @@ import AssistantScreen from '../screens/AssistantScreen';
 import ScanScreen from '../screens/ScanScreen';
 import PluginsScreen from '../screens/PluginsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import SubscriptionScreen from '../screens/SubscriptionScreen';
+import SmartHomeScreen from '../screens/SmartHomeScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -65,6 +67,8 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Main" component={TabNavigator} />
+        <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+        <Stack.Screen name="SmartHome" component={SmartHomeScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -56,7 +56,7 @@ export default function HomeScreen({ navigation }: any) {
         navigation.navigate('Scan');
         break;
       case 'home':
-        // Navigate to smart home
+        navigation.navigate('SmartHome');
         break;
     }
   };

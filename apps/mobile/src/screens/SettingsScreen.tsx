@@ -34,6 +34,34 @@ export default function SettingsScreen({ navigation }: any) {
 
       <ScrollView style={styles.content}>
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => navigation.navigate('Subscription')}
+          >
+            <Icon name="card-outline" size={24} color="#A3A3A3" />
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Subscription</Text>
+              <Text style={styles.settingValue}>Manage your plan</Text>
+            </View>
+            <Icon name="chevron-forward" size={20} color="#525252" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => navigation.navigate('SmartHome')}
+          >
+            <Icon name="home-outline" size={24} color="#A3A3A3" />
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Smart Home</Text>
+              <Text style={styles.settingValue}>Manage devices and scenes</Text>
+            </View>
+            <Icon name="chevron-forward" size={20} color="#525252" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Server</Text>
           
           <View style={styles.settingItem}>
