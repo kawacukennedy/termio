@@ -22,6 +22,7 @@ pub mod health;
 pub mod memory;
 pub mod models;
 pub mod notifications;
+pub mod payments;
 pub mod plugins;
 pub mod sync;
 pub mod voice;

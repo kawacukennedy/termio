@@ -18,6 +18,8 @@ mod health_data;
 mod knowledge_graph;
 mod memory_entry;
 mod message;
+pub mod smart_home;
+pub mod subscription;
 
 pub use action_plan::{ActionPlan, ActionStep, ActionType, PlanStatus};
 pub use conversation::Conversation;
