@@ -1,4 +1,28 @@
 //! Memory entry model
+//!
+//! Represents user memories stored in TERMIO's three-tier memory system.
+//!
+//! ## Memory Lifecycle
+//!
+//! 1. **Creation**: Memories are created from conversations, documents, or manually
+//! 2. **Indexing**: Embeddings are generated for semantic search
+//! 3. **Retrieval**: Accessed via keyword search or semantic similarity
+//! 4. **Reinforcement**: Frequent access increases importance score
+//! 5. **Cleanup**: Low-importance, unused memories are pruned
+//!
+//! ## Importance Scoring
+//!
+//! The `importance_score` (0-1) determines memory retention priority:
+//! - High (>0.7): Core memories, never pruned
+//! - Medium (0.3-0.7): Standard retention
+//! - Low (<0.3): Candidates for cleanup
+//!
+//! ## Access Control
+//!
+//! Memories can be:
+//! - **Private**: Device-only access
+//! - **SharedDevices**: Synced across user's devices
+//! - **SharedUsers**: Explicitly shared with others
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
