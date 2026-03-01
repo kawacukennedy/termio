@@ -1,6 +1,27 @@
 //! Event definitions
 //!
 //! Structured events for the system event bus.
+//!
+//! ## Event Categories
+//!
+//! | Category | Description | Use Case |
+//! |----------|-------------|----------|
+//! | System | Lifecycle events | Logging, monitoring |
+//! | Conversation | Chat events | UI updates, sync |
+//! | AI | Model events | Progress, debugging |
+//! | Memory | Storage events | Indexing, cleanup |
+//! | Sync | P2P events | Connection status |
+//!
+//! ## Event Structure
+//!
+//! ```rust
+//! Event {
+//!     id: "ulid...",
+//!     timestamp: "2024-01-15T10:30:00Z",
+//!     payload: EventPayload::Conversation(ConversationEvent::MessageReceived(msg)),
+//!     source: "termio-core"
+//! }
+//! ```
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

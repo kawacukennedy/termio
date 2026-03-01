@@ -1,6 +1,36 @@
 //! Event bus
 //!
 //! Asynchronous event bus using Tokio broadcast channels.
+//!
+//! ## Overview
+//!
+//! The event bus enables loose coupling between TERMIO components:
+//! - Subsystems publish events without knowing subscribers
+//! - Multiple subscribers can receive same event
+//! - Events are async and non-blocking
+//!
+//! ## Usage
+//!
+//! ```rust
+//! // Create bus
+//! let bus = EventBus::new(1024);
+//!
+//! // Subscribe
+//! let mut rx = bus.subscribe();
+//!
+//! // Publish
+//! bus.publish(Event { ... })?;
+//!
+//! // Receive
+//! while let Some(event) = rx.recv().await { ... }
+//! ```
+//!
+//! ## Event Flow
+//!
+//! ```text
+//! [Component A] --publish--> [Event Bus] --broadcast--> [Component B]
+//!                                                         [Component C]
+//! ```
 
 use tokio::sync::broadcast;
 use std::sync::Arc;
