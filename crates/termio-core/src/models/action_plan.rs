@@ -1,6 +1,40 @@
 //! Action plan model for autonomous task execution
 //!
-//! Represents multi-step plans the AI creates and executes.
+//! Represents multi-step plans the AI creates and executes (FA-002).
+//!
+//! ## Overview
+//!
+//! Action plans enable TERMIO to autonomously execute complex tasks:
+//! - Breaking down user requests into steps
+//! - Executing each step with appropriate tools
+//! - Handling failures and retries
+//! - Requiring approval for sensitive actions
+//!
+//! ## Status Lifecycle
+//!
+//! ```text
+//! Pending → RequiresApproval → InProgress → Completed
+//!                      ↓
+//!                   Failed
+//! ```
+//!
+//! ## Action Types
+//!
+//! | Type | Description | Example |
+//! |------|-------------|--------|
+//! | app_intent | Execute app-specific actions | "Send email", "Create calendar event" |
+//! | computer_vision | Image/analysis tasks | "Analyze screenshot", "OCR" |
+//! | shell_command | Run terminal commands | "git push", "npm install" |
+//! | http_request | API calls | "Fetch weather", "Post to webhook" |
+//!
+//! ## Approval Flow
+//!
+//! 1. AI creates plan with steps
+//! 2. If `requires_approval = true`, status becomes `RequiresApproval`
+//! 3. User reviews and approves/denies
+//! 4. On approval, execution begins
+//! 5. Each step runs sequentially, tracking results
+//! 6. Plan completes or fails based on step outcomes
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
