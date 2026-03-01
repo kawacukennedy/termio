@@ -1,6 +1,41 @@
 //! Health & biometric data model
 //!
-//! Tracks health data from wearables, manual input, and device sensors.
+//! Tracks health data from wearables, manual input, and device sensors (FA-008).
+//!
+//! ## Overview
+//!
+//! TERMIO integrates with health platforms to provide personalized insights:
+//! - Wearable devices (Apple Watch, Fitbit, Garmin)
+//! - Health platforms (Apple Health, Google Fit)
+//! - Manual user input
+//!
+//! ## Supported Metrics
+//!
+//! | Data Type | Unit | Source | Description |
+//! |-----------|------|--------|-------------|
+//! | heart_rate | bpm | Wearable | Beats per minute |
+//! | hrv | ms | Wearable | Heart rate variability |
+//! | spo2 | % | Wearable | Blood oxygen saturation |
+//! | skin_temperature | °C | Wearable | Skin temperature |
+//! | steps | count | Wearable | Daily step count |
+//! | sleep | hours | Wearable | Sleep duration |
+//! | stress | score | Wearable | Stress level (0-100) |
+//!
+//! ## Confidence Scores
+//!
+//! Each reading has a confidence score (0.0-1.0) based on:
+//! - Device accuracy
+//! - Signal quality
+//! - Historical reliability
+//!
+//! Low-confidence readings are flagged for user review.
+//!
+//! ## Privacy
+//!
+//! Health data is:
+//! - Stored locally with user encryption
+//! - Never shared without explicit consent
+//! - Deletable on request (GDPR compliance)
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
