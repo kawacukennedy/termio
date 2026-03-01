@@ -2,6 +2,27 @@
 //!
 //! SQLite-backed storage for conversations, memory entries, knowledge graph,
 //! health data, action plans, plugins, and notifications.
+//!
+//! ## Database Schema
+//!
+//! This store manages data across multiple tables:
+//! - **conversations**: Chat sessions with message history
+//! - **memory_entries**: User memories with embeddings
+//! - **knowledge_nodes/knowledge_edges**: Graph-based knowledge storage
+//! - **health_data**: Wearable/device health metrics
+//! - **action_plans**: Task automation plans
+//! - **plugins**: WASM plugin registry
+//! - **notifications**: Push and local notifications
+//! - **subscriptions**: User subscription tiers
+//! - **smart_devices/smart_scenes**: IoT device management
+//!
+//! ## Usage
+//!
+//! ```rust
+//! let store = MemoryStore::new("termio.db").await?;
+//! store.save_conversation(&conversation).await?;
+//! let convs = store.list_conversations(user_id, 10).await?;
+//! ```
 
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use std::path::Path;
@@ -10,6 +31,14 @@ use crate::error::Result;
 use crate::models::{Conversation, MemoryEntry, Message};
 
 /// Persistent memory store backed by SQLite
+///
+/// This is the third tier in TERMIO's three-tier memory architecture:
+/// 1. Ring buffer (in-memory, fastest)
+/// 2. Vector store (semantic search)
+/// 3. SQLite (persistent, full-text)
+///
+/// All data is locally stored with user-controlled encryption keys.
+/// The store uses `sqlx` for async database operations with a connection pool.
 pub struct MemoryStore {
     pool: Pool<Sqlite>,
 }
@@ -44,8 +73,13 @@ impl MemoryStore {
     }
 
     /// Run database migrations
+    ///
+    /// Creates all necessary tables and indexes for TERMIO's data storage.
+    /// Uses `CREATE TABLE IF NOT EXISTS` for idempotent migrations.
+    /// Each table includes appropriate indexes for common query patterns.
     async fn run_migrations(&self) -> Result<()> {
-        // Conversations
+        // Conversations table - stores chat sessions
+        // Indexed by user_id+created_at for listing, and session_id for lookup
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS conversations (
@@ -69,7 +103,9 @@ impl MemoryStore {
         .execute(&self.pool)
         .await?;
 
-        // Memory entries
+        // Memory entries - stores user memories with optional embeddings
+        // The embedding column stores vector representations for semantic search
+        // Indexed by user_id+created_at for temporal queries
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS memory_entries (
@@ -90,7 +126,11 @@ impl MemoryStore {
         .execute(&self.pool)
         .await?;
 
-        // Knowledge graph nodes (FA-003)
+        // Knowledge graph nodes (FA-003) - entity storage
+        // node_type: concept, person, place, event, etc.
+        // label: display name for the node
+        // properties: JSON blob for custom attributes
+        // embedding: optional vector for semantic similarity
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS knowledge_nodes (
@@ -113,7 +153,9 @@ impl MemoryStore {
         .execute(&self.pool)
         .await?;
 
-        // Knowledge graph edges (FA-003)
+        // Knowledge graph edges (FA-003) - relationships between nodes
+        // relationship: type of connection (e.g., "knows", "works_at", "compiles_to")
+        // weight: confidence score for the relationship (0.0-1.0)
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS knowledge_edges (
@@ -134,7 +176,10 @@ impl MemoryStore {
         .execute(&self.pool)
         .await?;
 
-        // Health data (FA-008)
+        // Health data (FA-008) - wearable and device health metrics
+        // source: data origin (e.g., "apple_watch", "fitbit", "manual")
+        // data_type: metric type (e.g., "heart_rate", "steps", "sleep")
+        // confidence: reliability score for the reading (0.0-1.0)
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS health_data (
@@ -157,7 +202,11 @@ impl MemoryStore {
         .execute(&self.pool)
         .await?;
 
-        // Action plans (FA-002)
+        // Action plans (FA-002) - task automation workflows
+        // trigger: event or condition that activates the plan
+        // status: lifecycle state (pending, approved, running, completed, failed)
+        // steps: JSON array of actions to execute
+        // requires_approval: whether user confirmation is needed before execution
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS action_plans (
@@ -322,10 +371,13 @@ impl MemoryStore {
     }
 
     // ======================================================================
-    // Conversations
+    // Conversations - Chat session management
     // ======================================================================
 
     /// Save a conversation
+    ///
+    /// Uses `INSERT OR REPLACE` for upsert semantics. Serializes the message
+    /// list, context window, and vector timestamp to JSON for storage.
     pub async fn save_conversation(&self, conversation: &Conversation) -> Result<()> {
         let messages_json = serde_json::to_string(&conversation.messages)?;
         let context_json = serde_json::to_string(&conversation.context_window)?;
@@ -356,6 +408,8 @@ impl MemoryStore {
     }
 
     /// Get a conversation by ID
+    ///
+    /// Returns `None` if the conversation doesn't exist or has been deleted.
     pub async fn get_conversation(&self, id: &str) -> Result<Option<Conversation>> {
         let row = sqlx::query_as::<_, (String, String, String, String, String, String, String, String, String, String)>(
             "SELECT id, user_id, device_id, session_id, messages, context_window, created_at, updated_at, vector_timestamp, status FROM conversations WHERE id = ?"
@@ -450,10 +504,13 @@ impl MemoryStore {
     }
 
     // ======================================================================
-    // Memory entries
+    // Memory entries - User long-term memory storage
     // ======================================================================
 
     /// Save a memory entry
+    ///
+    /// Memory entries store user information, preferences, and facts.
+    /// Embeddings are stored as byte arrays (f32 vectors serialized to bytes).
     pub async fn save_memory_entry(&self, entry: &MemoryEntry) -> Result<()> {
         let metadata_json = serde_json::to_string(&entry.metadata)?;
         let access_json = serde_json::to_string(&entry.access_control)?;
@@ -640,10 +697,13 @@ impl MemoryStore {
     }
 
     // ======================================================================
-    // Knowledge Graph (FA-003)
+    // Knowledge Graph (FA-003) - Entity relationship storage
     // ======================================================================
 
     /// Create a knowledge node
+    ///
+    /// Nodes represent entities in the user's knowledge graph.
+    /// Common node types: "concept", "person", "place", "event", "topic"
     pub async fn save_knowledge_node(
         &self,
         id: &str,
@@ -816,10 +876,13 @@ impl MemoryStore {
     }
 
     // ======================================================================
-    // Health Data (FA-008)
+    // Health Data (FA-008) - Wearable and health metrics
     // ======================================================================
 
     /// Save a health data entry
+    ///
+    /// Stores metrics from wearables, health devices, or manual entry.
+    /// Common data types: "heart_rate", "steps", "sleep_duration", "blood_pressure"
     pub async fn save_health_data(
         &self,
         id: &str,
@@ -902,10 +965,13 @@ impl MemoryStore {
     }
 
     // ======================================================================
-    // Action Plans (FA-002)
+    // Action Plans (FA-002) - Task automation
     // ======================================================================
 
     /// Save an action plan
+    ///
+    /// Action plans automate user tasks with a trigger-condition-action model.
+    /// Status lifecycle: pending → approved → running → completed/failed
     pub async fn save_action_plan(
         &self,
         id: &str,
@@ -1032,10 +1098,13 @@ impl MemoryStore {
     }
 
     // ======================================================================
-    // Plugins
+    // Plugins - WASM plugin registry
     // ======================================================================
 
     /// Save a plugin record
+    ///
+    /// Plugins extend TERMIO's capabilities via WebAssembly.
+    /// The registry stores metadata; the actual WASM bytecode is loaded separately.
     pub async fn save_plugin(
         &self,
         id: &str,
@@ -1105,10 +1174,13 @@ impl MemoryStore {
     }
 
     // ======================================================================
-    // Notifications (FA-012)
+    // Notifications (FA-012) - Push and in-app notifications
     // ======================================================================
 
     /// Save a notification to the database
+    ///
+    /// Notifications support scheduling (delivery_time) and expiration.
+    /// Status: pending, delivered, read, dismissed
     pub async fn save_notification(&self, notif: &crate::notifications::Notification) -> Result<()> {
         sqlx::query(
             r#"
@@ -1218,10 +1290,13 @@ impl MemoryStore {
     }
 
     // ======================================================================
-    // Subscriptions
+    // Subscriptions - User tier and billing
     // ======================================================================
 
     /// Save a subscription
+    ///
+    /// Stores subscription tier, billing provider, and feature flags.
+    /// Tiers: freemium, pro, enterprise
     pub async fn save_subscription(&self, subscription: &crate::models::subscription::Subscription) -> Result<()> {
         let now = chrono::Utc::now().to_rfc3339();
         sqlx::query(
@@ -1304,10 +1379,13 @@ impl MemoryStore {
     }
 
     // ======================================================================
-    // Smart Home Devices (FA-006)
+    // Smart Home Devices (FA-006) - IoT device management
     // ======================================================================
 
     /// Save a smart device
+    ///
+    /// Registers IoT devices via protocols like Matter, Zigbee, Z-Wave.
+    /// State is stored as JSON for protocol-agnostic handling.
     pub async fn save_smart_device(&self, device: &crate::models::smart_home::SmartDevice) -> Result<()> {
         let now = chrono::Utc::now().to_rfc3339();
         let device_type_str = serde_json::to_string(&device.device_type)?.trim_matches('"').to_string();
@@ -1393,10 +1471,13 @@ impl MemoryStore {
     }
 
     // ======================================================================
-    // Smart Home Scenes (FA-006)
+    // Smart Home Scenes (FA-006) - Automated device scenarios
     // ======================================================================
 
     /// Save a smart scene
+    ///
+    /// Scenes group device actions into one-tap automations.
+    /// Example: "Movie Night" = dim lights + lower blinds + TV on
     pub async fn save_smart_scene(&self, scene: &crate::models::smart_home::HomeScene) -> Result<()> {
         let now = chrono::Utc::now().to_rfc3339();
         sqlx::query(
