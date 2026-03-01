@@ -1,6 +1,42 @@
 //! Session management
 //!
 //! JWT-based session tokens for API authentication.
+//!
+//! # Overview
+//!
+//! This module implements stateless JWT authentication for TERMIO.
+//! Sessions are created when users authenticate and verified on each request.
+//!
+//! # JWT Structure
+//!
+//! ```json
+//! {
+//!   "sub": "user-uuid",
+//!   "device_id": "device-uuid", 
+//!   "exp": 1699999999,
+//!   "iat": 1699900000,
+//!   "scopes": ["read", "write", "execute"]
+//! }
+//! ```
+//!
+//! # Usage
+//!
+//! ```rust
+//! use termio_core::auth::SessionManager;
+//! use chrono::Duration;
+//! use uuid::Uuid;
+//!
+//! let manager = SessionManager::new(secret.as_bytes());
+//! let session = manager.create_session(
+//!     user_id,
+//!     device_id,
+//!     Duration::hours(24),
+//!     vec!["read".to_string()]
+//! )?;
+//!
+//! // Later, verify the token
+//! let claims = manager.verify_token(&session.token.0)?;
+//! ```
 
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
@@ -10,21 +46,32 @@ use uuid::Uuid;
 use crate::error::{Error, Result};
 
 /// Session claims for JWT
+///
+/// This is the payload stored inside the JWT token.
+/// Contains identity information and authorization scope.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
-    /// Subject (User ID)
+    /// Subject (User ID) - who this token represents
     pub sub: String,
-    /// Device ID
+    
+    /// Device ID - which device this token is for
     pub device_id: String,
-    /// Expiration time
+    
+    /// Expiration time - Unix timestamp when token expires
     pub exp: usize,
-    /// Issued at
+    
+    /// Issued at - Unix timestamp when token was created
     pub iat: usize,
-    /// Permissions/Scopes
+    
+    /// Permissions/Scopes - what this token allows
+    /// e.g., ["read", "write", "execute_plugin"]
     pub scopes: Vec<String>,
 }
 
 /// Opaque session token
+///
+/// Wrapper around the JWT string to prevent accidental string operations
+/// and make the API clearer.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Token(pub String);
 
@@ -37,13 +84,25 @@ impl fmt::Display for Token {
 use std::fmt;
 
 /// Session manager
+///
+/// Creates and verifies JWT session tokens.
+/// Each instance uses a single secret key for all operations.
 pub struct SessionManager {
+    /// Key for encoding new tokens
     encoding_key: EncodingKey,
+    /// Key for decoding/verifying tokens
     decoding_key: DecodingKey,
 }
 
 impl SessionManager {
     /// Create a new session manager with a secret
+    ///
+    /// The secret should be at least 32 bytes and stored securely.
+    /// In production, load from environment or secure storage.
+    ///
+    /// # Arguments
+    ///
+    /// * `secret` - Secret key for signing tokens (min 32 bytes recommended)
     pub fn new(secret: &[u8]) -> Self {
         Self {
             encoding_key: EncodingKey::from_secret(secret),
@@ -52,6 +111,34 @@ impl SessionManager {
     }
 
     /// Create a new session for a user on a device
+    ///
+    /// Generates a JWT token with the user's ID, device ID,
+    /// expiration time, and requested permissions.
+    ///
+    /// # Arguments
+    ///
+    /// * `user_id` - The user's UUID
+    /// * `device_id` - The device's UUID  
+    /// * `duration` - How long the session lasts
+    /// * `scopes` - Permission scopes for this session
+    ///
+    /// # Returns
+    ///
+    /// A Session containing the JWT token and metadata
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chrono::Duration;
+    /// use uuid::Uuid;
+    ///
+    /// let session = manager.create_session(
+    ///     Uuid::new_v4(),
+    ///     Uuid::new_v4(),
+    ///     Duration::hours(24),
+    ///     vec!["read".to_string(), "write".to_string()]
+    /// )?;
+    /// ```
     pub fn create_session(
         &self,
         user_id: Uuid,
@@ -62,6 +149,7 @@ impl SessionManager {
         let now = Utc::now();
         let expires_at = now + duration;
 
+        // Build JWT claims
         let claims = Claims {
             sub: user_id.to_string(),
             device_id: device_id.to_string(),
@@ -70,6 +158,7 @@ impl SessionManager {
             scopes,
         };
 
+        // Sign the token
         let token_str = encode(&Header::default(), &claims, &self.encoding_key)
             .map_err(|e| Error::Auth(format!("Token generation failed: {}", e)))?;
 
@@ -82,9 +171,29 @@ impl SessionManager {
     }
 
     /// Verify a session token
+    ///
+    /// Decodes and validates the JWT token.
+    /// Checks signature and expiration.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - The JWT string to verify
+    ///
+    /// # Returns
+    ///
+    /// The Claims if valid, error if invalid/expired
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// match manager.verify_token(&token_str) {
+    ///     Ok(claims) => println!("User: {}", claims.sub),
+    ///     Err(e) => println!("Invalid token: {}", e),
+    /// }
+    /// ```
     pub fn verify_token(&self, token: &str) -> Result<Claims> {
         let mut validation = Validation::default();
-        validation.validate_exp = true;
+        validation.validate_exp = true;  // Reject expired tokens
 
         let token_data = decode::<Claims>(token, &self.decoding_key, &validation)
             .map_err(|e| Error::Auth(format!("Invalid token: {}", e)))?;
@@ -94,11 +203,18 @@ impl SessionManager {
 }
 
 /// Active session
+///
+/// Contains the token and associated metadata.
+/// Returned when creating a new session.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Session {
+    /// The JWT token string
     pub token: Token,
+    /// User ID from the token
     pub user_id: Uuid,
+    /// Device ID from the token
     pub device_id: Uuid,
+    /// When the session expires (Unix timestamp)
     pub expires_at: i64,
 }
 
