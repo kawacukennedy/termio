@@ -1,3 +1,25 @@
+/**
+ * App Navigator
+ * 
+ * Main navigation configuration for the TERMIO mobile app.
+ * Uses React Navigation with:
+ * - Bottom Tab Navigator: Main app sections
+ * - Native Stack Navigator: Modal screens
+ * 
+ * # Screen Structure
+ * 
+ * ## Tab Navigator (Main)
+ * 1. **Home**: Dashboard with quick actions and recent conversations
+ * 2. **Assistant**: Full chat interface with AI
+ * 3. **Scan**: Camera-based visual intelligence
+ * 4. **Plugins**: Plugin management
+ * 5. **Settings**: App configuration
+ * 
+ * ## Stack Screens (Modal)
+ * 1. **Subscription**: Plan selection and management
+ * 2. **SmartHome**: Device and scene management
+ */
+
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -12,13 +34,21 @@ import SettingsScreen from '../screens/SettingsScreen';
 import SubscriptionScreen from '../screens/SubscriptionScreen';
 import SmartHomeScreen from '../screens/SmartHomeScreen';
 
+// Create navigators
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+/**
+ * Tab Navigator
+ * 
+ * Bottom tab navigation with icons.
+ * Uses Ionicons for consistent iOS-style icons.
+ */
 function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        // Icon configuration based on route name
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: string;
 
@@ -44,13 +74,14 @@ function TabNavigator() {
 
           return <Icon name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#0EA5E9',
-        tabBarInactiveTintColor: '#A3A3A3',
+        // Tab bar styling - dark theme per iOS 26 spec
+        tabBarActiveTintColor: '#0EA5E9',  // Primary accent
+        tabBarInactiveTintColor: '#A3A3A3', // Secondary text
         tabBarStyle: {
-          backgroundColor: '#171717',
-          borderTopColor: '#262626',
+          backgroundColor: '#171717',       // Background
+          borderTopColor: '#262626',        // Border
         },
-        headerShown: false,
+        headerShown: false,  // Hide headers - custom headers in screens
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -62,6 +93,11 @@ function TabNavigator() {
   );
 }
 
+/**
+ * Main App Navigator
+ * 
+ * Root navigator combining tabs and modal screens.
+ */
 export default function AppNavigator() {
   return (
     <NavigationContainer>

@@ -1,3 +1,20 @@
+/**
+ * Home Screen
+ * 
+ * The main dashboard for TERMIO, showing:
+ * - Header with title and notifications
+ * - Quick Actions: New Chat, Voice Mode, Scan, Smart Home
+ * - Suggestions: AI-generated proactive suggestions
+ * - Recent Conversations: List of past conversations
+ * - Floating Action Button: Quick access to new chat
+ * 
+ * # Design
+ * 
+ * - Dark theme per iOS 26 specification
+ * - Uses iOS-style navigation patterns
+ * - Zustand for state management
+ */
+
 import React from 'react';
 import {
   View,
@@ -13,10 +30,12 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useAppStore } from '../store/appStore';
 
 export default function HomeScreen({ navigation }: any) {
+  // Zustand store selectors
   const conversations = useAppStore((state) => state.conversations);
   const setCurrentConversation = useAppStore((state) => state.setCurrentConversation);
   const addConversation = useAppStore((state) => state.addConversation);
 
+  // Quick action buttons shown as horizontal chips
   const quickActions = [
     { id: 'new', title: 'New Chat', icon: 'chatbubbles', color: '#0EA5E9' },
     { id: 'voice', title: 'Voice Mode', icon: 'mic', color: '#10B981' },
@@ -24,13 +43,16 @@ export default function HomeScreen({ navigation }: any) {
     { id: 'home', title: 'Smart Home', icon: 'home', color: '#8B5CF6' },
   ];
 
+  // Proactive AI suggestions shown as cards
   const suggestions = [
     { id: '1', title: 'Check weather', description: 'It might rain today', action: 'Check' },
     { id: '2', title: 'Meeting in 30 min', description: 'Prepare agenda', action: 'View' },
     { id: '3', title: 'Weekly summary', description: 'View your week at a glance', action: 'Show' },
   ];
 
+  // Handle new chat button press
   const handleNewChat = () => {
+    // Generate unique ID from timestamp
     const id = Date.now().toString();
     const conversation = {
       id,
@@ -39,11 +61,13 @@ export default function HomeScreen({ navigation }: any) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    // Add to store and navigate
     addConversation(conversation);
     setCurrentConversation(id);
     navigation.navigate('Assistant');
   };
 
+  // Handle quick action button press
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'new':
@@ -62,18 +86,22 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   return (
+    // Safe area handling for notched devices
     <SafeAreaView style={styles.container}>
+      {/* Header Section */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.title}>TERMIO</Text>
         </View>
+        {/* Notification bell */}
         <TouchableOpacity style={styles.notificationButton}>
           <Icon name="notifications-outline" size={24} color="#FAFAFA" />
         </TouchableOpacity>
       </View>
 
+      {/* Main Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Quick Actions */}
+        {/* Quick Actions Section - Horizontal scroll */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickActions}>
@@ -92,7 +120,7 @@ export default function HomeScreen({ navigation }: any) {
           </ScrollView>
         </View>
 
-        {/* Proactive Suggestions */}
+        {/* Proactive Suggestions Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Suggestions for you</Text>
           {suggestions.map((suggestion) => (
@@ -108,10 +136,11 @@ export default function HomeScreen({ navigation }: any) {
           ))}
         </View>
 
-        {/* Recent Conversations */}
+        {/* Recent Conversations Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent</Text>
           {conversations.length === 0 ? (
+            // Empty state
             <View style={styles.empty}>
               <Icon name="chatbubbles-outline" size={48} color="#404040" />
               <Text style={styles.emptyText}>No conversations yet</Text>
@@ -120,6 +149,7 @@ export default function HomeScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
           ) : (
+            // Conversation list
             conversations.map((conv) => (
               <TouchableOpacity
                 key={conv.id}
@@ -147,7 +177,7 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       </ScrollView>
 
-      {/* Floating Action Button */}
+      {/* Floating Action Button for new chat */}
       <TouchableOpacity style={styles.fab} onPress={handleNewChat}>
         <Icon name="add" size={28} color="#FFFFFF" />
       </TouchableOpacity>
@@ -156,10 +186,12 @@ export default function HomeScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  // Main container - full screen with dark background
   container: {
     flex: 1,
     backgroundColor: '#0C0C0C',
   },
+  // Header bar with title and notification
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -182,9 +214,11 @@ const styles = StyleSheet.create({
   notificationButton: {
     padding: 4,
   },
+  // Scrollable content area
   content: {
     flex: 1,
   },
+  // Section container with title
   section: {
     padding: 16,
   },
@@ -196,6 +230,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
+  // Quick action chips - horizontal scroll
   quickActions: {
     flexDirection: 'row',
   },
@@ -219,6 +254,7 @@ const styles = StyleSheet.create({
     color: '#FAFAFA',
     textAlign: 'center',
   },
+  // Suggestion cards
   suggestionCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -251,6 +287,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  // Conversation list items
   conversationItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -285,6 +322,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#525252',
   },
+  // Empty state
   empty: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -307,6 +345,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  // Floating action button
   fab: {
     position: 'absolute',
     bottom: 24,

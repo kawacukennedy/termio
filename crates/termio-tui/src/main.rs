@@ -1,6 +1,38 @@
 //! TERMIO Terminal UI
 //!
 //! A next-generation AI assistant with a beautiful terminal interface.
+//!
+//! # Overview
+//!
+//! The TERMIO TUI provides a rich terminal interface with:
+//! - 70/30 split: Conversation panel (70%) + Context panel (30%)
+//! - Sidebar: Conversation history navigation
+//! - Help overlay: Keyboard shortcuts reference
+//! - Command palette: Quick command execution
+//! - Plugin manager: Manage WASM plugins
+//!
+//! # Keyboard Shortcuts
+//!
+//! | Shortcut | Action |
+//! |---------|--------|
+//! | Enter | Start typing / Send message |
+//! | Escape | Stop typing / Close overlay |
+//! | Ctrl+N | New conversation |
+//! | Ctrl+V | Toggle voice recording |
+//! | Ctrl+S | Trigger sync |
+//! | Ctrl+H | Toggle help |
+//! | Ctrl+P | Plugin manager |
+//! | Ctrl+B | Toggle sidebar |
+//! | Ctrl+K | Command palette |
+//! | Ctrl+T | Toggle theme |
+//! | Tab | Switch panel focus |
+//! | Ctrl+Q | Quit |
+//!
+//! # Running
+//!
+//! ```bash
+//! cargo run -p termio-tui
+//! ```
 
 mod app;
 mod theme;
@@ -20,6 +52,9 @@ use app::App;
 use theme::Theme;
 
 /// Initialize logging
+///
+/// Sets up tracing with environment-based filtering.
+/// Log level can be controlled via RUST_LOG environment variable.
 fn init_logging() {
     tracing_subscriber::registry()
         .with(
@@ -31,26 +66,30 @@ fn init_logging() {
 }
 
 /// Main entry point
+///
+/// Sets up the terminal and runs the application event loop.
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Initialize logging
     init_logging();
     tracing::info!("Starting TERMIO...");
 
-    // Setup terminal
+    // Setup terminal for raw mode (no line buffering)
     enable_raw_mode()?;
     let mut stdout = io::stdout();
+    // Enter alternate screen buffer for full-screen TUI
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    // Create app
+    // Create app with dark theme
     let theme = Theme::dark();
     let mut app = App::new(theme);
 
-    // Run app
+    // Run the main event loop
     let res = run_app(&mut terminal, &mut app).await;
 
-    // Restore terminal
+    // Restore terminal to original state
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),
@@ -70,28 +109,35 @@ async fn main() -> Result<()> {
 }
 
 /// Run the main application loop
+///
+/// Handles keyboard events and renders the UI.
 async fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> {
     loop {
-        // Draw UI
+        // Step 1: Draw the UI
         terminal.draw(|f| ui::render(f, app))?;
 
-        // Check quit signal from command palette
+        // Step 2: Check for quit signal
         if app.status == "__QUIT__" {
             return Ok(());
         }
 
-        // Handle events
+        // Step 3: Handle events
         if event::poll(std::time::Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
+                // Only handle key press events (not release)
                 if key.kind == KeyEventKind::Press {
-                    // Ctrl+Q always quits
+                    // ==========================================
+                    // Global: Ctrl+Q always quits
+                    // ==========================================
                     if key.code == KeyCode::Char('q')
                         && key.modifiers.contains(event::KeyModifiers::CONTROL)
                     {
                         return Ok(());
                     }
 
-                    // Command palette mode
+                    // ==========================================
+                    // Command Palette Mode
+                    // ==========================================
                     if app.show_command_palette {
                         match key.code {
                             KeyCode::Esc => app.dismiss_overlay(),
@@ -103,7 +149,9 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Resul
                         continue;
                     }
 
-                    // Help overlay — Esc or Ctrl+H to dismiss
+                    // ==========================================
+                    // Help Overlay Mode
+                    // ==========================================
                     if app.show_help {
                         match key.code {
                             KeyCode::Esc => app.dismiss_overlay(),
@@ -117,7 +165,9 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Resul
                         continue;
                     }
 
-                    // Plugin manager overlay — Esc or Ctrl+P to dismiss
+                    // ==========================================
+                    // Plugin Manager Mode
+                    // ==========================================
                     if app.show_plugin_manager {
                         match key.code {
                             KeyCode::Esc => {
@@ -133,7 +183,9 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Resul
                         continue;
                     }
 
-                    // Global shortcuts (Ctrl + key) — spec-compliant mapping
+                    // ==========================================
+                    // Global Shortcuts (Ctrl + key)
+                    // ==========================================
                     if key.modifiers.contains(event::KeyModifiers::CONTROL) {
                         match key.code {
                             KeyCode::Char('n') => {
@@ -178,7 +230,9 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Resul
                         }
                     }
 
-                    // Normal key handling
+                    // ==========================================
+                    // Normal Mode Key Handling
+                    // ==========================================
                     match key.code {
                         KeyCode::Esc => {
                             if app.is_in_input_mode() {
