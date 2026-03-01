@@ -1,14 +1,30 @@
 //! Data models for TERMIO
 //!
-//! Implements the data models from the specification:
-//! - Conversation: Multi-message conversation with context
-//! - Message: Individual message with metadata
-//! - MemoryEntry: Semantic memory with embeddings
-//! - KnowledgeNode/Edge: Graph-based knowledge representation
-//! - Document: Uploaded document processing
-//! - HealthData: Biometric and health measurements
-//! - ActionPlan: Autonomous task execution plans
-//! - DeviceSyncState: Cross-device sync tracking
+//! This module contains all data structures used throughout TERMIO,
+//! implementing the data models from the project specification.
+//!
+//! # Model Overview
+//!
+//! | Model | Description | Storage |
+//! |-------|-------------|---------|
+//! | Conversation | Multi-message chat with context | SQLite |
+//! | Message | Individual user/assistant message | In Conversation |
+//! | MemoryEntry | Semantic memory with embeddings | SQLite + Vector |
+//! | KnowledgeNode | Graph entity | SQLite |
+//! | KnowledgeEdge | Graph relationship | SQLite |
+//! | Document | Uploaded document | SQLite |
+//! | HealthData | Biometric measurements | SQLite |
+//! | ActionPlan | Autonomous task plan | SQLite |
+//! | DeviceSyncState | Cross-device sync state | SQLite |
+//! | Subscription | User subscription tier | SQLite |
+//! | SmartDevice | Matter/Thread device | SQLite |
+//!
+//! # Key Design Decisions
+//!
+//! - UUID v7 for time-ordered IDs (conversation, message, memory)
+//! - ULID for memory entries (time-ordered, sortable)
+//! - RFC3339 timestamps for all temporal fields
+//! - Serde for JSON serialization throughout
 
 mod action_plan;
 mod conversation;
