@@ -1,6 +1,39 @@
 //! Document model
 //!
 //! Uploaded document processing with status tracking.
+//!
+//! ## Overview
+//!
+//! TERMIO can ingest documents to enhance context and knowledge:
+//! - User uploads PDF, Markdown, text, or code files
+//! - Document is processed and text is extracted
+//! - Content is chunked and indexed for retrieval
+//! - Chunks become memory entries with embeddings
+//!
+//! ## Processing Pipeline
+//!
+//! ```text
+//! Upload → Pending → Processing → Indexed
+//!                               ↓
+//!                             Failed
+//! ```
+//!
+//! ## Document Types
+//!
+//! | Type | Processing |
+//! |------|------------|
+//! | text | Direct extraction |
+//! | markdown | Parse headers, code blocks |
+//! | pdf | OCR + text extraction |
+//! | code | Syntax-aware chunking |
+//! | other | Treat as plain text |
+//!
+//! ## Chunking Strategy
+//!
+//! Documents are split into semantic chunks (~500 tokens each):
+//! - Preserve paragraph boundaries
+//! - Keep code blocks together
+//! - Add overlap for context continuity
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
