@@ -1,6 +1,47 @@
 //! Knowledge graph model
 //!
-//! Graph-based knowledge representation with nodes and edges.
+//! Graph-based knowledge representation with nodes and edges (FA-003).
+//!
+//! ## Overview
+//!
+//! The knowledge graph stores entities and their relationships, enabling:
+//! - Semantic reasoning about user interests
+//! - Contextual responses based on known facts
+//! - Discovery of related concepts
+//!
+//! ## Node Types
+//!
+//! | Type | Description | Example |
+//! |------|-------------|--------|
+//! | concept | Abstract ideas | "machine learning", "philosophy" |
+//! | person | People | "Ada Lovelace", "user's friend" |
+//! | place | Locations | "San Francisco", "office" |
+//! | entity | Named things | "Rust (language)", "iPhone" |
+//! | topic | Subject areas | "coding", "cooking" |
+//! | event | Happenings | "meeting", "vacation" |
+//!
+//! ## Relationship Types
+//!
+//! | Relation | Description | Weight Hint |
+//! |----------|-------------|--------------|
+//! | related_to | General association | 0.5-0.8 |
+//! | part_of | Containment | 0.9 |
+//! | knows | Personal connection | 0.7-1.0 |
+//! | works_at | Employment | 0.9 |
+//! | depends_on | Dependency | 0.8-1.0 |
+//! | similar_to | Similarity | 0.6-0.9 |
+//!
+//! ## Usage Example
+//!
+//! ```rust
+//! let rust = KnowledgeNode::new("Rust", "language", user_id)
+//!     .with_property("paradigm", json!("systems"))
+//!     .with_embedding(embedding);
+//!
+//! let wasm = KnowledgeNode::new("WebAssembly", "language", user_id);
+//!
+//! let edge = KnowledgeEdge::new(rust.id, wasm.id, "compiles_to", 0.95);
+//! ```
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
