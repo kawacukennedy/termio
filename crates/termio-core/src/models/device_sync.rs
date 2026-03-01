@@ -1,6 +1,30 @@
 //! Device sync state model
 //!
-//! Tracks synchronization state for each paired device.
+//! Tracks synchronization state for each paired device (FA-010).
+//!
+//! ## Overview
+//!
+//! TERMIO uses CRDTs (Conflict-free Replicated Data Types) for eventual
+//! consistency across devices. This model tracks:
+//! - Last sync timestamp and state hash
+//! - Pending changes waiting to sync
+//! - Connection info for peer-to-peer sync
+//! - User preferences for sync behavior
+//!
+//! ## Sync Configuration
+//!
+//! | Setting | Default | Description |
+//! |---------|---------|-------------|
+//! | auto_sync | true | Automatically sync when changes occur |
+//! | wifi_only | false | Only sync on WiFi (save mobile data) |
+//! | battery_threshold | 20% | Minimum battery to trigger sync |
+//! | data_cap_mb | None | Monthly data limit (None = unlimited) |
+//!
+//! ## Vector Clocks
+//!
+//! Each sync maintains a vector clock to track causality:
+//! - `{ "device_A": 5, "device_B": 3 }` means device_A has 5 events, device_B has 3
+//! - Used to resolve conflicts in CRDT merge operations
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
