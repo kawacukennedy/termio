@@ -1,6 +1,36 @@
 //! Vector store for semantic search
 //!
 //! SQLite-based vector storage with cosine similarity search.
+//!
+//! This is the second tier in TERMIO's three-tier memory architecture:
+//! - Provides semantic similarity search over embeddings
+//! - Enables finding related memories, conversations, and knowledge
+//!
+//! ## How it works
+//!
+//! 1. Text content is converted to embeddings using an external ML model
+//! 2. Embeddings are stored as byte arrays in SQLite (f32 -> little-endian bytes)
+//! 3. Search computes cosine similarity between query and stored vectors
+//! 4. Results are sorted by similarity and filtered by threshold
+//!
+//! ## Usage
+//!
+//! ```rust
+//! let store = VectorStore::new(pool, 384); // 384-dimensional embeddings
+//! store.initialize().await?;
+//!
+//! // Insert
+//! store.insert(&VectorEntry {
+//!     id: "mem_1".into(),
+//!     content: "User prefers dark mode".into(),
+//!     embedding: vec![0.1, -0.2, ...], // 384 dims
+//!     metadata: json!({"type": "preference"}),
+//! }).await?;
+//!
+//! // Search
+//! let results = store.search(&query_embedding, 5, 0.7).await?;
+//! for (entry, score) in results { ... }
+//! ```
 
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Sqlite};
@@ -8,27 +38,43 @@ use sqlx::{Pool, Sqlite};
 use crate::error::Result;
 
 /// A vector entry in the store
+///
+/// Represents a piece of content with its embedding vector.
+/// Used for semantic search across memories and knowledge.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VectorEntry {
+    /// Unique identifier for this entry
     pub id: String,
+    /// Original text content
     pub content: String,
+    /// Embedding vector (typically 384-1536 dimensions)
     pub embedding: Vec<f32>,
+    /// Additional metadata (source, timestamp, tags, etc.)
     pub metadata: serde_json::Value,
 }
 
 /// Vector store for semantic search
+///
+/// Uses cosine similarity to find related content.
+/// In production, consider replacing with specialized vector databases
+/// (Milvus, Pinecone, Qdrant) for better performance at scale.
 pub struct VectorStore {
     pool: Pool<Sqlite>,
+    /// Embedding dimensions (must match the embedding model)
     dimensions: usize,
 }
 
 impl VectorStore {
     /// Create a new vector store
+    ///
+    /// The `dimensions` parameter must match your embedding model's output size:
+    /// - OpenAI ada-002: 1536
+    /// - sentence-transformers/all-MiniLM-L6-v2: 384
     pub fn new(pool: Pool<Sqlite>, dimensions: usize) -> Self {
         Self { pool, dimensions }
     }
 
-    /// Get the dimensions
+    /// Get the embedding dimensions
     pub fn dimensions(&self) -> usize {
         self.dimensions
     }
@@ -38,6 +84,9 @@ impl VectorStore {
     }
 
     /// Initialize the vector store tables
+    ///
+    /// Creates the vectors table with content, embedding, and metadata columns.
+    /// Embeddings are stored as BLOB (raw bytes) for efficiency.
     pub async fn initialize(&self) -> Result<()> {
         sqlx::query(
             r#"
@@ -81,6 +130,19 @@ impl VectorStore {
     }
 
     /// Search for similar vectors
+    ///
+    /// Computes cosine similarity between the query embedding and all stored vectors.
+    /// Returns entries with similarity above the threshold, sorted by score.
+    ///
+    /// # Arguments
+    /// * `query_embedding` - The embedding vector to search with
+    /// * `limit` - Maximum number of results to return
+    /// * `threshold` - Minimum similarity score (0.0 to 1.0)
+    ///
+    /// # Performance Note
+    /// This is a brute-force O(n) scan. For large datasets (>10k vectors),
+    /// consider using approximate nearest neighbor (ANN) indexes or a
+    /// specialized vector database.
     pub async fn search(
         &self,
         query_embedding: &[f32],
@@ -161,6 +223,13 @@ impl VectorStore {
 }
 
 /// Calculate cosine similarity between two vectors
+///
+/// Cosine similarity measures the angle between vectors:
+/// - 1.0 = identical direction (most similar)
+/// - 0.0 = orthogonal (no similarity)
+/// - -1.0 = opposite direction
+///
+/// Formula: (a · b) / (||a|| * ||b||)
 pub fn cosine_similarity_impl(a: &[f32], b: &[f32]) -> f32 {
     let dot: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
     let mag_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
