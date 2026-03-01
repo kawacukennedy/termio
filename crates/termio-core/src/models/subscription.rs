@@ -1,3 +1,32 @@
+//! Subscription and billing model
+//!
+//! Manages user subscription tiers, payment methods, and feature access.
+//!
+//! ## Subscription Tiers
+//!
+//! | Tier | Price | Features |
+//! |------|-------|----------|
+//! | freemium | $0 | Basic AI, 50 messages/day, local-only |
+//! | pro | $19/mo | Unlimited messages, cloud sync, voice input |
+//! | business | $49/mo/user | Team sharing, API access, priority support |
+//! | enterprise | Custom | On-premise deployment, SSO, SLA |
+//!
+//! ## Feature Flags
+//!
+//! Each tier includes specific features stored in the `features` JSON field:
+//! - `voice_input`: Enable voice commands
+//! - `cloud_sync`: Cross-device synchronization
+//! - `plugins`: Load custom WASM plugins
+//! - `smart_home`: IoT device integration
+//! - `health_integration`: Wearable data sync
+//! - `api_access`: REST API access
+//!
+//! ## Payment Providers
+//!
+//! - **Stripe**: Credit cards, Apple Pay, Google Pay
+//! - **Binance**: Cryptocurrency payments (USDT)
+//! - **Manual**: Enterprise billing with invoice
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
